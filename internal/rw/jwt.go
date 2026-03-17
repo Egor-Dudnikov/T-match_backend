@@ -25,13 +25,13 @@ func GeneratingJWT(userID, email string, timeLife time.Duration) (string, error)
 
 }
 
-func DecodeJWT(tokenStr string) (*jwt.Token, error) {
+func DecodeJWT(tokenStr string) (*jwt.Token, Claims, error) {
 	claims := Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
 	if err != nil {
-		return nil, err
+		return nil, claims, err
 	}
-	return token, nil
+	return token, claims, nil
 }
 
 func keyfunc(token *jwt.Token) (interface{}, error) {

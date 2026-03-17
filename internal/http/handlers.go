@@ -35,9 +35,9 @@ func (app *App) СreateUserHandler(w http.ResponseWriter, r *http.Request, _ htt
 	user := rw.User{
 		PasswordHash: string(hashPassword),
 		Email:        userReg.Email,
-		Role:         "student",
+		Role:         "intern",
 	}
-	id := rw.QueeryNewUser(user, app.Db)
+	id, err := rw.QueeryNewUser(user, app.Db)
 	user.Id = id
 	if err != nil {
 		app.Log.Println("Error append database", err)
@@ -61,6 +61,6 @@ func (app *App) СreateUserHandler(w http.ResponseWriter, r *http.Request, _ htt
 		MaxAge:   604800,
 	})
 
-	w.Write([]byte(accessToken))
-
+	w.Header().Set("Token", accessToken)
+	log.Println("User registered successfully with id:", id)
 }

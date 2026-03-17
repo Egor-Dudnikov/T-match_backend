@@ -3,6 +3,7 @@ package rw
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -18,17 +19,19 @@ func PingDatabase(config DbConfig) (*sql.DB, error) {
 
 	err = db.Ping()
 	if err != nil {
-		return db, nil
+		return nil, err
 	}
+
+	log.Println("Successfully connected to database")
 
 	return db, nil
 }
 
-func QueeryNewUser(user User, db *sql.DB) int {
+func QueeryNewUser(user User, db *sql.DB) (int, error) {
 	var id int
-	db.QueryRow(`INSERT INTO users ()
-        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-		RETURNING id`,
+	err := db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)
+        VALUES ($1, $2, $3, NOW())
+		RETURNING id`, user.Email, user.PasswordHash, user.Role,
 	).Scan(&id)
-	return id
+	return id, err
 }
