@@ -1,6 +1,8 @@
 package rw
 
 import (
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -30,8 +32,11 @@ type ServerConfig struct {
 }
 
 type RedisConfig struct {
-	Addr string `json:"addr"`
-	DB   int    `json:"db"`
+	Addr         string        `json:"addr"`
+	DB           int           `json:"db"`
+	Max_retries  int           `json:"max_retries"`
+	Dial_timeout time.Duration `json:"dial_timeout"`
+	Timeout      time.Duration `json:"time_duration"`
 }
 
 type Config struct {

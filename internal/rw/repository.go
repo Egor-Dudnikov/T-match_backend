@@ -27,6 +27,10 @@ func PingDatabase(config DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
+func RedisPing(config RedisConfig) {
+
+}
+
 func QueeryNewUser(user User, db *sql.DB) (int, error) {
 	var id int
 	err := db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)

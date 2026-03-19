@@ -22,7 +22,7 @@ func (app *App) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 	w.Write([]byte("Hi men"))
 }
 
-func (app *App) СreateUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	userReg := rw.UserRegistration{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&userReg)
@@ -37,6 +37,7 @@ func (app *App) СreateUserHandler(w http.ResponseWriter, r *http.Request, _ htt
 		Email:        userReg.Email,
 		Role:         "intern",
 	}
+
 	id, err := rw.QueeryNewUser(user, app.Db)
 	user.Id = id
 	if err != nil {
@@ -63,4 +64,8 @@ func (app *App) СreateUserHandler(w http.ResponseWriter, r *http.Request, _ htt
 
 	w.Header().Set("Token", accessToken)
 	log.Println("User registered successfully with id:", id)
+}
+
+func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
 }

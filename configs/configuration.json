@@ -9,5 +9,13 @@
     "serverConfig": {
         "host": "localhost",
         "port": ":8080"
+    },
+    "redisConfig": {
+        "addr": "localhost:6379",
+        "db": 0,
+        "user": "",               
+        "max_retries": 3,
+        "dial_timeout": "5s",
+        "timeout": "3s"
     }
 }
