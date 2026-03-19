@@ -1,6 +1,8 @@
 package rw
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type User struct {
 	Id           int
@@ -27,9 +29,15 @@ type ServerConfig struct {
 	Port string `json:"port"`
 }
 
+type RedisConfig struct {
+	Addr string `json:"addr"`
+	DB   int    `json:"db"`
+}
+
 type Config struct {
 	DbConfig     DbConfig
 	ServerConfig ServerConfig
+	RedisConfig  RedisConfig
 }
 
 type Claims struct {

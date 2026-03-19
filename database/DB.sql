@@ -12,7 +12,7 @@ CREATE TYPE "user_role" AS ENUM (
 );
 
 CREATE TABLE "users" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "email" varchar UNIQUE NOT NULL,
   "password_hash" varchar,
   "role" user_role,
@@ -20,7 +20,7 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "interns" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "user_id" integer NOT NULL,
   "first_name" varchar,
   "last_name" varchar,
@@ -33,7 +33,7 @@ CREATE TABLE "interns" (
 );
 
 CREATE TABLE "companies" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "user_id" integer NOT NULL,
   "company_name" varchar UNIQUE NOT NULL,
   "description" text,
@@ -41,13 +41,13 @@ CREATE TABLE "companies" (
 );
 
 CREATE TABLE "admins" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "user_id" integer NOT NULL,
   "name" varchar
 );
 
 CREATE TABLE "internships" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "company_id" integer NOT NULL,
   "title" varchar,
   "description" text,
@@ -58,7 +58,7 @@ CREATE TABLE "internships" (
 );
 
 CREATE TABLE "applications" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "intern_id" integer NOT NULL,
   "internship_id" integer NOT NULL,
   "status" application_status DEFAULT 'pending',
@@ -66,7 +66,7 @@ CREATE TABLE "applications" (
 );
 
 CREATE TABLE "skills" (
-  "id" integer PRIMARY KEY,
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "name" varchar UNIQUE
 );
 
