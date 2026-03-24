@@ -13,6 +13,9 @@ Content-Type: application/json
 **Response 201 Created**
 Content-Type: application/json
 Token: eyJhbGciOiJIUzI1NiIs...
+{
+    ...
+}
 
 ## Обновление токена
 

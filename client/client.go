@@ -9,8 +9,8 @@ import (
 
 func main() {
 	data := map[string]string{
-		"email":    "Abuba@exemple.com",
-		"password": "qwer1234",
+		"email":    "Abu@exemple.com",
+		"password": "qwer124",
 	}
 
 	json_data, err := json.Marshal(data)
