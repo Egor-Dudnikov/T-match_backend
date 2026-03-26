@@ -1,27 +1,18 @@
 package main
 
 import (
+	"T-match_backend/configs"
 	"T-match_backend/internal/http"
 	"T-match_backend/internal/rw"
-	"encoding/json"
 	"log"
 	stdhttp "net/http"
-	"os"
 
 	_ "github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	configJson, err := os.Open("../configs/configuration.json")
-	if err != nil {
-		log.Fatalln("Config not found", err)
-	}
-	defer configJson.Close()
-
-	config := rw.Config{}
-	decoderJson := json.NewDecoder(configJson)
-	err = decoderJson.Decode(&config)
+	config, err := configs.PingConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -31,9 +22,18 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer db.Close()
+
+	dbr, err := rw.RedisPing(config.RedisConfig)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer dbr.Close()
+
 	app := &http.App{
 		Db:  db,
+		Dbr: dbr,
 		Log: log.Default(),
+		Cfg: config,
 	}
 
 	router := http.NewRouter(app)

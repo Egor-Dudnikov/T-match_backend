@@ -18,6 +18,12 @@ type UserRegistration struct {
 	Password string `json:"password"`
 }
 
+type UserVerify struct {
+	Email        string
+	PasswordHash string
+	Code         string
+}
+
 type DbConfig struct {
 	Host    string `json:"host"`
 	Port    int    `json:"port"`
@@ -32,17 +38,25 @@ type ServerConfig struct {
 }
 
 type RedisConfig struct {
-	Addr         string        `json:"addr"`
-	DB           int           `json:"db"`
-	Max_retries  int           `json:"max_retries"`
-	Dial_timeout time.Duration `json:"dial_timeout"`
-	Timeout      time.Duration `json:"time_duration"`
+	Addr        string        `json:"addr"`
+	DB          int           `json:"db"`
+	Max_retries int           `json:"max_retries"`
+	DialTimeout time.Duration `json:"dial_timeout"`
+	Timeout     time.Duration `json:"time_duration"`
+}
+
+type VeryfyConfig struct {
+	Addr     string `json:"addr"`
+	Host     string `json:"host"`
+	Identity string `json:"identity"`
+	Username string `json:"username"`
 }
 
 type Config struct {
 	DbConfig     DbConfig
 	ServerConfig ServerConfig
 	RedisConfig  RedisConfig
+	VeryfyConfig VeryfyConfig
 }
 
 type Claims struct {

@@ -1,10 +1,13 @@
 package rw
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func PingDatabase(config DbConfig) (*sql.DB, error) {
@@ -27,8 +30,20 @@ func PingDatabase(config DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func RedisPing(config RedisConfig) {
+func RedisPing(cfg RedisConfig) (*redis.Client, error) {
+	db := redis.NewClient(&redis.Options{
+		Addr:         cfg.Addr,
+		Password:     os.Getenv("REDIS_PASSWORD"),
+		DB:           cfg.DB,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+	})
 
+	if err := db.Ping(context.Background()).Err(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func QueeryNewUser(user User, db *sql.DB) (int, error) {
