@@ -4,10 +4,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(app *App) *httprouter.Router {
+func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/", app.Index)
-	router.POST("/auth/students", app.AuthStudent)
-	router.POST("/auth/students/verify", app.VerifyStudent)
+	router.GET("/", Index)
+	router.POST("/auth/students", app.AuthStudentHandler)
+	router.POST("/auth/students/verify", app.VerifyStudentHandler)
 	return router
 }

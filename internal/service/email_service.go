@@ -6,10 +6,18 @@ import (
 	"os"
 )
 
-func SendVerifyCode(to string, code string, cfg models.VeryfyConfig) error {
-	addr := cfg.Addr
-	a := smtp.PlainAuth(cfg.Identity, cfg.Username, os.Getenv("SMTP_PASSWORD"), cfg.Host)
-	from := cfg.Username
+type EmailClient struct {
+	cfg models.EmailConfig
+}
+
+func NewEmailClient(cfg models.EmailConfig) *EmailClient {
+	return &EmailClient{cfg: cfg}
+}
+
+func (r *EmailClient) SendVerifyCode(to string, code string) error {
+	addr := r.cfg.Addr
+	a := smtp.PlainAuth(r.cfg.Identity, r.cfg.Username, os.Getenv("SMTP_PASSWORD"), r.cfg.Host)
+	from := r.cfg.Username
 	msg := []byte("From: " + from + "\r\n" +
 		"To: " + to + "\r\n" +
 		"Subject: Code for verify\r\n" +

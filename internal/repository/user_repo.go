@@ -28,18 +28,26 @@ func PingDatabase(config models.DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func QueeryNewUser(user models.User, db *sql.DB) (int, error) {
+type Repository struct {
+	db *sql.DB
+}
+
+func NewRepository(r *sql.DB) *Repository {
+	return &Repository{db: r}
+}
+
+func (r *Repository) QueeryNewUser(user models.User) (int, error) {
 	var id int
-	err := db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)
+	err := r.db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, user.Email, user.PasswordHash, user.Role,
 	).Scan(&id)
 	return id, err
 }
 
-func CheckUserEmail(email string, db *sql.DB) (bool, error) {
+func (r *Repository) CheckUserEmail(email string) (bool, error) {
 	var exist bool
-	err := db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exist)
+	err := r.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exist)
 	if err != nil {
 		return exist, err
 	}

@@ -46,7 +46,7 @@ type RedisConfig struct {
 	Timeout     time.Duration `json:"time_duration"`
 }
 
-type VeryfyConfig struct {
+type EmailConfig struct {
 	Addr     string `json:"addr"`
 	Host     string `json:"host"`
 	Identity string `json:"identity"`
@@ -61,7 +61,7 @@ type Config struct {
 	DbConfig     DbConfig
 	ServerConfig ServerConfig
 	RedisConfig  RedisConfig
-	VeryfyConfig VeryfyConfig
+	EmailConfig  EmailConfig
 }
 
 type Claims struct {

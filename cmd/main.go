@@ -2,9 +2,10 @@ package main
 
 import (
 	"T-match_backend/configs"
-	"T-match_backend/internal/cash"
+	"T-match_backend/internal/cache"
 	"T-match_backend/internal/handlers"
 	"T-match_backend/internal/repository"
+	"T-match_backend/internal/service"
 	"log"
 	"net/http"
 
@@ -24,19 +25,20 @@ func main() {
 	}
 	defer db.Close()
 
-	dbr, err := cash.PingRedis(config.RedisConfig)
+	dbr, err := cache.PingRedis(config.RedisConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer dbr.Close()
 
-	app := &handlers.App{
-		Db:  db,
-		Dbr: dbr,
-		Cfg: config,
-	}
+	repo := repository.NewRepository(db)
+	redis := cache.NewRedis(dbr)
+	email := service.NewEmailClient(config.EmailConfig)
 
-	router := handlers.NewRouter(app)
+	app := service.NewAuthService(repo, redis, email)
+	authHandler := handlers.NewAuthServiceHandler(app)
+
+	router := handlers.NewRouter(authHandler)
 
 	port := config.ServerConfig.Port
 	addr := config.ServerConfig.Host
