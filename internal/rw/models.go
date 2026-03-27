@@ -16,6 +16,7 @@ type User struct {
 type UserRegistration struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	DeviceID string `json:"device_id"`
 }
 
 type UserVerify struct {
@@ -64,7 +65,8 @@ type Config struct {
 }
 
 type Claims struct {
-	UserId string
-	Email  string
+	UserId   string
+	DeviceID string
+	Email    string
 	jwt.RegisteredClaims
 }

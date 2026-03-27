@@ -7,16 +7,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GeneratingJWT(userID, email string, timeLife time.Duration) (string, error) {
+func GeneratingJWT(userID, deviceID, email string, timeLife time.Duration) (string, error) {
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
 	claims := Claims{
 		userID,
+		deviceID,
 		email,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(timeLife)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "realword",
+			Issuer:    "t-match_backend",
 		},
 	}
 

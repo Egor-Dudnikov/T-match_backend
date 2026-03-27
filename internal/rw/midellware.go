@@ -37,7 +37,7 @@ func AuthMiddelware(next http.Handler) http.Handler {
 				http.Error(w, "User not autorization", http.StatusUnauthorized)
 				return
 			} else {
-				newAccessTocen, err := GeneratingJWT(claims.UserId, claims.Email, time.Hour*7*24)
+				newAccessTocen, err := GeneratingJWT(claims.UserId, claims.DeviceID, claims.Email, time.Hour*7*24)
 				if err != nil {
 					log.Println(err)
 					http.Error(w, "User not autorization", http.StatusUnauthorized)

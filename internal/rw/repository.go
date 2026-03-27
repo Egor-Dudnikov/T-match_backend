@@ -43,6 +43,7 @@ func PingRedis(cfg RedisConfig) (*redis.Client, error) {
 	if err := db.Ping(context.Background()).Err(); err != nil {
 		return nil, err
 	}
+	log.Println("Successfully connected to redis")
 	return db, nil
 }
 
@@ -53,4 +54,13 @@ func QueeryNewUser(user User, db *sql.DB) (int, error) {
 		RETURNING id`, user.Email, user.PasswordHash, user.Role,
 	).Scan(&id)
 	return id, err
+}
+
+func CheckUserEmail(email string, db *sql.DB) (bool, error) {
+	var exist bool
+	err := db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exist)
+	if err != nil {
+		return exist, err
+	}
+	return exist, nil
 }
