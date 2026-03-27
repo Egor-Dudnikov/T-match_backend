@@ -26,6 +26,7 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	userReg := models.UserRegistration{}
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	err := decoder.Decode(&userReg)
 	if err != nil {
 		log.Println("JSON decoder error", err)

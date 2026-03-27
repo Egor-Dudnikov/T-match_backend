@@ -46,5 +46,5 @@ func (r *Redis) Get(key string) (string, error) {
 }
 
 func (r *Redis) Del(key string) {
-	r.cache.Del(context.Background(), key)
+	r.cache.Del(context.Background(), key).Result()
 }
