@@ -14,9 +14,9 @@ type User struct {
 }
 
 type UserRegistration struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	DeviceID string `json:"device_id"`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=8,max=72,containsany=!@#$^&*"`
+	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
 }
 
 type UserVerify struct {

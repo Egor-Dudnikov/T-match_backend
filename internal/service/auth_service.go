@@ -10,24 +10,32 @@ import (
 	"log"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
-	db    *repository.Repository
-	cache *cache.Redis
-	email *EmailClient
+	db       *repository.Repository
+	cache    *cache.Redis
+	email    *EmailClient
+	validate *validator.Validate
 }
 
-func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient) *AuthService {
+func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate) *AuthService {
 	return &AuthService{
-		db:    db,
-		cache: cache,
-		email: email,
+		db:       db,
+		cache:    cache,
+		email:    email,
+		validate: validate,
 	}
 }
 
 func (app *AuthService) AuthUser(userReg models.UserRegistration) (string, error) {
+	err := app.validate.Struct(userReg)
+	if err != nil {
+		return "", err
+	}
+
 	exist, err := app.db.CheckUserEmail(userReg.Email)
 	if err != nil {
 		return "", err

@@ -62,6 +62,11 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 	}
 
 	accessToken, refreshToken, err := h.authService.VerifyStudent(sesionToken, verifyRequest)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",

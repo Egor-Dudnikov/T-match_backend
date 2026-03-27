@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	_ "github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
@@ -35,7 +36,9 @@ func main() {
 	redis := cache.NewRedis(dbr)
 	email := service.NewEmailClient(config.EmailConfig)
 
-	app := service.NewAuthService(repo, redis, email)
+	validate := validator.New()
+
+	app := service.NewAuthService(repo, redis, email, validate)
 	authHandler := handlers.NewAuthServiceHandler(app)
 
 	router := handlers.NewRouter(authHandler)
