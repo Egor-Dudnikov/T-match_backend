@@ -1,4 +1,4 @@
-package rw
+package models
 
 import (
 	"time"
@@ -65,7 +65,7 @@ type Config struct {
 }
 
 type Claims struct {
-	UserId   string
+	UserID   string
 	DeviceID string
 	Email    string
 	jwt.RegisteredClaims

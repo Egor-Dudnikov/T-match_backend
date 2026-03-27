@@ -1,17 +1,18 @@
-package http
+package handlers
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
 	"net/http"
 	"time"
 
-	"T-match_backend/internal/rw"
+	"T-match_backend/internal/models"
+	"T-match_backend/internal/repository"
+	"T-match_backend/internal/service"
+	"T-match_backend/internal/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/redis/go-redis/v9"
@@ -21,7 +22,7 @@ import (
 type App struct {
 	Db  *sql.DB
 	Dbr *redis.Client
-	Cfg rw.Config
+	Cfg models.Config
 }
 
 func (app *App) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -29,7 +30,7 @@ func (app *App) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 }
 
 func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	userReg := rw.UserRegistration{}
+	userReg := models.UserRegistration{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&userReg)
 	if err != nil {
@@ -38,7 +39,7 @@ func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter
 		return
 	}
 
-	exist, err := rw.CheckUserEmail(userReg.Email, app.Db)
+	exist, err := repository.CheckUserEmail(userReg.Email, app.Db)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -57,28 +58,28 @@ func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter
 		return
 	}
 
-	sesionToken, err := rw.GeneratingJWT("0", userReg.DeviceID, userReg.Email, 3*time.Minute)
+	sesionToken, err := utils.GeneratingJWT("0", userReg.DeviceID, userReg.Email, 3*time.Minute)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	code, err := NewCode()
+	code, err := utils.NewCode()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	err = rw.SendVerifyCode(userReg.Email, code, app.Cfg.VeryfyConfig)
+	err = service.SendVerifyCode(userReg.Email, code, app.Cfg.VeryfyConfig)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	user := rw.UserVerify{
+	user := models.UserVerify{
 		Email:        userReg.Email,
 		PasswordHash: string(hashPassword),
 		Code:         code,
@@ -109,7 +110,7 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	userVerify := rw.UserVerify{}
+	userVerify := models.UserVerify{}
 	res, err := app.Dbr.Get(context.Background(), sesionToken).Result()
 	if err != nil {
 		log.Println(err)
@@ -124,7 +125,7 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	verifyRequest := rw.VerifyRequest{}
+	verifyRequest := models.VerifyRequest{}
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&verifyRequest)
 	if err != nil {
@@ -141,20 +142,20 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 
 	app.Dbr.Del(context.Background(), sesionToken)
 
-	_, claim, err := rw.DecodeJWT(sesionToken)
+	_, claim, err := utils.DecodeJWT(sesionToken)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	user := rw.User{
+	user := models.User{
 		Email:        userVerify.Email,
 		Role:         "intern",
 		PasswordHash: userVerify.PasswordHash,
 	}
 
-	id, err := rw.QueeryNewUser(user, app.Db)
+	id, err := repository.QueeryNewUser(user, app.Db)
 	user.Id = id
 	if err != nil {
 		log.Println("Error append database", err)
@@ -162,14 +163,14 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	accessToken, err := rw.GeneratingJWT(string(id), claim.DeviceID, user.Email, time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(string(id), claim.DeviceID, user.Email, time.Minute*15)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := rw.GeneratingJWT(string(id), claim.DeviceID, user.Email, time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(string(id), claim.DeviceID, user.Email, time.Hour*24*7)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -194,18 +195,4 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 	w.Header().Set("Token", accessToken)
 	log.Println("User registered successfully with id:", id)
-}
-
-func NewCode() (string, error) {
-	code := make([]byte, 6)
-	max := big.NewInt(10)
-
-	for i := range 6 {
-		digit, err := rand.Int(rand.Reader, max)
-		if err != nil {
-			return "", err
-		}
-		code[i] = byte('0' + digit.Int64())
-	}
-	return string(code), nil
 }

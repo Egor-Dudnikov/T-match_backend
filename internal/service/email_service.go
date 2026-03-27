@@ -1,11 +1,12 @@
-package rw
+package service
 
 import (
+	"T-match_backend/internal/models"
 	"net/smtp"
 	"os"
 )
 
-func SendVerifyCode(to string, code string, cfg VeryfyConfig) error {
+func SendVerifyCode(to string, code string, cfg models.VeryfyConfig) error {
 	addr := cfg.Addr
 	a := smtp.PlainAuth(cfg.Identity, cfg.Username, os.Getenv("SMTP_PASSWORD"), cfg.Host)
 	from := cfg.Username

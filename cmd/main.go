@@ -2,10 +2,11 @@ package main
 
 import (
 	"T-match_backend/configs"
-	"T-match_backend/internal/http"
-	"T-match_backend/internal/rw"
+	"T-match_backend/internal/cash"
+	"T-match_backend/internal/handlers"
+	"T-match_backend/internal/repository"
 	"log"
-	stdhttp "net/http"
+	"net/http"
 
 	_ "github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
@@ -17,30 +18,30 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	db, err := rw.PingDatabase(config.DbConfig)
+	db, err := repository.PingDatabase(config.DbConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer db.Close()
 
-	dbr, err := rw.PingRedis(config.RedisConfig)
+	dbr, err := cash.PingRedis(config.RedisConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer dbr.Close()
 
-	app := &http.App{
+	app := &handlers.App{
 		Db:  db,
 		Dbr: dbr,
 		Cfg: config,
 	}
 
-	router := http.NewRouter(app)
+	router := handlers.NewRouter(app)
 
 	port := config.ServerConfig.Port
 	addr := config.ServerConfig.Host
 	log.Printf("Starting server at port %s, address %s", port, addr)
-	if err := stdhttp.ListenAndServe(port, router); err != nil {
+	if err := http.ListenAndServe(port, router); err != nil {
 		log.Fatalln(err)
 	}
 }

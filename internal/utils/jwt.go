@@ -1,6 +1,7 @@
-package rw
+package utils
 
 import (
+	"T-match_backend/internal/models"
 	"os"
 	"time"
 
@@ -10,11 +11,11 @@ import (
 func GeneratingJWT(userID, deviceID, email string, timeLife time.Duration) (string, error) {
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
-	claims := Claims{
-		userID,
-		deviceID,
-		email,
-		jwt.RegisteredClaims{
+	claims := models.Claims{
+		UserID:   userID,
+		DeviceID: deviceID,
+		Email:    email,
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(timeLife)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "t-match_backend",
@@ -26,8 +27,8 @@ func GeneratingJWT(userID, deviceID, email string, timeLife time.Duration) (stri
 
 }
 
-func DecodeJWT(tokenStr string) (*jwt.Token, Claims, error) {
-	claims := Claims{}
+func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
+	claims := models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
 	if err != nil {
 		return nil, claims, err

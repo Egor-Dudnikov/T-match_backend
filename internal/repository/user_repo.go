@@ -1,16 +1,14 @@
-package rw
+package repository
 
 import (
-	"context"
+	"T-match_backend/internal/models"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/redis/go-redis/v9"
 )
 
-func PingDatabase(config DbConfig) (*sql.DB, error) {
+func PingDatabase(config models.DbConfig) (*sql.DB, error) {
 
 	conStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		config.Host, config.Port, config.User, os.Getenv("DB_PASSWORD"), config.Name, config.Sslmode)
@@ -30,24 +28,7 @@ func PingDatabase(config DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func PingRedis(cfg RedisConfig) (*redis.Client, error) {
-	db := redis.NewClient(&redis.Options{
-		Addr:         cfg.Addr,
-		Password:     os.Getenv("REDIS_PASSWORD"),
-		DB:           cfg.DB,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.Timeout,
-		WriteTimeout: cfg.Timeout,
-	})
-
-	if err := db.Ping(context.Background()).Err(); err != nil {
-		return nil, err
-	}
-	log.Println("Successfully connected to redis")
-	return db, nil
-}
-
-func QueeryNewUser(user User, db *sql.DB) (int, error) {
+func QueeryNewUser(user models.User, db *sql.DB) (int, error) {
 	var id int
 	err := db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())

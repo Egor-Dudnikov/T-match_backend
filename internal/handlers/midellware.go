@@ -1,6 +1,7 @@
-package rw
+package handlers
 
 import (
+	"T-match_backend/internal/utils"
 	"context"
 	"log"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 func AuthMiddelware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		token, claims, err := DecodeJWT(authHeader)
+		token, claims, err := utils.DecodeJWT(authHeader)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "User not autorization", http.StatusUnauthorized)
@@ -26,7 +27,7 @@ func AuthMiddelware(next http.Handler) http.Handler {
 				return
 			}
 			var refTocen *jwt.Token
-			refTocen, claims, err = DecodeJWT(refTocenCookie.Value)
+			refTocen, claims, err = utils.DecodeJWT(refTocenCookie.Value)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "User not autorization", http.StatusUnauthorized)
@@ -37,7 +38,7 @@ func AuthMiddelware(next http.Handler) http.Handler {
 				http.Error(w, "User not autorization", http.StatusUnauthorized)
 				return
 			} else {
-				newAccessTocen, err := GeneratingJWT(claims.UserId, claims.DeviceID, claims.Email, time.Hour*7*24)
+				newAccessTocen, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, time.Hour*7*24)
 				if err != nil {
 					log.Println(err)
 					http.Error(w, "User not autorization", http.StatusUnauthorized)
