@@ -30,7 +30,7 @@ func PingDatabase(config DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func RedisPing(cfg RedisConfig) (*redis.Client, error) {
+func PingRedis(cfg RedisConfig) (*redis.Client, error) {
 	db := redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,
 		Password:     os.Getenv("REDIS_PASSWORD"),

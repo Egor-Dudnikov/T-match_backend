@@ -52,6 +52,10 @@ type VeryfyConfig struct {
 	Username string `json:"username"`
 }
 
+type VerifyRequest struct {
+	Code string `json:"code"`
+}
+
 type Config struct {
 	DbConfig     DbConfig
 	ServerConfig ServerConfig

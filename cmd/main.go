@@ -23,7 +23,7 @@ func main() {
 	}
 	defer db.Close()
 
-	dbr, err := rw.RedisPing(config.RedisConfig)
+	dbr, err := rw.PingRedis(config.RedisConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -32,7 +32,6 @@ func main() {
 	app := &http.App{
 		Db:  db,
 		Dbr: dbr,
-		Log: log.Default(),
 		Cfg: config,
 	}
 

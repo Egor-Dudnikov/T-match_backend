@@ -21,7 +21,7 @@
     "veryfyConfig": {
         "addr": "mail.hosting.reg.ru:587",
         "host": "mail.hosting.reg.ru",
-        "": "",
+        "identity": "",
         "username": "support@tmatch.space"
     }
 }

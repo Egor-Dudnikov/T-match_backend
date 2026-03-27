@@ -20,7 +20,6 @@ import (
 type App struct {
 	Db  *sql.DB
 	Dbr *redis.Client
-	Log *log.Logger
 	Cfg rw.Config
 }
 
@@ -33,7 +32,7 @@ func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&userReg)
 	if err != nil {
-		app.Log.Println("JSON decoder error", err)
+		log.Println("JSON decoder error", err)
 		return
 	}
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(userReg.Password), bcrypt.DefaultCost)
@@ -62,21 +61,46 @@ func (app *App) AuthStudent(w http.ResponseWriter, r *http.Request, _ httprouter
 		Code:         code,
 	}
 
-	if err := app.Dbr.Set(context.Background(), sesionToken, user, time.Minute*5).Err(); err != nil {
+	userJson, err := json.Marshal(user)
+	if err != nil {
+		log.Println(err)
+	}
+
+	if err := app.Dbr.Set(context.Background(), sesionToken, userJson, time.Minute*5).Err(); err != nil {
 		log.Println(err)
 		return
 	}
 
 	w.Header().Set("Token", sesionToken)
+	log.Println("User registrathion")
 
 }
 
 func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sesionToken := r.Header.Get("Token")
 	userVerify := rw.UserVerify{}
-	err := app.Dbr.Get(context.Background(), sesionToken).Scan(&userVerify)
+	res, err := app.Dbr.Get(context.Background(), sesionToken).Result()
 	if err != nil {
 		log.Println(err)
+		return
+	}
+
+	err = json.Unmarshal([]byte(res), &userVerify)
+	if err != nil {
+		log.Println(err)
+	}
+
+	verifyRequest := rw.VerifyRequest{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&verifyRequest)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if userVerify.Code != verifyRequest.Code {
+		log.Println("Not right verify code")
+		http.Error(w, "Not right verify code", http.StatusUnauthorized)
 		return
 	}
 
@@ -89,14 +113,14 @@ func (app *App) VerifyStudent(w http.ResponseWriter, r *http.Request, _ httprout
 	id, err := rw.QueeryNewUser(user, app.Db)
 	user.Id = id
 	if err != nil {
-		app.Log.Println("Error append database", err)
+		log.Println("Error append database", err)
 		return
 	}
 
 	accessToken, err := rw.GeneratingJWT(string(id), user.Email, time.Minute*7)
 	refreshToken, err := rw.GeneratingJWT(string(id), user.Email, time.Hour*24*7)
 	if err != nil {
-		app.Log.Println(err)
+		log.Println(err)
 		return
 	}
 
