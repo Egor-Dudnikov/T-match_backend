@@ -119,7 +119,7 @@ Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpO
 
 ### Использование Access Token
 
-После успешной верификации, все последующие запросы к API ребующие авторизации должны содержать access token в header с заголовком 
+После успешной верификации, все последующие запросы к API требующие авторизации должны содержать access token в header с заголовком Token
 
 ## 📊 Полный сценарий работы
 
