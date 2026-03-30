@@ -51,7 +51,7 @@ func (app *AuthService) AuthUser(userReg models.UserRegistration) (string, error
 		return "", fmt.Errorf("%v: %v", apierrors.ErrInternalServer, err)
 	}
 
-	sesionToken := uuid.New().String()
+	sessionID := uuid.New().String()
 
 	code, err := utils.NewCode()
 	if err != nil {
@@ -75,24 +75,24 @@ func (app *AuthService) AuthUser(userReg models.UserRegistration) (string, error
 		return "", fmt.Errorf("%v: %v", apierrors.ErrJSONEncodeFailed, err)
 	}
 
-	err = app.cache.Set(sesionToken, userJson, time.Minute*7)
+	err = app.cache.Set(sessionID, userJson, time.Minute*7)
 	if err != nil {
 		return "", fmt.Errorf("%v: %v", apierrors.ErrCacheError, err)
 	}
 
-	return sesionToken, nil
+	return sessionID, nil
 
 }
 
-func (app *AuthService) VerifyStudent(sesionToken string, verifyRequest models.VerifyRequest) (string, string, error) {
+func (app *AuthService) VerifyStudent(sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", fmt.Errorf("%v: %v", apierrors.ErrValidationFailed, err)
 	}
 
 	userVerify := models.UserVerify{}
-	res, err := app.cache.Get(sesionToken)
-	defer app.cache.Del(sesionToken)
+	res, err := app.cache.Get(sessionID)
+	defer app.cache.Del(sessionID)
 
 	if err != nil {
 		return "", "", fmt.Errorf("%v: %v", apierrors.ErrCodeExpired, err)

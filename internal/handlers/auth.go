@@ -35,19 +35,19 @@ func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.R
 		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	sesionToken, err := h.authService.AuthUser(userReg)
+	sessionID, err := h.authService.AuthUser(userReg)
 	if err != nil {
 		return err
 	}
 
-	w.Header().Set("Token", sesionToken)
+	w.Header().Set("Token", sessionID)
 	log.Println("User registrathion successfully")
 	return nil
 }
 
 func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	sesionToken := r.Header.Get("Token")
-	if sesionToken == "" {
+	sessionID := r.Header.Get("Token")
+	if sessionID == "" {
 		return fmt.Errorf(apierrors.ErrBadRequest.Error())
 	}
 
@@ -59,7 +59,7 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	accessToken, refreshToken, err := h.authService.VerifyStudent(sesionToken, verifyRequest)
+	accessToken, refreshToken, err := h.authService.VerifyStudent(sessionID, verifyRequest)
 	if err != nil {
 		return fmt.Errorf("%v: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
