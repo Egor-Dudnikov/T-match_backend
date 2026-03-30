@@ -1,7 +1,6 @@
 ## Базовый URL
 ```
 Development: http://localhost:8080
-
 ```
 
 ---
@@ -9,7 +8,7 @@ Development: http://localhost:8080
 ## 🔐 Аутентификация
 
 ### 1. Регистрация пользователя
-**Отправка email и пароля, получение session token**
+**Отправка email и пароля, получение session ID**
 
 ```
 POST /auth/students
@@ -26,7 +25,7 @@ Content-Type: application/json
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123!",
+  "password": "Password123",
   "device_id": "device_1234567890"
 }
 ```
@@ -34,18 +33,17 @@ Content-Type: application/json
 **Поля:**
 | Поле | Тип | Обязательное | Описание |
 |------|-----|--------------|----------|
-| email | string | ✅ | Email пользователя |
+| email | string | ✅ | Email пользователя (валидация email) |
 | password | string | ✅ | Пароль (8-72 символа) |
-| device_id | string | ✅ | Уникальный ID устройства |
+| device_id | string | ✅ | Уникальный ID устройства (5-100 символов) |
 
 **Требования к паролю:**
 - Минимум 8 символов
 - Максимум 72 символа
-- Хотя бы 3 из 4 типов символов:
-  - Заглавные буквы (A-Z)
-  - Строчные буквы (a-z)
-  - Цифры (0-9)
-  - Специальные символы (!@#$%^&*)
+- Должен содержать хотя бы:
+  - Одну заглавную букву (A-Z)
+  - Одну цифру (0-9)
+  - Одну строчную букву (a-z)
 
 #### 📥 Ответы
 
@@ -53,17 +51,35 @@ Content-Type: application/json
 
 **Headers:**
 ```
-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Token: a7f3e9d2c1b4a5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7
+```
+*В ответе возвращается Session ID (строка 64 символа)*
+
+**Body:**
+```json
+{
+  "message": "Verification code sent to email"
+}
 ```
 
 **❌ Ошибка валидации (400 Bad Request)**
 
+**Body:**
+```
+Validation failed
+```
 
 **❌ Пользователь уже существует (409 Conflict)**
 
+**Body:**
+```
+User with this email already exists
+```
+
+---
 
 ### 2. Верификация пользователя
-**Подтверждение email кодом, получение токенов**
+**Подтверждение email кодом, получение access и refresh токенов**
 
 ```
 POST /auth/students/verify
@@ -74,7 +90,7 @@ POST /auth/students/verify
 **Headers:**
 ```http
 Content-Type: application/json
-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Token: a7f3e9d2c1b4a5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7
 ```
 
 **Body:**
@@ -87,7 +103,7 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Поля:**
 | Поле | Тип | Обязательное | Описание |
 |------|-----|--------------|----------|
-| code | string | ✅ | 6-значный код из email |
+| code | string | ✅ | 6-значный числовой код из email |
 
 #### 📥 Ответы
 
@@ -96,58 +112,112 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Headers:**
 ```
 Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
-Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Lax
+Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800
+```
+
+**Body:**
+```json
+{
+  "message": "User verified successfully"
+}
 ```
 
 **Важно:** 
-- **Access Token** передается в заголовке `Token`
-- **Refresh Token** автоматически устанавливается в HttpOnly cookie (браузер сам его сохранит)
+- **Access Token** передается в заголовке `Token` (время жизни: 15 минут)
+- **Refresh Token** автоматически устанавливается в HttpOnly cookie (время жизни: 7 дней)
+- Cookie настройки: `HttpOnly` (недоступен из JavaScript), `SameSite=Lax`, `Max-Age=604800`
 
-**❌ Неверный код (403 Forbidden)**
+**❌ Неверный или просроченный Session ID (400 Bad Request)**
 
-**❌ Просроченный session token (401 Unauthorized)**
+**Body:**
+```
+Verification code expired
+```
+
+**❌ Неверный код (400 Bad Request)**
+
+**Body:**
+```
+Invalid verification code format
+```
+
+**❌ Ошибка валидации кода (400 Bad Request)**
+
+**Body:**
+```
+Validation failed
+```
+
+---
 
 ## 🔄 Работа с токенами
 
-### Типы токенов
+### Типы токенов и идентификаторов
 
-| Токен | Где хранится | Время жизни | Использование |
-|-------|--------------|-------------|---------------|
-| **Session Token** | memory / state | 3 минуты | Для верификации email |
-| **Access Token** | memory | 15 минут | Для авторизации API запросов |
-| **Refresh Token** | HttpOnly cookie | 7 дней | Для обновления access token |
+| Тип | Где хранится | Время жизни | Формат | Использование |
+|-----|-------------|-------------|--------|---------------|
+| **Session ID** | Memory / State | 7 минут | Hex строка (64 символа) | Для верификации email, возвращается при регистрации |
+| **Access Token** | Memory | 15 минут | JWT | Для авторизации API запросов |
+| **Refresh Token** | HttpOnly cookie | 7 дней | JWT | Для обновления access token |
 
-### Использование Access Token
+### Описание процесса
 
-После успешной верификации, все последующие запросы к API требующие авторизации должны содержать access token в header с заголовком Token
+1. **Регистрация**: 
+   - Пользователь отправляет email, пароль и device_id
+   - Сервер генерирует 6-значный код и отправляет на email
+   - Сервер создает Session ID (случайная строка) и сохраняет временные данные в Redis
+   - Клиент получает Session ID в заголовке `Token`
+
+2. **Верификация**:
+   - Клиент отправляет Session ID (в заголовке) и код из email
+   - Сервер проверяет код, создает пользователя в БД
+   - Сервер генерирует Access Token (15 мин) и Refresh Token (7 дней)
+   - Клиент получает Access Token в заголовке, Refresh Token в HttpOnly cookie
+
+3. **Использование токенов**:
+   - Все последующие API запросы используют Access Token в заголовке `Token`
+   - Refresh Token автоматически отправляется браузером в cookie при запросах на обновление
+
+### Структура JWT Claims
+
+**Access Token и Refresh Token содержат:**
+```json
+{
+  "user_id": "123",
+  "device_id": "device_1234567890",
+  "email": "user@example.com",
+  "exp": 1705314600,
+  "iat": 1705312800,
+  "iss": "t-match_backend"
+}
+```
+
+---
 
 ## 📊 Полный сценарий работы
 
-### Схема аутентификации
+### Обработка ошибок
 
-```mermaid
-sequenceDiagram
-    participant Frontend
-    participant Backend
-    participant Email
-    
-    Frontend->>Backend: 1. POST /auth/students (email, password, device_id)
-    Backend->>Email: 2. Отправка кода верификации
-    Backend-->>Frontend: 3. Session token (header)
-    
-    Note over Frontend: Пользователь вводит код из email
-    
-    Frontend->>Backend: 4. POST /auth/students/verify (code + session token)
-    Backend-->>Frontend: 5. Access token (header) + Refresh token (cookie)
-    
-    Note over Frontend: Все последующие запросы с Access token
-    
-    Frontend->>Backend: 6. API запросы с Access token
-    Backend-->>Frontend: 7. Данные
-    
-    Note over Frontend: При истечении Access token
-    
-    Frontend->>Backend: 8. POST /auth/refresh (с Refresh token в cookie)
-    Backend-->>Frontend: 9. Новый Access token
-```
+| HTTP Status | Ошибка | Описание |
+|-------------|--------|----------|
+| 400 | Validation failed | Неверный формат email, пароля или device_id |
+| 400 | Invalid verification code format | Код не соответствует формату (не 6 цифр) |
+| 400 | Verification code expired | Session ID истек или не найден в Redis |
+| 409 | User with this email already exists | Пользователь с таким email уже зарегистрирован |
+| 500 | Internal server error | Ошибка БД, генерации JWT или другие внутренние ошибки |
+| 503 | Failed to send email | Ошибка отправки email (временно недоступно) |
+| 503 | Cache service temporarily unavailable | Ошибка Redis (временно недоступно) |
 
+### Безопасность
+
+1. **Пароли**: Хранятся в БД в хешированном виде (bcrypt)
+2. **Session ID**: Криптостойкая случайная строка, не содержит информации о пользователе
+3. **Access Token**: JWT с коротким временем жизни (15 минут)
+4. **Refresh Token**: 
+   - HttpOnly cookie (недоступен для JavaScript)
+   - Долгое время жизни (7 дней)
+   - Привязан к user_id и device_id
+5. **Код верификации**: 
+   - 6 цифр
+   - Отправляется только на email
+   - Хранится в Redis с TTL 7 минут
