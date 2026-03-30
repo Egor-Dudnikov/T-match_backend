@@ -32,7 +32,7 @@ func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.R
 	err := decoder.Decode(&userReg)
 
 	if err != nil {
-		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
+		return fmt.Errorf("%W: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	sessionID, err := h.authService.AuthUser(userReg)
@@ -56,12 +56,12 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 	defer r.Body.Close()
 	err := decoder.Decode(&verifyRequest)
 	if err != nil {
-		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	accessToken, refreshToken, err := h.authService.VerifyStudent(sessionID, verifyRequest)
 	if err != nil {
-		return fmt.Errorf("%v: %v", apierrors.ErrJWTGenerationFailed, err)
+		return fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 	// при переходе на https заменить Secure на true
 	http.SetCookie(w, &http.Cookie{

@@ -55,12 +55,6 @@ Token: a7f3e9d2c1b4a5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7
 ```
 *В ответе возвращается Session ID (строка 64 символа)*
 
-**Body:**
-```json
-{
-  "message": "Verification code sent to email"
-}
-```
 
 **❌ Ошибка валидации (400 Bad Request)**
 
