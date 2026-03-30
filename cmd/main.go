@@ -6,6 +6,7 @@ import (
 	"T-match_backend/internal/handlers"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/service"
+	"T-match_backend/internal/utils"
 	"log"
 	"net/http"
 
@@ -35,8 +36,8 @@ func main() {
 	repo := repository.NewRepository(db)
 	redis := cache.NewRedis(dbr)
 	email := service.NewEmailClient(config.EmailConfig)
-
 	validate := validator.New()
+	validate.RegisterValidation("strong_password", utils.ValidPassword)
 
 	app := service.NewAuthService(repo, redis, email, validate)
 	authHandler := handlers.NewAuthServiceHandler(app)

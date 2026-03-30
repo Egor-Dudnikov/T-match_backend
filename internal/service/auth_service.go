@@ -87,6 +87,11 @@ func (app *AuthService) AuthUser(userReg models.UserRegistration) (string, error
 }
 
 func (app *AuthService) VerifyStudent(sesionToken string, verifyRequest models.VerifyRequest) (string, string, error) {
+	err := app.validate.Struct(verifyRequest)
+	if err != nil {
+		return "", "", err
+	}
+
 	userVerify := models.UserVerify{}
 	res, err := app.cache.Get(sesionToken)
 	if err != nil {

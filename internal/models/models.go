@@ -15,7 +15,7 @@ type User struct {
 
 type UserRegistration struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
-	Password string `json:"password" validate:"required,min=8,max=72"`
+	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
 }
 
@@ -54,7 +54,7 @@ type EmailConfig struct {
 }
 
 type VerifyRequest struct {
-	Code string `json:"code"`
+	Code string `json:"code" validate:"required,len=6,numeric"`
 }
 
 type Config struct {
