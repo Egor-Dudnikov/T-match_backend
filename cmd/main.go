@@ -9,6 +9,7 @@ import (
 	"T-match_backend/internal/utils"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/golang-jwt/jwt/v5"
@@ -16,6 +17,9 @@ import (
 )
 
 func main() {
+	if os.Getenv("JWT_SECRET") == "" {
+		log.Fatalln("not JWT_SECRET in env")
+	}
 	config, err := configs.PingConfig()
 	if err != nil {
 		log.Fatalln(err)

@@ -7,7 +7,7 @@ import (
 func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/", Index)
-	router.POST("/auth/students", app.AuthStudentHandler)
-	router.POST("/auth/students/verify", app.VerifyStudentHandler)
+	router.POST("/auth/students", ErrorMidelware(app.AuthStudentHandler))
+	router.POST("/auth/students/verify", ErrorMidelware(app.VerifyStudentHandler))
 	return router
 }

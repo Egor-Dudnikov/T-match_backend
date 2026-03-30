@@ -8,7 +8,7 @@ import (
 )
 
 func PingConfig() (models.Config, error) {
-	configJson, err := os.Open("../configs/configuration.json")
+	configJson, err := os.Open(os.Getenv("CONFIG_PATH"))
 	if err != nil {
 		log.Fatalln("Config not found", err)
 	}

@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/service"
 
@@ -23,52 +25,45 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Write([]byte("Hi men"))
 }
 
-func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	userReg := models.UserRegistration{}
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 	err := decoder.Decode(&userReg)
-	if err != nil {
-		log.Println("JSON decoder error", err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-	sesionToken, err := h.authService.AuthUser(userReg)
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
+	}
+
+	sesionToken, err := h.authService.AuthUser(userReg)
+	if err != nil {
+		return err
 	}
 
 	w.Header().Set("Token", sesionToken)
-	log.Println("User registrathion")
+	log.Println("User registrathion successfully")
+	return nil
 }
 
-func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	sesionToken := r.Header.Get("Token")
 	if sesionToken == "" {
-		log.Println("No token")
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+		return fmt.Errorf(apierrors.ErrBadRequest.Error())
 	}
 
 	verifyRequest := models.VerifyRequest{}
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	err := decoder.Decode(&verifyRequest)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%v: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	accessToken, refreshToken, err := h.authService.VerifyStudent(sesionToken, verifyRequest)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%v: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
-
+	// при переходе на https заменить Secure на true
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
@@ -81,4 +76,5 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 
 	w.Header().Set("Token", accessToken)
 	log.Println("User verifycation successfully")
+	return nil
 }

@@ -22,6 +22,7 @@ type UserRegistration struct {
 type UserVerify struct {
 	Email        string
 	PasswordHash string
+	DeviceID     string
 	Code         string
 }
 
