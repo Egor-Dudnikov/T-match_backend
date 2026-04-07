@@ -7,9 +7,13 @@ import (
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/service"
 	"T-match_backend/internal/utils"
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/golang-jwt/jwt/v5"
@@ -50,8 +54,26 @@ func main() {
 
 	port := config.ServerConfig.Port
 	addr := config.ServerConfig.Host
+
+	srv := &http.Server{
+		Addr:    port,
+		Handler: router,
+	}
 	log.Printf("Starting server at port %s, address %s", port, addr)
-	if err := http.ListenAndServe(port, router); err != nil {
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Stop server...")
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalln(err)
 	}
+
 }

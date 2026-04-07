@@ -48,3 +48,8 @@ func (r *Redis) Get(key string) (string, error) {
 func (r *Redis) Del(key string) {
 	r.cache.Del(context.Background(), key).Result()
 }
+
+func (r *Redis) Do(key string, field string, value any) (interface{}, error) {
+	res, err := r.cache.Do(context.Background(), "JSON.SET", key, field, value).Result()
+	return res, err
+}

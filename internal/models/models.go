@@ -13,7 +13,7 @@ type User struct {
 	PasswordHash string
 }
 
-type UserRegistration struct {
+type UserAuth struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
@@ -24,6 +24,8 @@ type UserVerify struct {
 	PasswordHash string
 	DeviceID     string
 	Code         string
+	Attemts      int
+	CodeAmount   int
 }
 
 type DbConfig struct {
@@ -42,7 +44,7 @@ type ServerConfig struct {
 type RedisConfig struct {
 	Addr        string        `json:"addr"`
 	DB          int           `json:"db"`
-	Max_retries int           `json:"max_retries"`
+	MaxRetries  int           `json:"max_retries"`
 	DialTimeout time.Duration `json:"dial_timeout"`
 	Timeout     time.Duration `json:"time_duration"`
 }

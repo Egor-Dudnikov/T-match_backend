@@ -9,8 +9,9 @@ var (
 	ErrValidationFailed = errors.New("validation failed")
 
 	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotExists     = errors.New("user not exists")
 
-	ErrInvalidCode = errors.New("invalid verification code format")
+	ErrInvalidCode = errors.New("invalid verification code")
 	ErrCodeExpired = errors.New("verification code expired")
 
 	ErrDatabaseError = errors.New("database error")
@@ -25,8 +26,11 @@ var (
 	ErrJSONDecodeFailed = errors.New("failed to decode JSON")
 	ErrJSONEncodeFailed = errors.New("failed to encode JSON")
 
-	ErrBadRequest     = errors.New("bad request")
-	ErrInternalServer = errors.New("internal server error")
+	ErrBadRequest             = errors.New("bad request")
+	ErrInternalServer         = errors.New("internal server error")
+	ErrTooManyInvalidAttempts = errors.New("too many invalid attempts")
+
+	ErrInvalidPassword = errors.New("invalid password")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -45,10 +49,19 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	case errors.Is(err, ErrBadRequest):
 		return http.StatusBadRequest, "Bad request"
 
+	// 401 Unauthorized
+	case errors.Is(err, ErrInvalidPassword):
+		return http.StatusUnauthorized, "Invalid password"
+
 	// 409 Conflict
 	case errors.Is(err, ErrUserAlreadyExists):
 		return http.StatusConflict, "User with this email already exists"
+	case errors.Is(err, ErrUserNotExists):
+		return http.StatusConflict, "User with this email not exists"
 
+	// 429 Too Many Request
+	case errors.Is(err, ErrTooManyInvalidAttempts):
+		return http.StatusTooManyRequests, "Too many invalid attempts"
 	// 503 Service Unavailable
 	case errors.Is(err, ErrCacheError):
 		return http.StatusServiceUnavailable, "Cache service temporarily unavailable"

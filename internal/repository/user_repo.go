@@ -36,7 +36,7 @@ func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
-func (r *Repository) QueeryNewUser(user models.User) (int, error) {
+func (r *Repository) QueryNewUser(user models.User) (int, error) {
 	var id int
 	err := r.db.QueryRow(`INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
@@ -52,4 +52,17 @@ func (r *Repository) CheckUserEmail(email string) (bool, error) {
 		return exist, err
 	}
 	return exist, nil
+}
+
+func (r *Repository) GetUser(email string) (models.User, error) {
+	user := models.User{}
+	err := r.db.QueryRow(`SELECT id, email, password_hash, role FROM users WHERE email = $1`, email).Scan(
+		&user.Id,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Role)
+	if err != nil {
+		return user, err
+	}
+	return user, nil
 }

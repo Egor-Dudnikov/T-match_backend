@@ -10,7 +10,7 @@ import (
 
 type ErrorHandler func(http.ResponseWriter, *http.Request, httprouter.Params) error
 
-func ErrorMidelware(next ErrorHandler) httprouter.Handle {
+func ErrorMiddelware(next ErrorHandler) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if err := next(w, r, ps); err != nil {
 			status, message := apierrors.HTTPStatusMapping(err)
