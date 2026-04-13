@@ -14,10 +14,16 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(app.AuthStudentHandler)))
 	router.POST("/auth/students/verify", ErrorMiddleware(
 		app.CorsMiddleware(app.VerifyUserHandler)))
-	router.POST("/auth/students/newverify", ErrorMiddleware(
+	router.POST("/auth/newverify", ErrorMiddleware(
 		app.CorsMiddleware(app.NewVerifyCode)))
 	router.POST("/auth/students/login", ErrorMiddleware(
 		app.CorsMiddleware(app.LoginUserHandler)))
+	router.POST("/auth/company", ErrorMiddleware(
+		app.CorsMiddleware(app.AuthCompanyHandler)))
+	router.POST("/auth/company/verify", ErrorMiddleware(
+		app.CorsMiddleware(app.VerifyCompanyHandler)))
+	router.POST("/auth/company/login", ErrorMiddleware(
+		app.CorsMiddleware(app.LoginCompanyHandler)))
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))

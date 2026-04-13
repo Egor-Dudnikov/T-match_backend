@@ -29,13 +29,9 @@ func (h *AuthServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ htt
 
 func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	userReg := models.UserAuth{}
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
-	err := decoder.Decode(&userReg)
-
+	userReg, err := decodeJSON[models.UserAuth](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 
 	sessionID, err := h.authService.AuthUser(ctx, userReg)
@@ -55,28 +51,16 @@ func (h *AuthServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Re
 		return fmt.Errorf(apierrors.ErrBadRequest.Error())
 	}
 
-	verifyRequest := models.VerifyRequest{}
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
-	err := decoder.Decode(&verifyRequest)
+	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
-
 	accessToken, refreshToken, err := h.authService.VerifyUser(ctx, sessionID, verifyRequest)
 	if err != nil {
 		return err
 	}
-	// при переходе на https заменить Secure на true
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-		MaxAge:   604800,
-	})
+
+	SetRefreshCookie(w, refreshToken)
 
 	w.Header().Set("Token", accessToken)
 	log.Println(sessionID)
@@ -95,32 +79,97 @@ func (h *AuthServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Reques
 
 func (h *AuthServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-
-	userLog := models.UserAuth{}
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
-
-	err := decoder.Decode(&userLog)
+	userLog, err := decodeJSON[models.UserAuth](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
-
 	accessToken, refreshToken, err := h.authService.LoginUser(ctx, userLog)
 	if err != nil {
 		return err
 	}
 
+	SetRefreshCookie(w, refreshToken)
+	w.Header().Set("Token", accessToken)
+	return nil
+}
+
+func (h *AuthServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+	userReg, err := decodeJSON[models.CompanyAuth](r)
+	if err != nil {
+		return err
+	}
+
+	sessionID, err := h.authService.AuthCompany(ctx, userReg)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Token", sessionID)
+	log.Println(sessionID)
+	return nil
+}
+
+func (h *AuthServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+	sessionID := r.Header.Get("Token")
+	if sessionID == "" {
+		return fmt.Errorf(apierrors.ErrBadRequest.Error())
+	}
+
+	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
+	if err != nil {
+		return err
+	}
+	accessToken, refreshToken, err := h.authService.VerifyCompany(ctx, sessionID, verifyRequest)
+	if err != nil {
+		return err
+	}
+
+	SetRefreshCookie(w, refreshToken)
+
+	w.Header().Set("Token", accessToken)
+	log.Println(sessionID)
+	return nil
+}
+
+func (h *AuthServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+	userLog, err := decodeJSON[models.UserAuth](r)
+	if err != nil {
+		return err
+	}
+	accessToken, refreshToken, err := h.authService.LoginCompany(ctx, userLog)
+	if err != nil {
+		return err
+	}
+
+	SetRefreshCookie(w, refreshToken)
+	w.Header().Set("Token", accessToken)
+	return nil
+}
+
+func decodeJSON[T any](r *http.Request) (T, error) {
+	var res T
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	err := decoder.Decode(&res)
+	if err != nil {
+		return res, fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+	}
+	return res, nil
+}
+
+func SetRefreshCookie(w http.ResponseWriter, value string) {
 	// при переходе на https заменить Secure на true
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
-		Value:    refreshToken,
+		Value:    value,
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 		MaxAge:   604800,
 	})
-
-	w.Header().Set("Token", accessToken)
-	return nil
 }
