@@ -1,4 +1,5 @@
 ## Базовый URL
+
 ```
 Development: http://localhost:8080
 ```
@@ -7,11 +8,198 @@ Development: http://localhost:8080
 
 ## 🔐 Аутентификация
 
-### 1. Регистрация пользователя
-**Отправка email и пароля, получение session ID**
+### 1. Регистрация пользователя (Студент / Соискатель)
+
+**Отправка email и пароля, получение Session ID**
 
 ```
 POST /auth/students
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "email": "student@example.com",
+  "password": "SecurePass123",
+  "device_id": "web_chrome_123"
+}
+```
+
+| Поле | Тип | Обязательное | Описание |
+|------|-----|--------------|----------|
+| email | string | ✅ | Email пользователя |
+| password | string | ✅ | Пароль: мин. 8 символов, **обязательно**: A-Z, a-z, 0-9 |
+| device_id | string | ✅ | Уникальный ID устройства (мин. 5 символов) |
+
+#### 📥 Ответы
+
+**✅ Успех (200 OK)**
+
+**Headers:**
+```
+Token: 550e8400-e29b-41d4-a716-446655440000
+```
+*Формат: стандартный UUID (36 символов)*
+
+**❌ Ошибка валидации (400 Bad Request)**
+*Тело ответа: `Bad request` или текст ошибки валидации поля.*
+
+**❌ Пользователь уже существует (409 Conflict)**
+*Тело ответа: `User with this email already exists`*
+
+---
+
+### 2. Регистрация компании (Работодатель)
+
+**Отправка email, пароля и ИНН, получение Session ID**
+
+```
+POST /auth/company
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "inn": "7707083893",
+  "email": "hr@company.ru",
+  "password": "StrongPass456",
+  "device_id": "iphone_app_456"
+}
+```
+
+| Поле | Тип | Обязательное | Описание |
+|------|-----|--------------|----------|
+| inn | string | ✅ | ИНН организации (10 или 12 цифр) |
+| email | string | ✅ | Email представителя компании |
+| password | string | ✅ | Пароль: мин. 8 символов, **обязательно**: A-Z, a-z, 0-9 |
+| device_id | string | ✅ | Уникальный ID устройства |
+
+#### 📥 Ответы
+
+**✅ Успех (200 OK)**
+
+**Headers:**
+```
+Token: 550e8400-e29b-41d4-a716-446655440000
+```
+
+**❌ Ошибка (404 Not Found)**
+*Тело ответа: `Company with this TIN not exists` (если компания не найдена в DADATA или не активна).*
+
+---
+
+### 3. Верификация (Общая для студентов и компаний)
+
+**Подтверждение email кодом, получение Access и Refresh токенов**
+
+*Для студентов:*
+```
+POST /auth/students/verify
+```
+
+*Для компаний:*
+```
+POST /auth/company/verify
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Content-Type: application/json
+Token: 550e8400-e29b-41d4-a716-446655440000  // Session ID из шага 1 или 2
+```
+
+**Body:**
+```json
+{
+  "code": "482915"
+}
+```
+
+| Поле | Тип | Обязательное | Описание |
+|------|-----|--------------|----------|
+| code | string | ✅ | 6-значный числовой код (строка из цифр) |
+
+#### 📥 Ответы
+
+**✅ Успех (200 OK)**
+
+**Headers:**
+```
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token (JWT)
+Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
+```
+
+**Body:**
+*Пустое тело (или простой текст OK, в коде не указан body).*
+
+**Важно:**
+- **Access Token** в заголовке `Token` (время жизни: 15 минут).
+- **Refresh Token** в HttpOnly Cookie `refresh_token` (время жизни: 7 дней).
+
+**❌ Код неверный (400 Bad Request)**
+*Тело ответа: `Invalid verification code format`*
+
+**❌ Session ID истек (400 Bad Request)**
+*Тело ответа: `Verification code expired`*
+
+**❌ Слишком много попыток (429 Too Many Requests)**
+*Тело ответа: `Too many invalid attempts`*
+
+---
+
+### 4. Повторная отправка кода
+
+**Если код не пришел или истек (до истечения срока жизни Session ID)**
+
+```
+POST /auth/newverify
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Token: 550e8400-e29b-41d4-a716-446655440000  // Текущий Session ID
+```
+
+*Body: Пустой*
+
+#### 📥 Ответы
+
+**✅ Успех (200 OK)**
+*На почту придет новый код. Старый код становится невалидным. Ограничение: 3 генерации кода на 1 сессию.*
+
+**❌ Ошибка (400 Bad Request)**
+*Если Session ID не найден или лимит генераций исчерпан.*
+
+---
+
+### 5. Вход (Логин)
+
+**Для студентов:**
+```
+POST /auth/students/login
+```
+
+**Для компаний:**
+```
+POST /auth/company/login
 ```
 
 #### 📤 Запрос
@@ -30,117 +218,21 @@ Content-Type: application/json
 }
 ```
 
-**Поля:**
-| Поле | Тип | Обязательное | Описание |
-|------|-----|--------------|----------|
-| email | string | ✅ | Email пользователя (валидация email) |
-| password | string | ✅ | Пароль (8-72 символа) |
-| device_id | string | ✅ | Уникальный ID устройства (5-100 символов) |
-
-**Требования к паролю:**
-- Минимум 8 символов
-- Максимум 72 символа
-- Должен содержать хотя бы:
-  - Одну заглавную букву (A-Z)
-  - Одну цифру (0-9)
-  - Одну строчную букву (a-z)
-
 #### 📥 Ответы
 
 **✅ Успех (200 OK)**
 
 **Headers:**
 ```
-Token: a7f3e9d2c1b4a5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7
-```
-*В ответе возвращается Session ID (строка 64 символа)*
-
-
-**❌ Ошибка валидации (400 Bad Request)**
-
-**Body:**
-```
-Validation failed
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token (JWT)
+Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
 ```
 
-**❌ Пользователь уже существует (409 Conflict)**
+**❌ Неверный пароль (401 Unauthorized)**
+*Тело ответа: `Invalid password`*
 
-**Body:**
-```
-User with this email already exists
-```
-
----
-
-### 2. Верификация пользователя
-**Подтверждение email кодом, получение access и refresh токенов**
-
-```
-POST /auth/students/verify
-```
-
-#### 📤 Запрос
-
-**Headers:**
-```http
-Content-Type: application/json
-Token: a7f3e9d2c1b4a5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7
-```
-
-**Body:**
-```json
-{
-  "code": "123456"
-}
-```
-
-**Поля:**
-| Поле | Тип | Обязательное | Описание |
-|------|-----|--------------|----------|
-| code | string | ✅ | 6-значный числовой код из email |
-
-#### 📥 Ответы
-
-**✅ Успех (200 OK)**
-
-**Headers:**
-```
-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
-Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800
-```
-
-**Body:**
-```json
-{
-  "message": "User verified successfully"
-}
-```
-
-**Важно:** 
-- **Access Token** передается в заголовке `Token` (время жизни: 15 минут)
-- **Refresh Token** автоматически устанавливается в HttpOnly cookie (время жизни: 7 дней)
-- Cookie настройки: `HttpOnly` (недоступен из JavaScript), `SameSite=Lax`, `Max-Age=604800`
-
-**❌ Неверный или просроченный Session ID (400 Bad Request)**
-
-**Body:**
-```
-Verification code expired
-```
-
-**❌ Неверный код (400 Bad Request)**
-
-**Body:**
-```
-Invalid verification code format
-```
-
-**❌ Ошибка валидации кода (400 Bad Request)**
-
-**Body:**
-```
-Validation failed
-```
+**❌ Пользователь не найден (404 Not Found)**
+*Тело ответа: `User with this email not exists`*
 
 ---
 
@@ -150,36 +242,19 @@ Validation failed
 
 | Тип | Где хранится | Время жизни | Формат | Использование |
 |-----|-------------|-------------|--------|---------------|
-| **Session ID** | Memory / State | 7 минут | Hex строка (64 символа) | Для верификации email, возвращается при регистрации |
-| **Access Token** | Memory | 15 минут | JWT | Для авторизации API запросов |
-| **Refresh Token** | HttpOnly cookie | 7 дней | JWT | Для обновления access token |
+| **Session ID** | Redis (Server) | 7 минут | UUID | Только для этапа верификации email. |
+| **Access Token** | Memory (Client) | 15 минут | JWT | Для авторизации API запросов в заголовке `Token`. |
+| **Refresh Token** | HttpOnly Cookie | 7 дней | JWT | Для обновления Access Token. |
 
-### Описание процесса
-
-1. **Регистрация**: 
-   - Пользователь отправляет email, пароль и device_id
-   - Сервер генерирует 6-значный код и отправляет на email
-   - Сервер создает Session ID (случайная строка) и сохраняет временные данные в Redis
-   - Клиент получает Session ID в заголовке `Token`
-
-2. **Верификация**:
-   - Клиент отправляет Session ID (в заголовке) и код из email
-   - Сервер проверяет код, создает пользователя в БД
-   - Сервер генерирует Access Token (15 мин) и Refresh Token (7 дней)
-   - Клиент получает Access Token в заголовке, Refresh Token в HttpOnly cookie
-
-3. **Использование токенов**:
-   - Все последующие API запросы используют Access Token в заголовке `Token`
-   - Refresh Token автоматически отправляется браузером в cookie при запросах на обновление
-
-### Структура JWT Claims
+### Структура JWT Claims (для разработчиков)
 
 **Access Token и Refresh Token содержат:**
 ```json
 {
-  "user_id": "123",
-  "device_id": "device_1234567890",
-  "email": "user@example.com",
+  "UserID": "101",
+  "DeviceID": "web_chrome_123",
+  "Email": "user@example.com",
+  "Role": "internal",  // или "company"
   "exp": 1705314600,
   "iat": 1705312800,
   "iss": "t-match_backend"
@@ -188,30 +263,22 @@ Validation failed
 
 ---
 
-## 📊 Полный сценарий работы
+## 📊 Обработка ошибок (Сводная таблица)
 
-### Обработка ошибок
+| HTTP Status | Ошибка (Тело ответа) | Причина |
+|-------------|----------------------|---------|
+| **400** | `Bad request` | Ошибка валидации полей (пароль простой, email неверный) |
+| **400** | `Invalid verification code format` | Код не из 6 цифр |
+| **400** | `Verification code expired` | Session ID просрочен (7 мин) |
+| **401** | `Invalid password` | Неверный пароль при логине |
+| **404** | `User with this email not exists` | Email не найден в системе |
+| **404** | `Company with this TIN not exists` | ИНН не найден в DADATA или компания ликвидирована |
+| **409** | `User with this email already exists` | Email уже зарегистрирован |
+| **429** | `Too many invalid attempts` | >3 попыток ввода кода / >3 запросов нового кода |
+| **500** | `Internal server error` | Ошибка БД, генерации JWT |
+| **502** | `External service temporarily unavailable...` | Ошибка связи с DADATA |
+| **503** | `Failed to send email...` / `Cache service temporarily unavailable` | Ошибка SMTP или Redis |
 
-| HTTP Status | Ошибка | Описание |
-|-------------|--------|----------|
-| 400 | Validation failed | Неверный формат email, пароля или device_id |
-| 400 | Invalid verification code format | Код не соответствует формату (не 6 цифр) |
-| 400 | Verification code expired | Session ID истек или не найден в Redis |
-| 409 | User with this email already exists | Пользователь с таким email уже зарегистрирован |
-| 500 | Internal server error | Ошибка БД, генерации JWT или другие внутренние ошибки |
-| 503 | Failed to send email | Ошибка отправки email (временно недоступно) |
-| 503 | Cache service temporarily unavailable | Ошибка Redis (временно недоступно) |
+### Дополнительно: CORS
 
-### Безопасность
-
-1. **Пароли**: Хранятся в БД в хешированном виде (bcrypt)
-2. **Session ID**: Криптостойкая случайная строка, не содержит информации о пользователе
-3. **Access Token**: JWT с коротким временем жизни (15 минут)
-4. **Refresh Token**: 
-   - HttpOnly cookie (недоступен для JavaScript)
-   - Долгое время жизни (7 дней)
-   - Привязан к user_id и device_id
-5. **Код верификации**: 
-   - 6 цифр
-   - Отправляется только на email
-   - Хранится в Redis с TTL 7 минут
+Сервер настроен на прием запросов с любых ориджинов (`*` в коде нет, но `ControlAllowOrigin` берется из конфига) и поддерживает метод `OPTIONS` для всех основных эндпоинтов. Не забудьте включать `credentials: 'include'` в запросах на клиенте, чтобы работали Cookies.
