@@ -31,6 +31,9 @@ var (
 	ErrTooManyInvalidAttempts = errors.New("too many invalid attempts")
 
 	ErrInvalidPassword = errors.New("invalid password")
+
+	ErrBadGateway       = errors.New("bad gateway")
+	ErrCompanyNotExists = errors.New("company not exits")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -58,6 +61,8 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusConflict, "User with this email already exists"
 	case errors.Is(err, ErrUserNotExists):
 		return http.StatusConflict, "User with this email not exists"
+	case errors.Is(err, ErrCompanyNotExists):
+		return http.StatusConflict, "Company with this TIN not exists"
 
 	// 429 Too Many Request
 	case errors.Is(err, ErrTooManyInvalidAttempts):
@@ -67,6 +72,10 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusServiceUnavailable, "Cache service temporarily unavailable"
 	case errors.Is(err, ErrEmailSendFailed):
 		return http.StatusServiceUnavailable, "Failed to send email, please try again"
+
+	// 502 Bad Gateway
+	case errors.Is(err, ErrBadGateway):
+		return http.StatusBadGateway, "External service temporarily unavailable. Please try again later."
 
 	// 500 Internal Server Error
 	case errors.Is(err, ErrDatabaseError):

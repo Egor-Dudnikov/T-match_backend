@@ -19,3 +19,19 @@ func ErrorMiddelware(next ErrorHandler) httprouter.Handle {
 		}
 	}
 }
+
+func CorsMiddelware(next ErrorHandler) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Token")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return nil
+		}
+
+		return next(w, r, ps)
+	}
+}

@@ -103,3 +103,9 @@ ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "in
 ALTER TABLE "intern_skills" ADD FOREIGN KEY ("intern_id") REFERENCES "interns" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE "intern_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+
+ALTER TABLE companies ADD COLUMN inn varchar(12) UNIQUE;
+ALTER TABLE companies ADD COLUMN kpp varchar(9);
+ALTER TABLE companies ADD COLUMN ogrn varchar(15);
+ALTER TABLE companies ADD COLUMN legal_address text;
+ALTER TABLE companies ADD COLUMN director_name varchar;

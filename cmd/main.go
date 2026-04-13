@@ -33,13 +33,11 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer db.Close()
 
 	dbr, err := cache.PingRedis(config.RedisConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer dbr.Close()
 
 	repo := repository.NewRepository(db)
 	redis := cache.NewRedis(dbr)
@@ -71,9 +69,20 @@ func main() {
 	<-quit
 
 	log.Println("Stop server...")
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, canel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer canel()
+
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 
+	if err := db.Close(); err != nil {
+		log.Println("DB close error:", err)
+	}
+
+	if err := dbr.Close(); err != nil {
+		log.Println("Redis close error:", err)
+	}
+
+	log.Println("Server exited")
 }

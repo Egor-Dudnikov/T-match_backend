@@ -21,11 +21,13 @@ func NewAuthServiceHandler(authService *service.AuthService) *AuthServiceHandler
 	return &AuthServiceHandler{authService: authService}
 }
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *AuthServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	w.Write([]byte("Hi men"))
+	return nil
 }
 
 func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
 	userReg := models.UserAuth{}
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
@@ -35,17 +37,18 @@ func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.R
 		return fmt.Errorf("%W: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	sessionID, err := h.authService.AuthUser(userReg)
+	sessionID, err := h.authService.AuthUser(ctx, userReg)
 	if err != nil {
 		return err
 	}
 
 	w.Header().Set("Token", sessionID)
-	log.Println("User registrathion successfully")
+	log.Println(sessionID)
 	return nil
 }
 
-func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *AuthServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	if sessionID == "" {
 		return fmt.Errorf(apierrors.ErrBadRequest.Error())
@@ -59,7 +62,7 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	accessToken, refreshToken, err := h.authService.VerifyStudent(sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.authService.VerifyUser(ctx, sessionID, verifyRequest)
 	if err != nil {
 		return err
 	}
@@ -75,20 +78,23 @@ func (h *AuthServiceHandler) VerifyStudentHandler(w http.ResponseWriter, r *http
 	})
 
 	w.Header().Set("Token", accessToken)
-	log.Println("User verifycation successfully")
+	log.Println(sessionID)
 	return nil
 }
 
 func (h *AuthServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
-	err := h.authService.NewCode(sessionID)
+	err := h.authService.NewCode(ctx, sessionID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *AuthServiceHandler) LoginStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *AuthServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+
 	userLog := models.UserAuth{}
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
@@ -98,7 +104,7 @@ func (h *AuthServiceHandler) LoginStudentHandler(w http.ResponseWriter, r *http.
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	accessToken, refreshToken, err := h.authService.LoginStudent(userLog)
+	accessToken, refreshToken, err := h.authService.LoginUser(ctx, userLog)
 	if err != nil {
 		return err
 	}
@@ -115,6 +121,5 @@ func (h *AuthServiceHandler) LoginStudentHandler(w http.ResponseWriter, r *http.
 	})
 
 	w.Header().Set("Token", accessToken)
-	log.Println("User verifycation successfully")
 	return nil
 }

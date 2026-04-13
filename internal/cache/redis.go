@@ -3,6 +3,7 @@ package cache
 import (
 	"T-match_backend/internal/models"
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"time"
@@ -35,21 +36,25 @@ func NewRedis(r *redis.Client) *Redis {
 	return &Redis{cache: r}
 }
 
-func (r *Redis) Set(key string, value []byte, time time.Duration) error {
-	err := r.cache.Set(context.Background(), key, value, time).Err()
+func (r *Redis) Set(ctx context.Context, key string, value []byte, time time.Duration) error {
+	err := r.cache.Set(ctx, key, value, time).Err()
 	return err
 }
 
-func (r *Redis) Get(key string) (string, error) {
-	value, err := r.cache.Get(context.Background(), key).Result()
+func (r *Redis) Get(ctx context.Context, key string) (string, error) {
+	value, err := r.cache.Get(ctx, key).Result()
 	return value, err
 }
 
-func (r *Redis) Del(key string) {
-	r.cache.Del(context.Background(), key).Result()
+func (r *Redis) Del(ctx context.Context, key string) {
+	r.cache.Del(ctx, key).Result()
 }
 
-func (r *Redis) Do(key string, field string, value any) (interface{}, error) {
-	res, err := r.cache.Do(context.Background(), "JSON.SET", key, field, value).Result()
+func (r *Redis) Do(ctx context.Context, key string, path string, value any) (interface{}, error) {
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	res, err := r.cache.Do(ctx, "JSON.SET", key, path, string(jsonValue)).Result()
 	return res, err
 }

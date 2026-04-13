@@ -6,6 +6,7 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/utils"
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -32,13 +33,13 @@ func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailC
 	}
 }
 
-func (app *AuthService) AuthUser(userReg models.UserAuth) (string, error) {
+func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrValidationFailed, err)
 	}
 
-	exist, err := app.db.CheckUserEmail(userReg.Email)
+	exist, err := app.db.CheckUserEmail(ctx, userReg.Email)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -68,7 +69,7 @@ func (app *AuthService) AuthUser(userReg models.UserAuth) (string, error) {
 		PasswordHash: string(hashPassword),
 		Code:         code,
 		DeviceID:     userReg.DeviceID,
-		Attemts:      0,
+		Attempts:     0,
 		CodeAmount:   0,
 	}
 
@@ -77,7 +78,7 @@ func (app *AuthService) AuthUser(userReg models.UserAuth) (string, error) {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
 	}
 
-	err = app.cache.Set(sessionID, userJson, time.Minute*7)
+	err = app.cache.Set(ctx, sessionID, userJson, time.Minute*7)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
 	}
@@ -86,14 +87,14 @@ func (app *AuthService) AuthUser(userReg models.UserAuth) (string, error) {
 
 }
 
-func (app *AuthService) VerifyStudent(sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrValidationFailed, err)
 	}
 
 	userVerify := models.UserVerify{}
-	res, err := app.cache.Get(sessionID)
+	res, err := app.cache.Get(ctx, sessionID)
 
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCodeExpired, err)
@@ -108,17 +109,14 @@ func (app *AuthService) VerifyStudent(sessionID string, verifyRequest models.Ver
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
 	}
 
-	if userVerify.Attemts >= 3 {
+	if userVerify.Attempts >= 3 {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
 	}
 
 	if userVerify.Code != verifyRequest.Code {
-		userVerify.Attemts++
-		_, err := app.cache.Do(sessionID, "$.attemts", userVerify.Attemts)
+		userVerify.Attempts++
+		_, err := app.cache.Do(ctx, sessionID, "$.attemts", userVerify.Attempts)
 		if err != nil {
-			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
-		}
-		if userVerify.Attemts >= 3 {
 			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 		}
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidCode, err)
@@ -130,7 +128,7 @@ func (app *AuthService) VerifyStudent(sessionID string, verifyRequest models.Ver
 		PasswordHash: userVerify.PasswordHash,
 	}
 
-	id, err := app.db.QueryNewUser(user)
+	id, err := app.db.QueryNewUser(ctx, user)
 	user.Id = id
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
@@ -147,21 +145,21 @@ func (app *AuthService) VerifyStudent(sessionID string, verifyRequest models.Ver
 	}
 
 	key := fmt.Sprintf("%d%s", id, userVerify.DeviceID)
-	err = app.cache.Set(key, []byte(refreshToken), 7*24*time.Hour)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
-	app.cache.Del(sessionID)
+	app.cache.Del(ctx, sessionID)
 	return accessToken, refreshToken, nil
 }
 
-func (app *AuthService) NewCode(sessionID string) error {
+func (app *AuthService) NewCode(ctx context.Context, sessionID string) error {
 	newCode, err := utils.NewCode()
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrInternalServer, err)
 	}
 
-	res, err := app.cache.Get(sessionID)
+	res, err := app.cache.Get(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrInternalServer, err)
 	}
@@ -170,31 +168,33 @@ func (app *AuthService) NewCode(sessionID string) error {
 
 	app.email.SendVerifyCode(user.Email, newCode)
 
-	app.cache.Do(sessionID, "$.code", newCode)
-	app.cache.Do(sessionID, "$.code_amount", user.CodeAmount+1)
+	app.cache.Do(ctx, sessionID, "$.code", newCode)
+	app.cache.Do(ctx, sessionID, "$.code_amount", user.CodeAmount+1)
 	return nil
 }
 
-func (app *AuthService) LoginStudent(userLog models.UserAuth) (string, string, error) {
-	ok, err := app.db.CheckUserEmail(userLog.Email)
+func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) (string, string, error) {
+	err := app.validate.Struct(userLog)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrValidationFailed, err)
+	}
+
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
-	if ok {
+	if !ok {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrUserNotExists)
-	}
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(userLog.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrInternalServer, err)
 	}
 
 	user := models.User{}
-	user, err = app.db.GetUser(userLog.Email)
+	user, err = app.db.GetUser(ctx, userLog.Email)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	if user.PasswordHash != string(hashPassword) {
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userLog.Password))
+	if err != nil {
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
@@ -209,7 +209,7 @@ func (app *AuthService) LoginStudent(userLog models.UserAuth) (string, string, e
 	}
 
 	key := fmt.Sprintf("%d%s", user.Id, userLog.DeviceID)
-	err = app.cache.Set(key, []byte(refreshToken), 7*24*time.Hour)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
