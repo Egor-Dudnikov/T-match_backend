@@ -3,14 +3,13 @@ package configs
 import (
 	"T-match_backend/internal/models"
 	"encoding/json"
-	"log"
 	"os"
 )
 
-func PingConfig() (models.Config, error) {
+func LoadConfig() (models.Config, error) {
 	configJson, err := os.Open(os.Getenv("CONFIG_PATH"))
 	if err != nil {
-		log.Fatalln("Config not found", err)
+		return models.Config{}, err
 	}
 	defer configJson.Close()
 

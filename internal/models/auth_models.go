@@ -27,7 +27,7 @@ type UserVerify struct {
 }
 
 type CompanyAuth struct {
-	Inn      string `json:"Inn" validate:"required,len=10|len=12,numeric"`
+	Inn      string `json:"inn" validate:"required,min=10,max=12,numeric"`
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
@@ -64,5 +64,6 @@ type Claims struct {
 	UserID   string
 	DeviceID string
 	Email    string
+	Role     string
 	jwt.RegisteredClaims
 }

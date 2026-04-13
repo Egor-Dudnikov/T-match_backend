@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -24,8 +23,6 @@ func PingDatabase(config models.DbConfig) (*sql.DB, error) {
 		return nil, err
 	}
 
-	log.Println("Successfully connected to database")
-
 	return db, nil
 }
 
@@ -38,8 +35,14 @@ func NewRepository(r *sql.DB) *Repository {
 }
 
 func (r *Repository) QueryNewUser(ctx context.Context, user models.User) (int, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	var id int
-	err := r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
+	err = r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, user.Email, user.PasswordHash, user.Role,
 	).Scan(&id)
@@ -49,12 +52,21 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User) (int, e
 	err = r.db.QueryRowContext(ctx, `INSERT INTO interns (user_id)
 		VALUES ($1)`, id).Err()
 
+	if err != nil {
+		return 0, err
+	}
+	tx.Commit()
 	return id, err
 }
 
 func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, companyData models.CompanyData) (int, error) {
 	var id int
-	err := r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+	err = r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, company.Email, company.PasswordHash, company.Role,
 	).Scan(&id)
@@ -62,14 +74,17 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, c
 		return 0, err
 	}
 	err = r.db.QueryRowContext(ctx, `INSERT INTO companies (user_id, company_name, inn, kpp, ogrn, legal_address, director_name)
-		VALUES ($1)`, id, companyData.ShortName, companyData.Inn, companyData.Kpp, companyData.Ogrn, companyData.Address, companyData.Director).Err()
-
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`, id, companyData.ShortName, companyData.Inn, companyData.Kpp, companyData.Ogrn, companyData.Address, companyData.Director).Err()
+	if err != nil {
+		return 0, err
+	}
+	tx.Commit()
 	return id, err
 }
 
-func (r *Repository) CheckUserEmail(ctx context.Context, email string) (bool, error) {
+func (r *Repository) CheckUserEmail(ctx context.Context, email string, role string) (bool, error) {
 	var exist bool
-	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`, email).Scan(&exist)
+	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND role = $2)`, email, role).Scan(&exist)
 	if err != nil {
 		return exist, err
 	}

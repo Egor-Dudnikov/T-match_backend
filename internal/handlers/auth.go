@@ -15,6 +15,7 @@ import (
 
 type AuthServiceHandler struct {
 	authService *service.AuthService
+	corsConfig  *models.CORSConfig
 }
 
 func NewAuthServiceHandler(authService *service.AuthService) *AuthServiceHandler {
@@ -34,7 +35,7 @@ func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.R
 	err := decoder.Decode(&userReg)
 
 	if err != nil {
-		return fmt.Errorf("%W: %v", apierrors.ErrJSONDecodeFailed, err)
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	sessionID, err := h.authService.AuthUser(ctx, userReg)

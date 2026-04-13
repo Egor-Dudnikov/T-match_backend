@@ -4,7 +4,6 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"encoding/json"
-	"log"
 	"os"
 	"time"
 
@@ -24,7 +23,6 @@ func PingRedis(cfg models.RedisConfig) (*redis.Client, error) {
 	if err := db.Ping(context.Background()).Err(); err != nil {
 		return nil, err
 	}
-	log.Println("Successfully connected to redis")
 	return db, nil
 }
 

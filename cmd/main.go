@@ -24,7 +24,7 @@ func main() {
 	if os.Getenv("JWT_SECRET") == "" {
 		log.Fatalln("not JWT_SECRET in env")
 	}
-	config, err := configs.PingConfig()
+	config, err := configs.LoadConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -54,8 +54,11 @@ func main() {
 	addr := config.ServerConfig.Host
 
 	srv := &http.Server{
-		Addr:    port,
-		Handler: router,
+		Addr:         addr + port,
+		Handler:      router,
+		ReadTimeout:  time.Second * 15,
+		WriteTimeout: time.Second * 15,
+		IdleTimeout:  time.Second * 60,
 	}
 	log.Printf("Starting server at port %s, address %s", port, addr)
 	go func() {
@@ -69,11 +72,11 @@ func main() {
 	<-quit
 
 	log.Println("Stop server...")
-	ctx, canel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer canel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Println(err)
+	if err := srv.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+		log.Fatalln(err)
 	}
 
 	if err := db.Close(); err != nil {

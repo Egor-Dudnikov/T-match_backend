@@ -6,8 +6,6 @@ import (
 )
 
 var (
-	ErrValidationFailed = errors.New("validation failed")
-
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrUserNotExists     = errors.New("user not exists")
 
@@ -33,14 +31,11 @@ var (
 	ErrInvalidPassword = errors.New("invalid password")
 
 	ErrBadGateway       = errors.New("bad gateway")
-	ErrCompanyNotExists = errors.New("company not exits")
+	ErrCompanyNotExists = errors.New("company not exists")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
 	switch {
-	// 400 Bad Request
-	case errors.Is(err, ErrValidationFailed):
-		return http.StatusBadRequest, "Validation failed"
 	case errors.Is(err, ErrInvalidCode):
 		return http.StatusBadRequest, "Invalid verification code format"
 	case errors.Is(err, ErrCodeExpired):
@@ -59,10 +54,12 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	// 409 Conflict
 	case errors.Is(err, ErrUserAlreadyExists):
 		return http.StatusConflict, "User with this email already exists"
+
+	// 404 Not Found
 	case errors.Is(err, ErrUserNotExists):
-		return http.StatusConflict, "User with this email not exists"
+		return http.StatusNotFound, "User with this email not exists"
 	case errors.Is(err, ErrCompanyNotExists):
-		return http.StatusConflict, "Company with this TIN not exists"
+		return http.StatusNotFound, "Company with this TIN not exists"
 
 	// 429 Too Many Request
 	case errors.Is(err, ErrTooManyInvalidAttempts):

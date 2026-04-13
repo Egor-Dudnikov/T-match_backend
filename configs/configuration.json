@@ -18,10 +18,14 @@
         "dial_timeout": 5000000000,
         "timeout": 3000000000
     },
-    "veryfyConfig": {
+    "emailConfig": {
         "addr": "mail.hosting.reg.ru:587",
         "host": "mail.hosting.reg.ru",
         "identity": "",
         "username": "support@tmatch.space"
+    },
+    "CORSConfig": {
+        "control_allow_origin": ["http://localhost:8000"],
+        "control_allow_headers": ["Content-Type", "Token"]
     }
 }

@@ -14,13 +14,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (app *AuthService) AuthCompay(ctx context.Context, userReg models.CompanyAuth) (string, error) {
+func (app *AuthService) AuthCompany(ctx context.Context, userReg models.CompanyAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", apierrors.ErrValidationFailed, err)
+		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	exist, err := app.db.CheckUserEmail(ctx, userReg.Email)
+	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "company")
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -77,7 +77,7 @@ func (app *AuthService) AuthCompay(ctx context.Context, userReg models.CompanyAu
 func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrValidationFailed, err)
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
 	companyVerify := models.CompanyVerify{}
@@ -102,7 +102,7 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 
 	if companyVerify.Code != verifyRequest.Code {
 		companyVerify.Attempts++
-		_, err := app.cache.Do(ctx, sessionID, "$.attemts", companyVerify.Attempts)
+		_, err := app.cache.Do(ctx, sessionID, "$.attempts", companyVerify.Attempts)
 		if err != nil {
 			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 		}
@@ -122,21 +122,65 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, "company", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, "company", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	key := fmt.Sprintf("%d%s", id, companyVerify.DeviceID)
+	key := fmt.Sprintf("%d.%s", id, companyVerify.DeviceID)
 	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
 	app.cache.Del(ctx, sessionID)
+	return accessToken, refreshToken, nil
+}
+
+func (app *AuthService) LoginCompany(ctx context.Context, userLog models.UserAuth) (string, string, error) {
+	err := app.validate.Struct(userLog)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+	}
+
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, "company")
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	if !ok {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrUserNotExists)
+	}
+
+	user := models.User{}
+	user, err = app.db.GetUser(ctx, userLog.Email)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userLog.Password))
+	if err != nil {
+		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
+	}
+
+	accessToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "company", time.Minute*15)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
+	}
+
+	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "company", time.Hour*24*7)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
+	}
+
+	key := fmt.Sprintf("%d.%s", user.Id, userLog.DeviceID)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
+	}
+
 	return accessToken, refreshToken, nil
 }

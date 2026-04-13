@@ -7,6 +7,7 @@ type Config struct {
 	ServerConfig ServerConfig
 	RedisConfig  RedisConfig
 	EmailConfig  EmailConfig
+	CORSConfig   CORSConfig
 }
 
 type DbConfig struct {
@@ -35,4 +36,9 @@ type EmailConfig struct {
 	Host     string `json:"host"`
 	Identity string `json:"identity"`
 	Username string `json:"username"`
+}
+
+type CORSConfig struct {
+	ControlAllowOrigin  []string `json:"control_allow_origin"`
+	ControlAllowHeaders []string `json:"control_allow_headers"`
 }
