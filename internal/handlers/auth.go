@@ -48,7 +48,7 @@ func (h *AuthServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Re
 	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	if sessionID == "" {
-		return fmt.Errorf(apierrors.ErrBadRequest.Error())
+		return fmt.Errorf("%w", apierrors.ErrBadRequest)
 	}
 
 	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
@@ -114,7 +114,7 @@ func (h *AuthServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http
 	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	if sessionID == "" {
-		return fmt.Errorf(apierrors.ErrBadRequest.Error())
+		return fmt.Errorf("%w", apierrors.ErrBadRequest)
 	}
 
 	verifyRequest, err := decodeJSON[models.VerifyRequest](r)

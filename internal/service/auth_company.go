@@ -106,7 +106,7 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 		if err != nil {
 			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 		}
-		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidCode, err)
+		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidCode)
 	}
 
 	user := models.User{
@@ -152,7 +152,7 @@ func (app *AuthService) LoginCompany(ctx context.Context, userLog models.UserAut
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	if !ok {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrUserNotExists)
+		return "", "", fmt.Errorf("%w", apierrors.ErrUserNotExists)
 	}
 
 	user := models.User{}
