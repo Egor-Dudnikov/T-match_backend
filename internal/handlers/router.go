@@ -27,8 +27,11 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
-	router.OPTIONS("/auth/students/newverify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/auth/company", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/auth/company/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/auth/newverify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/auth/company/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }

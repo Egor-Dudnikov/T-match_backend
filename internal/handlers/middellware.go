@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/utils"
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -34,5 +38,38 @@ func (h *AuthServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 		}
 
 		return next(w, r, ps)
+	}
+}
+
+func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		tokenStr := r.Header.Get("Token")
+		token, claims, err := utils.DecodeJWT(tokenStr)
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		if err != nil {
+			return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
+		}
+		if !token.Valid {
+			refreshTokenCookie, err := r.Cookie("refresh_token")
+			if err != nil {
+				return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+			}
+			refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
+			if err != nil {
+				return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
+			}
+			if refreshToken.Valid {
+				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, 15*time.Minute)
+				if err != nil {
+					return fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
+				}
+				w.Header().Set("Token", newToken)
+				return next(w, r.WithContext(ctx), ps)
+			} else {
+				return apierrors.ErrUnauthorized
+			}
+		}
+
+		return next(w, r.WithContext(ctx), ps)
 	}
 }

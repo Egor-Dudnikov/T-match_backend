@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -134,12 +133,12 @@ func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verify
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(strconv.Itoa(id), userVerify.DeviceID, user.Email, "internal", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "internal", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(id), userVerify.DeviceID, user.Email, "internal", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "internal", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
@@ -198,12 +197,12 @@ func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) 
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "internal", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "internal", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "internal", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "internal", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}

@@ -61,7 +61,7 @@ type VerifyRequest struct {
 }
 
 type Claims struct {
-	UserID   string
+	UserID   int
 	DeviceID string
 	Email    string
 	Role     string

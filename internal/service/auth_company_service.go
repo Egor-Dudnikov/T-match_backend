@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ func (app *AuthService) AuthCompany(ctx context.Context, userReg models.CompanyA
 		return "", fmt.Errorf("%w", apierrors.ErrUserAlreadyExists)
 	}
 
-	companyData, err := utils.ValidTIN(userReg.Inn)
+	companyData, err := ValidTIN(userReg.Inn)
 	if err != nil {
 		return "", err
 	}
@@ -122,12 +121,12 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, "company", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, "company", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(id), companyVerify.DeviceID, user.Email, "company", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, "company", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
@@ -166,12 +165,12 @@ func (app *AuthService) LoginCompany(ctx context.Context, userLog models.UserAut
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "company", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "company", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(strconv.Itoa(user.Id), userLog.DeviceID, user.Email, "company", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "company", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}

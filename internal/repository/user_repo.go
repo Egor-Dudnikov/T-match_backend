@@ -103,3 +103,20 @@ func (r *Repository) GetUser(ctx context.Context, email string) (models.User, er
 	}
 	return user, nil
 }
+
+func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
+	err := r.db.QueryRowContext(ctx, `UPDATE interns 
+	SET first_name = $2, 
+    	last_name = $3, 
+    	birth_date = $4, 
+    	location = $5, 
+    	university = $6, 
+    	degree = $7, 
+    	bio = $8, 
+    	experience = $9
+	WHERE id = $1`, id, profile.FirstName, profile.LastName, profile.BirthDate, profile.Location, profile.University, profile.Bio, profile.Experience).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}

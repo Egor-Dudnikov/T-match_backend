@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GeneratingJWT(userID, deviceID, email, role string, timeLife time.Duration) (string, error) {
+func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Duration) (string, error) {
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
 	claims := models.Claims{

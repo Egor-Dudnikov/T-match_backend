@@ -13,99 +13,91 @@ CREATE TYPE "user_role" AS ENUM (
 
 CREATE TABLE "users" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "email" varchar UNIQUE NOT NULL,
-  "password_hash" varchar,
-  "role" user_role,
-  "created_at" timestamp
+  "email" VARCHAR UNIQUE NOT NULL,
+  "password_hash" VARCHAR,
+  "role" USER_ROLE,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "interns" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "user_id" integer NOT NULL,
-  "first_name" varchar,
-  "last_name" varchar,
-  "birth_date" date,
-  "location" varchar,
-  "university" varchar,
-  "degree" varchar,
-  "bio" text,
-  "experience" text
+  "user_id" INTEGER NOT NULL,
+  "first_name" VARCHAR,
+  "last_name" VARCHAR,
+  "birth_date" DATE,
+  "location" VARCHAR,
+  "university" VARCHAR,
+  "degree" VARCHAR,
+  "bio" TEXT,
+  "experience" TEXT,
+  "image" TEXT
 );
 
 CREATE TABLE "companies" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "user_id" integer NOT NULL,
-  "company_name" varchar UNIQUE NOT NULL,
-  "description" text,
-  "website" varchar
+  "user_id" INTEGER NOT NULL,
+  "company_name" VARCHAR UNIQUE NOT NULL,
+  "description" TEXT,
+  "website" VARCHAR,
+  "inn" VARCHAR(12) UNIQUE,
+  "kpp" VARCHAR(9),
+  "ogrn" VARCHAR(15),
+  "legal_address" TEXT,
+  "director_name" VARCHAR
 );
 
 CREATE TABLE "admins" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "user_id" integer NOT NULL,
-  "name" varchar
+  "user_id" INTEGER NOT NULL,
+  "name" VARCHAR
 );
 
 CREATE TABLE "internships" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "company_id" integer NOT NULL,
-  "title" varchar,
-  "description" text,
-  "salary" integer,
-  "duration_months" integer,
-  "location" varchar,
-  "created_at" timestamp
+  "company_id" INTEGER NOT NULL,
+  "title" VARCHAR,
+  "description" TEXT,
+  "salary" INTEGER,
+  "duration_months" INTEGER,
+  "location" VARCHAR,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "applications" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "intern_id" integer NOT NULL,
-  "internship_id" integer NOT NULL,
-  "status" application_status DEFAULT 'pending',
-  "created_at" timestamp
+  "intern_id" INTEGER NOT NULL,
+  "internship_id" INTEGER NOT NULL,
+  "status" APPLICATION_STATUS DEFAULT 'pending',
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "skills" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "name" varchar UNIQUE
+  "name" VARCHAR UNIQUE
 );
 
 CREATE TABLE "intern_skills" (
-  "intern_id" integer NOT NULL,
-  "skill_id" integer NOT NULL,
+  "intern_id" INTEGER NOT NULL,
+  "skill_id" INTEGER NOT NULL,
   PRIMARY KEY ("intern_id", "skill_id")
 );
 
 CREATE TABLE "internship_skills" (
-  "internship_id" integer NOT NULL,
-  "skill_id" integer NOT NULL,
+  "internship_id" INTEGER NOT NULL,
+  "skill_id" INTEGER NOT NULL,
   PRIMARY KEY ("internship_id", "skill_id")
 );
 
 CREATE UNIQUE INDEX ON "applications" ("intern_id", "internship_id");
 
-ALTER TABLE "companies" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
+-- Foreign keys
 ALTER TABLE "interns" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
+ALTER TABLE "companies" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "admins" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
 ALTER TABLE "internships" ADD FOREIGN KEY ("company_id") REFERENCES "companies" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
 ALTER TABLE "applications" ADD FOREIGN KEY ("intern_id") REFERENCES "interns" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
 ALTER TABLE "applications" ADD FOREIGN KEY ("internship_id") REFERENCES "internships" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "internship_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "internships" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
 ALTER TABLE "intern_skills" ADD FOREIGN KEY ("intern_id") REFERENCES "interns" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
 ALTER TABLE "intern_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE companies ADD COLUMN inn varchar(12) UNIQUE;
-ALTER TABLE companies ADD COLUMN kpp varchar(9);
-ALTER TABLE companies ADD COLUMN ogrn varchar(15);
-ALTER TABLE companies ADD COLUMN legal_address text;
-ALTER TABLE companies ADD COLUMN director_name varchar;
+ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "internships" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "internship_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
