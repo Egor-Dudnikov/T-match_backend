@@ -55,8 +55,6 @@ func (app *AuthService) AuthCompany(ctx context.Context, userReg models.CompanyA
 		Code:         code,
 		DeviceID:     userReg.DeviceID,
 		CompanyData:  companyData,
-		Attempts:     0,
-		CodeAmount:   0,
 	}
 
 	userJson, err := json.Marshal(user)
@@ -91,17 +89,7 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	if companyVerify.CodeAmount >= 3 {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
-	}
-
-	if companyVerify.Attempts >= 3 {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
-	}
-
 	if companyVerify.Code != verifyRequest.Code {
-		companyVerify.Attempts++
-		_, err := app.cache.Do(ctx, sessionID, "$.attempts", companyVerify.Attempts)
 		if err != nil {
 			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 		}

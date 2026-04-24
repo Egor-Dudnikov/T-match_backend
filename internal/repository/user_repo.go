@@ -42,14 +42,14 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User) (int, e
 	defer tx.Rollback()
 
 	var id int
-	err = r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
+	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, user.Email, user.PasswordHash, user.Role,
 	).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-	err = r.db.QueryRowContext(ctx, `INSERT INTO interns (user_id)
+	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id)
 		VALUES ($1)`, id).Err()
 
 	if err != nil {
@@ -66,14 +66,14 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, c
 		return 0, err
 	}
 	defer tx.Rollback()
-	err = r.db.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
+	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, company.Email, company.PasswordHash, company.Role,
 	).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-	err = r.db.QueryRowContext(ctx, `INSERT INTO companies (user_id, company_name, inn, kpp, ogrn, legal_address, director_name)
+	err = tx.QueryRowContext(ctx, `INSERT INTO companies (user_id, company_name, inn, kpp, ogrn, legal_address, director_name)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`, id, companyData.ShortName, companyData.Inn, companyData.Kpp, companyData.Ogrn, companyData.Address, companyData.Director).Err()
 	if err != nil {
 		return 0, err
@@ -105,7 +105,7 @@ func (r *Repository) GetUser(ctx context.Context, email string) (models.User, er
 }
 
 func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
-	err := r.db.QueryRowContext(ctx, `UPDATE interns 
+	_, err := r.db.ExecContext(ctx, `UPDATE interns 
 	SET first_name = $2, 
     	last_name = $3, 
     	birth_date = $4, 
@@ -114,7 +114,7 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
     	degree = $7, 
     	bio = $8, 
     	experience = $9
-	WHERE id = $1`, id, profile.FirstName, profile.LastName, profile.BirthDate, profile.Location, profile.University, profile.Bio, profile.Experience).Err()
+	WHERE id = $1`, id, profile.FirstName, profile.LastName, profile.BirthDate, profile.Location, profile.University, profile.Bio, profile.Experience)
 	if err != nil {
 		return err
 	}

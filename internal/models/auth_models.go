@@ -22,8 +22,6 @@ type UserVerify struct {
 	PasswordHash string
 	DeviceID     string
 	Code         string
-	Attempts     int
-	CodeAmount   int
 }
 
 type CompanyAuth struct {
@@ -39,8 +37,6 @@ type CompanyVerify struct {
 	PasswordHash string
 	DeviceID     string
 	Code         string
-	Attempts     int
-	CodeAmount   int
 }
 
 type CompanyData struct {

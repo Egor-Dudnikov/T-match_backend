@@ -3,7 +3,6 @@ package cache
 import (
 	"T-match_backend/internal/models"
 	"context"
-	"encoding/json"
 	"os"
 	"time"
 
@@ -46,13 +45,4 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 
 func (r *Redis) Del(ctx context.Context, key string) {
 	r.cache.Del(ctx, key).Result()
-}
-
-func (r *Redis) Do(ctx context.Context, key string, path string, value any) (interface{}, error) {
-	jsonValue, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	res, err := r.cache.Do(ctx, "JSON.SET", key, path, string(jsonValue)).Result()
-	return res, err
 }

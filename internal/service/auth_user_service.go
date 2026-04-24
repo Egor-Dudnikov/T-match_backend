@@ -38,7 +38,7 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "internal")
+	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "intern")
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -68,8 +68,6 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 		PasswordHash: string(hashPassword),
 		Code:         code,
 		DeviceID:     userReg.DeviceID,
-		Attempts:     0,
-		CodeAmount:   0,
 	}
 
 	userJson, err := json.Marshal(user)
@@ -104,26 +102,13 @@ func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verify
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	if userVerify.CodeAmount >= 3 {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
-	}
-
-	if userVerify.Attempts >= 3 {
-		return "", "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
-	}
-
 	if userVerify.Code != verifyRequest.Code {
-		userVerify.Attempts++
-		_, err := app.cache.Do(ctx, sessionID, "$.attempts", userVerify.Attempts)
-		if err != nil {
-			return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
-		}
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidCode)
 	}
 
 	user := models.User{
 		Email:        userVerify.Email,
-		Role:         "internal",
+		Role:         "intern",
 		PasswordHash: userVerify.PasswordHash,
 	}
 
@@ -133,12 +118,12 @@ func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verify
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "internal", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "intern", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "internal", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "intern", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
@@ -165,10 +150,23 @@ func (app *AuthService) NewCode(ctx context.Context, sessionID string) error {
 	user := models.UserVerify{}
 	json.Unmarshal([]byte(res), &user)
 
-	app.email.SendVerifyCode(user.Email, newCode)
+	user.Code = newCode
+	jsoneNewCode, err := json.Marshal(user)
 
-	app.cache.Do(ctx, sessionID, "$.code", newCode)
-	app.cache.Do(ctx, sessionID, "$.code_amount", user.CodeAmount+1)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
+	}
+
+	err = app.email.SendVerifyCode(user.Email, newCode)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrEmailSendFailed, err)
+	}
+
+	err = app.cache.Set(ctx, sessionID, jsoneNewCode, time.Minute*7)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
+	}
+
 	return nil
 }
 
@@ -178,7 +176,7 @@ func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) 
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, "internal")
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, "intern")
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -197,12 +195,12 @@ func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) 
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "internal", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "intern", time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "internal", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "intern", time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}

@@ -33,6 +33,8 @@ var (
 	ErrBadGateway       = errors.New("bad gateway")
 	ErrCompanyNotExists = errors.New("company not exists")
 	ErrUnauthorized     = errors.New("user unauthorized")
+
+	ErrForbidden = errors.New("access forbidden")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -53,6 +55,10 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusUnauthorized, "Invalid password"
 	case errors.Is(err, ErrUnauthorized):
 		return http.StatusUnauthorized, "User Unauthorized"
+
+	// 403 Forbidden
+	case errors.Is(err, ErrForbidden):
+		return http.StatusForbidden, "Access denied: insufficient permissions"
 
 	// 409 Conflict
 	case errors.Is(err, ErrUserAlreadyExists):

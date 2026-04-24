@@ -14,5 +14,4 @@ func (app AuthService) NewProfile(ctx context.Context, profile models.Profile) e
 		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return nil
-
 }

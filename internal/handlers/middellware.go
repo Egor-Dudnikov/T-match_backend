@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
 	"fmt"
@@ -71,5 +72,25 @@ func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 		}
 
 		return next(w, r.WithContext(ctx), ps)
+	}
+}
+
+func (h *AuthServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		claims := r.Context().Value("claims").(models.Claims)
+		if claims.Role != "intern" {
+			return apierrors.ErrForbidden
+		}
+		return next(w, r, ps)
+	}
+}
+
+func (h *AuthServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		claims := r.Context().Value("claims").(models.Claims)
+		if claims.Role != "company" {
+			return apierrors.ErrForbidden
+		}
+		return next(w, r, ps)
 	}
 }

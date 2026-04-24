@@ -18,8 +18,8 @@ type AuthServiceHandler struct {
 	corsConfig  *models.CORSConfig
 }
 
-func NewAuthServiceHandler(authService *service.AuthService) *AuthServiceHandler {
-	return &AuthServiceHandler{authService: authService}
+func NewAuthServiceHandler(authService *service.AuthService, cfg *models.CORSConfig) *AuthServiceHandler {
+	return &AuthServiceHandler{authService: authService, corsConfig: cfg}
 }
 
 func (h *AuthServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {

@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	_ "github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
 
@@ -46,7 +45,7 @@ func main() {
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
 
 	app := service.NewAuthService(repo, redis, email, validate)
-	authHandler := handlers.NewAuthServiceHandler(app)
+	authHandler := handlers.NewAuthServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)
 

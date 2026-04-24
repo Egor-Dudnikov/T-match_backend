@@ -10,6 +10,6 @@ type Profile struct {
 	University string    `json:"university"`
 	Degree     string    `json:"degree"`
 	Bio        string    `json:"bio"`
-	Experience string    `json:"expirience"`
+	Experience string    `json:"experience"`
 	Image      string    `json:"image"`
 }
