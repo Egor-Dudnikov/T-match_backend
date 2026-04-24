@@ -46,10 +46,10 @@ func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		tokenStr := r.Header.Get("Token")
 		token, claims, err := utils.DecodeJWT(tokenStr)
-		ctx := context.WithValue(r.Context(), "claims", claims)
 		if err != nil {
 			return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
 		}
+		ctx := context.WithValue(r.Context(), "claims", claims)
 		if !token.Valid {
 			refreshTokenCookie, err := r.Cookie("refresh_token")
 			if err != nil {
@@ -58,6 +58,14 @@ func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 			refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
 			if err != nil {
 				return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
+			}
+
+			refreshTokenCach, err := h.authService.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
+			if err != nil {
+				return err
+			}
+			if refreshTokenCookie.String() != refreshTokenCach {
+				return apierrors.ErrUnauthorized
 			}
 			if refreshToken.Valid {
 				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, 15*time.Minute)

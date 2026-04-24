@@ -224,3 +224,12 @@ func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) 
 
 	return accessToken, refreshToken, nil
 }
+
+func (app *AuthService) GetRefreshToken(ctx context.Context, id int, deviceID string) (string, error) {
+	key := fmt.Sprintf("%d.%s", id, deviceID)
+	token, err := app.cache.Get(ctx, key)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
+	}
+	return token, nil
+}
