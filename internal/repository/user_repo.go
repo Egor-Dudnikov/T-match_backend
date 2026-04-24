@@ -6,6 +6,9 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func PingDatabase(config models.DbConfig) (*sql.DB, error) {
@@ -34,7 +37,7 @@ func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
-func (r *Repository) QueryNewUser(ctx context.Context, user models.User) (int, error) {
+func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birh_date time.Time) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -49,8 +52,8 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User) (int, e
 	if err != nil {
 		return 0, err
 	}
-	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id)
-		VALUES ($1)`, id).Err()
+	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id, birth_date)
+		VALUES ($1, $2)`, id, birh_date).Err()
 
 	if err != nil {
 		return 0, err
@@ -105,16 +108,64 @@ func (r *Repository) GetUser(ctx context.Context, email string) (models.User, er
 }
 
 func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE interns 
-	SET first_name = $2, 
-    	last_name = $3, 
-    	birth_date = $4, 
-    	location = $5, 
-    	university = $6, 
-    	degree = $7, 
-    	bio = $8, 
-    	experience = $9
-	WHERE id = $1`, id, profile.FirstName, profile.LastName, profile.BirthDate, profile.Location, profile.University, profile.Bio, profile.Experience)
+	var query strings.Builder
+	query.WriteString("UPDATE interns SET ")
+	delimiter := false
+	cnt := 1
+	values := []interface{}{id}
+
+	addFilled := func(name string, value any) {
+		if delimiter {
+			query.WriteString(", ")
+		}
+		cnt++
+
+		query.WriteString(name)
+		query.WriteString(" = $")
+		query.WriteString(strconv.Itoa(cnt))
+
+		values = append(values, value)
+		delimiter = true
+	}
+
+	if profile.FirstName != "" {
+		addFilled("first_name", profile.FirstName)
+	}
+
+	if profile.LastName != "" {
+		addFilled("last_name", profile.LastName)
+	}
+
+	if !profile.BirthDate.IsZero() {
+		addFilled("birth_date", profile.BirthDate)
+	}
+
+	if profile.Bio != "" {
+		addFilled("bio", profile.Bio)
+	}
+
+	if profile.Degree != "" {
+		addFilled("degree", profile.Degree)
+	}
+
+	if profile.Experience != "" {
+		addFilled("experience", profile.Experience)
+	}
+
+	if profile.Location != "" {
+		addFilled("location", profile.Location)
+	}
+
+	if profile.University != "" {
+		addFilled("university", profile.University)
+	}
+
+	query.WriteString(" WHERE user_id = $1")
+
+	if cnt == 1 {
+		return nil
+	}
+	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
 		return err
 	}

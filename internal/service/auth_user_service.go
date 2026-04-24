@@ -38,6 +38,16 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
+	today := time.Now()
+	age := today.Year() - userReg.BirthDate.Year()
+	if today.YearDay() > userReg.BirthDate.YearDay() {
+		age--
+	}
+
+	if age < 16 {
+		return "", apierrors.ErrUserMustBe16
+	}
+
 	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "intern")
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
@@ -68,6 +78,7 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 		PasswordHash: string(hashPassword),
 		Code:         code,
 		DeviceID:     userReg.DeviceID,
+		BirthDate:    userReg.BirthDate,
 	}
 
 	userJson, err := json.Marshal(user)
@@ -112,7 +123,7 @@ func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verify
 		PasswordHash: userVerify.PasswordHash,
 	}
 
-	id, err := app.db.QueryNewUser(ctx, user)
+	id, err := app.db.QueryNewUser(ctx, user, userVerify.BirthDate)
 	user.Id = id
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)

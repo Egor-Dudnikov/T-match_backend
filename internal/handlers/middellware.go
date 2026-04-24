@@ -29,7 +29,7 @@ func ErrorMiddleware(next ErrorHandler) httprouter.Handle {
 func (h *AuthServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		w.Header().Set("Access-Control-Allow-Origin", strings.Join(h.corsConfig.ControlAllowOrigin, ", "))
-		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", strings.Join(h.corsConfig.ControlAllowHeaders, ", "))
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 

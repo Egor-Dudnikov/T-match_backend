@@ -34,7 +34,8 @@ var (
 	ErrCompanyNotExists = errors.New("company not exists")
 	ErrUnauthorized     = errors.New("user unauthorized")
 
-	ErrForbidden = errors.New("access forbidden")
+	ErrForbidden    = errors.New("access forbidden")
+	ErrUserMustBe16 = errors.New("birth date is invalid")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -69,6 +70,10 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusNotFound, "User with this email not exists"
 	case errors.Is(err, ErrCompanyNotExists):
 		return http.StatusNotFound, "Company with this TIN not exists"
+
+	// 422 Unprocessable Entity
+	case errors.Is(err, ErrUserMustBe16):
+		return http.StatusUnprocessableEntity, "User must be at least 16 years old"
 
 	// 429 Too Many Request
 	case errors.Is(err, ErrTooManyInvalidAttempts):
