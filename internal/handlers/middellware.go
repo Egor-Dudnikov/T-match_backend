@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,6 +46,9 @@ func (h *AuthServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		tokenStr := r.Header.Get("Token")
+		if tokenStr == "" {
+			return apierrors.ErrUnauthorized
+		}
 		token, claims, err := utils.DecodeJWT(tokenStr)
 		if err != nil {
 			return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
@@ -64,7 +68,7 @@ func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 			if err != nil {
 				return err
 			}
-			if refreshTokenCookie.String() != refreshTokenCach {
+			if refreshTokenCookie.Value != refreshTokenCach {
 				return apierrors.ErrUnauthorized
 			}
 			if refreshToken.Valid {
@@ -100,5 +104,29 @@ func (h *AuthServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 			return apierrors.ErrForbidden
 		}
 		return next(w, r, ps)
+	}
+}
+
+func (h *AuthServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		ctx := r.Context()
+		var id string
+		claims := ctx.Value("claims")
+		if claims != nil {
+			id = strconv.Itoa(claims.(models.Claims).UserID)
+		} else {
+			id = r.Header.Get("Token")
+		}
+		key := id + "." + endpoint
+		key = key
+		ok, err := h.authService.RateLimitCheck(ctx, key, rate)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return apierrors.ErrTooManyInvalidAttempts
+		}
+		return next(w, r, ps)
+
 	}
 }

@@ -40,7 +40,7 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 
 	today := time.Now()
 	age := today.Year() - userReg.BirthDate.Year()
-	if today.YearDay() > userReg.BirthDate.YearDay() {
+	if today.YearDay() < userReg.BirthDate.YearDay() {
 		age--
 	}
 
@@ -232,4 +232,12 @@ func (app *AuthService) GetRefreshToken(ctx context.Context, id int, deviceID st
 		return "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
 	return token, nil
+}
+
+func (app *AuthService) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
+	ok, err := app.cache.RateLimitCheck(ctx, key, rate)
+	if err != nil {
+		return false, fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
+	}
+	return ok, nil
 }
