@@ -188,3 +188,7 @@ func (r *Repository) GetMyProfile(ctx context.Context, id int) (models.Profile, 
 		&profile.Image)
 	return profile, err
 }
+
+func (r *Repository) UpdateCompanyProfile(ctx context.Context, company, profile models.CompanyProfile) {
+
+}

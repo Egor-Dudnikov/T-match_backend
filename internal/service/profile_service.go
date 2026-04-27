@@ -8,8 +8,9 @@ import (
 )
 
 func (app AuthService) NewProfile(ctx context.Context, profile models.Profile) error {
+	err := app.validate.Struct(profile)
 	claims := ctx.Value("claims").(models.Claims)
-	err := app.db.QueryProfile(ctx, claims.UserID, profile)
+	err = app.db.QueryProfile(ctx, claims.UserID, profile)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
