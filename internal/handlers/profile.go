@@ -7,7 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (h *AuthServiceHandler) UbdateProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *AuthServiceHandler) UbdateProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.Profile](r)
 	if err != nil {
 		return err
@@ -18,4 +18,13 @@ func (h *AuthServiceHandler) UbdateProfile(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 	return nil
+}
+
+func (h *AuthServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	profile, err := h.authService.GetMyProfile(r.Context())
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[models.Profile](w, profile)
+	return err
 }

@@ -40,10 +40,14 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.RateLimitMiddleware(app.LoginCompanyHandler, 30, "/auth/company/login"))))
 
-	router.PUT("/my/profile", ErrorMiddleware(
+	router.PUT("/my/profile/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
-				app.RateLimitMiddleware(app.UbdateProfile, 300, "/my/profile")))))
+				app.RateLimitMiddleware(app.UbdateProfileHandler, 100, "/my/profile/put")))))
+
+	router.GET("/my/profile", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(app.RateLimitMiddleware(app.GetMyProfileHandler, 120, "my/profile")))))
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
@@ -52,6 +56,7 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 	router.OPTIONS("/auth/company/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/newverify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/company/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/my/profile/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router

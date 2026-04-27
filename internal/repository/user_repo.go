@@ -128,36 +128,36 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 		delimiter = true
 	}
 
-	if profile.FirstName != "" {
-		addFilled("first_name", profile.FirstName)
+	if profile.FirstName != nil {
+		addFilled("first_name", &profile.FirstName)
 	}
 
-	if profile.LastName != "" {
-		addFilled("last_name", profile.LastName)
+	if profile.LastName != nil {
+		addFilled("last_name", &profile.LastName)
 	}
 
-	if !profile.BirthDate.IsZero() {
-		addFilled("birth_date", profile.BirthDate)
+	if profile.BirthDate != nil {
+		addFilled("birth_date", &profile.BirthDate)
 	}
 
-	if profile.Bio != "" {
-		addFilled("bio", profile.Bio)
+	if profile.Bio != nil {
+		addFilled("bio", &profile.Bio)
 	}
 
-	if profile.Degree != "" {
-		addFilled("degree", profile.Degree)
+	if profile.Degree != nil {
+		addFilled("degree", &profile.Degree)
 	}
 
-	if profile.Experience != "" {
-		addFilled("experience", profile.Experience)
+	if profile.Experience != nil {
+		addFilled("experience", &profile.Experience)
 	}
 
-	if profile.Location != "" {
-		addFilled("location", profile.Location)
+	if profile.Location != nil {
+		addFilled("location", &profile.Location)
 	}
 
-	if profile.University != "" {
-		addFilled("university", profile.University)
+	if profile.University != nil {
+		addFilled("university", &profile.University)
 	}
 
 	query.WriteString(" WHERE user_id = $1")
@@ -170,4 +170,21 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) GetMyProfile(ctx context.Context, id int) (models.Profile, error) {
+	profile := models.Profile{}
+	err := r.db.QueryRowContext(ctx, `SELECT first_name, last_name, birth_date, location, university, degree, bio, experience, image 
+	FROM internal
+	WHERE user_id = $1`, id).Scan(
+		&profile.FirstName,
+		&profile.LastName,
+		&profile.BirthDate,
+		&profile.Location,
+		&profile.University,
+		&profile.Degree,
+		&profile.Bio,
+		&profile.Experience,
+		&profile.Image)
+	return profile, err
 }

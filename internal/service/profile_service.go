@@ -15,3 +15,12 @@ func (app AuthService) NewProfile(ctx context.Context, profile models.Profile) e
 	}
 	return nil
 }
+
+func (app AuthService) GetMyProfile(ctx context.Context) (models.Profile, error) {
+	claims := ctx.Value("claims").(models.Claims)
+	profile, err := app.db.GetMyProfile(ctx, claims.UserID)
+	if err != nil {
+		return profile, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return profile, nil
+}

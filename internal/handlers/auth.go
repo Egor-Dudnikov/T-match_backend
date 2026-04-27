@@ -161,6 +161,19 @@ func decodeJSON[T any](r *http.Request) (T, error) {
 	return res, nil
 }
 
+func encodeJSON[T any](w http.ResponseWriter, resp T) error {
+	respJson, err := json.Marshal(resp)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(respJson)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SetRefreshCookie(w http.ResponseWriter, value string) {
 	// при переходе на https заменить Secure на true
 	http.SetCookie(w, &http.Cookie{
