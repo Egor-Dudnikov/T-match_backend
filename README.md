@@ -1,11 +1,6 @@
-### Бекенд для проекта T-match
-*сервис для подборки стажировок и стажёров*
+## T-match Backend API Documentation
 
-Вот обновленная документация API, приведенная в соответствие с вашим актуальным кодом.
-
----
-
-## Базовый URL
+### Базовый URL
 
 ```
 Development: http://localhost:8080
@@ -15,9 +10,9 @@ Development: http://localhost:8080
 
 ## 🔐 Аутентификация
 
-### 1. Регистрация студента / соискателя
+### 1. Регистрация студента
 
-**Отправка email, пароля, device_id и даты рождения → получение Session ID**
+**Отправка email, пароля, device_id и даты рождения → получение Session ID для верификации.**
 
 ```
 POST /auth/students
@@ -34,7 +29,7 @@ Content-Type: application/json
 ```json
 {
   "email": "student@example.com",
-  "password": "SecurePass123",
+  "password": "SecurePass123!",
   "device_id": "web_chrome_123",
   "birth_date": "2008-05-15T00:00:00Z"
 }
@@ -50,14 +45,15 @@ Content-Type: application/json
 #### 📥 Ответы
 
 **✅ Успех (200 OK)**
-
-**Headers:**
 ```
 Token: 550e8400-e29b-41d4-a716-446655440000
 ```
-*Session ID (UUID)*
+*Возвращается UUID длительностью 7 минут для подтверждения email.*
 
 **❌ Ошибка валидации (400 Bad Request)**
+```
+Bad request
+```
 
 **❌ Пользователь уже существует (409 Conflict)**
 ```
@@ -73,7 +69,7 @@ User must be at least 16 years old
 
 ### 2. Регистрация компании
 
-**Отправка ИНН, email, пароля и device_id → получение Session ID**
+**Отправка ИНН, email, пароля и device_id → получение Session ID для верификации.**
 
 ```
 POST /auth/company
@@ -91,7 +87,7 @@ Content-Type: application/json
 {
   "inn": "7707083893",
   "email": "hr@company.ru",
-  "password": "StrongPass456",
+  "password": "StrongPass456!",
   "device_id": "iphone_app_456"
 }
 ```
@@ -106,17 +102,14 @@ Content-Type: application/json
 #### 📥 Ответы
 
 **✅ Успех (200 OK)**
-
-**Headers:**
 ```
 Token: 550e8400-e29b-41d4-a716-446655440000
 ```
 
-**❌ Компания не найдена (404 Not Found)**
+**❌ Компания не найдена или не активна (404 Not Found)**
 ```
 Company with this TIN not exists
 ```
-*(ИНН не найден в DADATA или компания не активна)*
 
 **❌ Пользователь уже существует (409 Conflict)**
 ```
@@ -130,9 +123,9 @@ External service temporarily unavailable. Please try again later.
 
 ---
 
-### 3. Верификация email (общая)
+### 3. Верификация Email
 
-**Подтверждение email кодом → получение Access и Refresh токенов**
+**Подтверждение email кодом → получение Access и Refresh токенов.**
 
 *Для студентов:*
 ```
@@ -173,14 +166,22 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token (JWT)
 Set-Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
 ```
 
+*Access Token (15 минут) возвращается в заголовке. Refresh Token (7 дней) устанавливается в HttpOnly cookie.*
+
 **❌ Неверный формат кода (400 Bad Request)**
 ```
-Invalid verification code format
+Bad request
 ```
+*Например, если код не из 6 цифр.*
 
-**❌ Код истек или Session ID не найден (400 Bad Request)**
+**❌ Сессия не найдена или код истек (400 Bad Request)**
 ```
 Verification code expired
+```
+
+**❌ Неверный код (400 Bad Request)**
+```
+Invalid verification code format
 ```
 
 **❌ Слишком много попыток (429 Too Many Requests)**
@@ -190,9 +191,9 @@ Too many invalid attempts
 
 ---
 
-### 4. Повторная отправка кода
+### 4. Запрос нового кода верификации
 
-**Запрос нового кода верификации (до истечения Session ID)**
+**Повторная отправка кода на email, пока активен Session ID.**
 
 ```
 POST /auth/newverify
@@ -211,7 +212,8 @@ Token: 550e8400-e29b-41d4-a716-446655440000
 
 **✅ Успех (200 OK)**
 
-**❌ Session ID не найден или лимит превышен (400/429)**
+**❌ Сессия не найдена или истекла (400/500 Internal Server Error)**
+*Точный код зависит от обертки ошибок, но по логике будет Internal Server Error при проблемах с Redis.*
 
 ---
 
@@ -238,7 +240,7 @@ Content-Type: application/json
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123",
+  "password": "SecurePass123!",
   "device_id": "web_chrome_123",
   "birth_date": "2008-05-15T00:00:00Z"
 }
@@ -249,7 +251,7 @@ Content-Type: application/json
 | email | string | ✅ | Email пользователя |
 | password | string | ✅ | Пароль |
 | device_id | string | ✅ | ID устройства |
-| birth_date | string | ❌ | Требуется только для студентов при регистрации |
+| birth_date | string | ❌ | Присутствует в структуре, но для входа не используется. Можно не передавать. |
 
 #### 📥 Ответы
 
@@ -278,7 +280,7 @@ User with this email not exists
 ### Обновление профиля студента
 
 ```
-PUT /my/profile
+PUT /my/profile/put
 ```
 
 #### 📤 Запрос
@@ -289,7 +291,7 @@ Content-Type: application/json
 Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
 ```
 
-**Body:**
+**Body (все поля опциональны):**
 ```json
 {
   "first_name": "Иван",
@@ -304,18 +306,6 @@ Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
 }
 ```
 
-| Поле | Тип | Обязательное | Описание |
-|------|-----|--------------|----------|
-| first_name | string | ❌ | Имя |
-| last_name | string | ❌ | Фамилия |
-| birth_date | string | ❌ | Дата рождения (RFC3339) |
-| location | string | ❌ | Город/регион |
-| university | string | ❌ | Учебное заведение |
-| degree | string | ❌ | Степень/курс |
-| bio | string | ❌ | О себе |
-| experience | string | ❌ | Опыт работы/проекты |
-| image | string | ❌ | Фото (Base64) |
-
 #### 📥 Ответы
 
 **✅ Успех (200 OK)**
@@ -329,7 +319,115 @@ User Unauthorized
 ```
 Access denied: insufficient permissions
 ```
-*(Только студенты могут обновлять профиль)*
+*Только пользователи с ролью "intern" могут обновлять этот профиль.*
+
+---
+
+### Получение профиля студента
+
+```
+GET /my/profile
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
+```
+
+*Body: пустой*
+
+#### 📥 Ответ
+
+**✅ Успех (200 OK)**
+```json
+{
+  "email": "student@example.com",
+  "profile": {
+    "first_name": "Иван",
+    "last_name": "Иванов",
+    "birth_date": "2008-05-15T00:00:00Z",
+    "location": "Москва",
+    "university": "МГУ",
+    "degree": "Бакалавр",
+    "bio": "...",
+    "experience": "...",
+    "image": "..."
+  }
+}
+```
+
+---
+
+### Обновление профиля компании
+
+```
+PUT /my/company/profile/put
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Content-Type: application/json
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
+```
+
+**Body (все поля опциональны, кроме ИНН из регистрации):**
+```json
+{
+  "company_name": "ООО Рога и Копыта",
+  "descrption": "Мы лучшая компания...",
+  "website": "https://example.com"
+}
+```
+
+#### 📥 Ответы
+
+**✅ Успех (200 OK)**
+
+**❌ Доступ запрещен (403 Forbidden)**
+```
+Access denied: insufficient permissions
+```
+*Только пользователи с ролью "company" могут обновлять этот профиль.*
+
+---
+
+### Получение профиля компании
+
+```
+GET /my/company/profile
+```
+
+#### 📤 Запрос
+
+**Headers:**
+```http
+Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  // Access Token
+```
+
+*Body: пустой*
+
+#### 📥 Ответ
+
+**✅ Успех (200 OK)**
+```json
+{
+  "email": "hr@company.ru",
+  "profile": {
+    "company_name": "ООО Рога и Копыта",
+    "descrption": "...",
+    "website": "https://example.com",
+    "inn": "7707083893",
+    "kpp": "770701001",
+    "ogrn": "1027735403160",
+    "legal_address": "г. Москва, ул. Тверская, д. 1",
+    "director_name": "Иванов Иван Иванович"
+  }
+}
+```
 
 ---
 
@@ -337,71 +435,54 @@ Access denied: insufficient permissions
 
 | Тип | Где хранится | Время жизни | Формат | Использование |
 |-----|-------------|-------------|--------|---------------|
-| **Session ID** | Redis | 7 минут | UUID | Верификация email (заголовок `Token`) |
-| **Access Token** | Клиент (Memory) | 15 минут | JWT | Авторизация API (заголовок `Token`) |
-| **Refresh Token** | HttpOnly Cookie | 7 дней | JWT | Обновление Access Token |
-
-### Структура JWT Claims
-
-```json
-{
-  "UserID": 101,
-  "DeviceID": "web_chrome_123",
-  "Email": "user@example.com",
-  "Role": "intern",
-  "exp": 1705314600,
-  "iat": 1705312800,
-  "iss": "t-match_backend"
-}
-```
+| **Session ID** | Ответ сервера (заголовок `Token`) | 7 минут | UUID | Подтверждение email |
+| **Access Token** | Ответ сервера (заголовок `Token`) | 15 минут | JWT | Авторизация API запросов |
+| **Refresh Token** | HttpOnly Cookie (`refresh_token`) | 7 дней | JWT | Обновление Access Token |
 
 ### Автоматическое обновление Access Token
 
-При запросе с истекшим Access Token, но валидным Refresh Token:
-- Сервер автоматически сгенерирует новый Access Token
-- Новый токен вернется в заголовке `Token`
-- Запрос будет обработан как обычно
+При истечении Access Token сервер автоматически выпустит новый, если у клиента есть действующий Refresh Token в cookies. Новый Access Token вернется в заголовке `Token` ответа.
+
+Клиент должен иметь возможность получать обновленный `Token` из заголовков всех ответов API.
 
 ---
 
 ## 📊 Коды ответов
 
-| HTTP Status | Тело ответа | Причина |
-|-------------|-------------|---------|
-| **400** | `Bad request` | Ошибка валидации JSON или полей |
-| **400** | `Invalid verification code format` | Код не из 6 цифр |
-| **400** | `Verification code expired` | Session ID истек (7 минут) |
-| **401** | `Invalid password` | Неверный пароль |
-| **401** | `User Unauthorized` | Отсутствует или неверный токен |
-| **403** | `Access denied: insufficient permissions` | Роль не соответствует эндпоинту |
-| **404** | `User with this email not exists` | Email не зарегистрирован |
-| **404** | `Company with this TIN not exists` | ИНН не найден в DADATA |
-| **409** | `User with this email already exists` | Email уже используется |
-| **422** | `User must be at least 16 years old` | Возраст менее 16 лет |
-| **429** | `Too many invalid attempts` | Превышен лимит попыток |
-| **502** | `External service temporarily unavailable...` | Ошибка DADATA API |
-| **503** | `Failed to send email, please try again` | Ошибка SMTP |
-| **503** | `Cache service temporarily unavailable` | Ошибка Redis |
-| **500** | `Internal server error` | БД, JWT или другая внутренняя ошибка |
+| HTTP Status | Сообщение (тело ответа) | Причина |
+|-------------|--------------------------|---------|
+| **400** | `Bad request` | Ошибка валидации входящих данных (email, пароль и т.д.) |
+| **400** | `Invalid verification code format` | Код не соответствует формату (6 цифр) |
+| **400** | `Verification code expired` | Истек Session ID (7 минут с момента запроса кода) |
+| **401** | `Invalid password` | Неверный пароль при входе |
+| **401** | `User Unauthorized` | Отсутствует, невалидный или просроченный токен |
+| **403** | `Access denied: insufficient permissions` | Роль в JWT (`intern`/`company`) не соответствует эндпоинту |
+| **404** | `User with this email not exists` | Попытка входа с незарегистрированным email |
+| **404** | `Company with this TIN not exists` | ИНН не найден через DADATA или компания неактивна |
+| **409** | `User with this email already exists` | Попытка повторной регистрации с тем же email и ролью |
+| **422** | `User must be at least 16 years old` | На момент регистрации студенту меньше 16 лет |
+| **429** | `Too many invalid attempts` | Превышен лимит запросов (Rate Limiting) |
+| **502** | `External service temporarily unavailable...` | Ошибка при обращении к DADATA API |
+| **503** | `Failed to send email, please try again` | Ошибка отправки письма |
+| **503** | `Cache service temporarily unavailable` | Ошибка соединения с Redis |
+| **500** | `Internal server error` | Ошибка БД, генерации JWT или другая внутренняя ошибка |
 
 ---
 
-## 🌐 CORS
+## 🌐 CORS и Cookies
 
-Сервер поддерживает CORS из коробки:
-- **Allow-Origin:** Настраивается через конфиг (`control_allow_origin`)
-- **Allow-Methods:** `GET, PUT, POST, OPTIONS, PATCH`
-- **Allow-Headers:** Настраивается через конфиг
-- **Allow-Credentials:** `true`
-
-**Важно:** При запросах с клиента необходимо указывать `credentials: 'include'` для корректной работы с Refresh Token в cookies.
+- **Поддержка CORS:** Настроена для разрешенных origin, методов (`GET, PUT, POST, OPTIONS, PATCH`) и заголовков, включая `Authorization` и `Token`.
+- **Обработка Preflight:** Сервер автоматически отвечает на все `OPTIONS` запросы к известным эндпоинтам статусом `200 OK`.
+- **Клиентские запросы:** Для получения и автоматической отправки Refresh Token (HttpOnly Cookie), все fetch/Axios запросы должны включать опцию `credentials: 'include'`.
 
 ---
 
-## 📋 Rate Limiting
+## 📋 Rate Limiting (Лимиты запросов)
 
-| Эндпоинт | Лимит (запросов/минуту) |
-|----------|------------------------|
+Лимиты указаны в запросах в минуту на один уникальный ключ (для авторизованных — `[userID].[endpoint]`, для неавторизованных — `[sessionID].[endpoint]`).
+
+| Эндпоинт | Лимит |
+|----------|-------|
 | `/auth/students` | 20 |
 | `/auth/students/verify` | 60 |
 | `/auth/newverify` | 7 |
@@ -409,4 +490,8 @@ Access denied: insufficient permissions
 | `/auth/company` | 20 |
 | `/auth/company/verify` | 60 |
 | `/auth/company/login` | 30 |
-| `/my/profile` | 300 |
+| `/my/profile/put` | 100 |
+| `/my/profile` | 120 |
+| `/my/company/profile/put` | 100 |
+| `/my/company/profile` | 120 |
+| Корневой `/` | Без ограничений |
