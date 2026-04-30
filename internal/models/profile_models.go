@@ -15,7 +15,22 @@ type Profile struct {
 }
 
 type CompanyProfile struct {
-	CompanyName *string `json:"company_name"`
-	Description *string `json:"descrption"`
-	Website     *string `json:"website"`
+	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
+	Description  *string `json:"descrption,omitempty" validate:"omitempty,max=2000"`
+	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
+	Inn          string  `json:"inn,omitempty"`
+	Kpp          string  `json:"kpp,omitempty"`
+	Ogrn         string  `json:"ogrn,omitempty"`
+	LegalAddress string  `json:"legal_address,omitempty"`
+	DirectorName string  `json:"director_name,omitempty"`
+}
+
+type ProfileResponse struct {
+	Email   string  `json:"email"`
+	Profile Profile `json:"profile"`
+}
+
+type CompanyProfileResponse struct {
+	Email   string         `json:"email"`
+	Profile CompanyProfile `json:"profile"`
 }

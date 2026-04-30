@@ -29,29 +29,38 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 	return nil
 }
 
-func (app Service) GetMyProfile(ctx context.Context) (models.Profile, error) {
+func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
 	claims := ctx.Value("claims").(models.Claims)
+	resp := models.ProfileResponse{Email: claims.Email}
 	profile, err := app.db.GetMyProfile(ctx, claims.UserID)
+	resp.Profile = profile
 	if err != nil {
-		return profile, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
-	return profile, nil
+	return resp, nil
 }
 
 func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.CompanyProfile) error {
+	err := app.validate.Struct(profile)
+	if err != nil {
+		return err
+	}
 	claims := ctx.Value("claims").(models.Claims)
-	err := app.db.UpdateCompanyProfile(ctx, claims.UserID, profile)
+	err = app.db.UpdateCompanyProfile(ctx, claims.UserID, profile)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfile, error) {
+func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
 	claims := ctx.Value("claims").(models.Claims)
+	resp := models.CompanyProfileResponse{
+		Email: claims.Email}
 	profile, err := app.db.GetCompanyProfile(ctx, claims.UserID)
+	resp.Profile = profile
 	if err != nil {
-		return profile, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
-	return profile, nil
+	return resp, nil
 }

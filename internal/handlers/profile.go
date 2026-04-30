@@ -25,7 +25,7 @@ func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return err
 	}
-	err = encodeJSON[models.Profile](w, profile)
+	err = encodeJSON[models.ProfileResponse](w, profile)
 	return err
 }
 
@@ -46,6 +46,6 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 	if err != nil {
 		return err
 	}
-	encodeJSON[models.CompanyProfile](w, profile)
+	encodeJSON[models.CompanyProfileResponse](w, profile)
 	return nil
 }
