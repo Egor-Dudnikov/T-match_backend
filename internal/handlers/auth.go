@@ -13,21 +13,21 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type AuthServiceHandler struct {
-	authService *service.AuthService
+type ServiceHandler struct {
+	authService *service.Service
 	corsConfig  *models.CORSConfig
 }
 
-func NewAuthServiceHandler(authService *service.AuthService, cfg *models.CORSConfig) *AuthServiceHandler {
-	return &AuthServiceHandler{authService: authService, corsConfig: cfg}
+func NewServiceHandler(authService *service.Service, cfg *models.CORSConfig) *ServiceHandler {
+	return &ServiceHandler{authService: authService, corsConfig: cfg}
 }
 
-func (h *AuthServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	w.Write([]byte("Hi men"))
 	return nil
 }
 
-func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userReg, err := decodeJSON[models.UserAuth](r)
 	if err != nil {
@@ -44,7 +44,7 @@ func (h *AuthServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.R
 	return nil
 }
 
-func (h *AuthServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	if sessionID == "" {
@@ -67,7 +67,7 @@ func (h *AuthServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func (h *AuthServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	err := h.authService.NewCode(ctx, sessionID)
@@ -77,7 +77,7 @@ func (h *AuthServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Reques
 	return nil
 }
 
-func (h *AuthServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.UserAuth](r)
 	if err != nil {
@@ -93,7 +93,7 @@ func (h *AuthServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Req
 	return nil
 }
 
-func (h *AuthServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userReg, err := decodeJSON[models.CompanyAuth](r)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *AuthServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.R
 	return nil
 }
 
-func (h *AuthServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("Token")
 	if sessionID == "" {
@@ -133,7 +133,7 @@ func (h *AuthServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http
 	return nil
 }
 
-func (h *AuthServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.UserAuth](r)
 	if err != nil {

@@ -16,15 +16,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
+type Service struct {
 	db       *repository.Repository
 	cache    *cache.Redis
 	email    *EmailClient
 	validate *validator.Validate
 }
 
-func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate) *AuthService {
-	return &AuthService{
+func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate) *Service {
+	return &Service{
 		db:       db,
 		cache:    cache,
 		email:    email,
@@ -32,7 +32,7 @@ func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailC
 	}
 }
 
-func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (string, error) {
+func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -95,7 +95,7 @@ func (app *AuthService) AuthUser(ctx context.Context, userReg models.UserAuth) (
 
 }
 
-func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -148,7 +148,7 @@ func (app *AuthService) VerifyUser(ctx context.Context, sessionID string, verify
 	return accessToken, refreshToken, nil
 }
 
-func (app *AuthService) NewCode(ctx context.Context, sessionID string) error {
+func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 	newCode, err := utils.NewCode()
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrInternalServer, err)
@@ -181,7 +181,7 @@ func (app *AuthService) NewCode(ctx context.Context, sessionID string) error {
 	return nil
 }
 
-func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) (string, string, error) {
+func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (string, string, error) {
 	err := app.validate.Struct(userLog)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -225,7 +225,7 @@ func (app *AuthService) LoginUser(ctx context.Context, userLog models.UserAuth) 
 	return accessToken, refreshToken, nil
 }
 
-func (app *AuthService) GetRefreshToken(ctx context.Context, id int, deviceID string) (string, error) {
+func (app *Service) GetRefreshToken(ctx context.Context, id int, deviceID string) (string, error) {
 	key := fmt.Sprintf("%d.%s", id, deviceID)
 	token, err := app.cache.Get(ctx, key)
 	if err != nil {
@@ -234,7 +234,7 @@ func (app *AuthService) GetRefreshToken(ctx context.Context, id int, deviceID st
 	return token, nil
 }
 
-func (app *AuthService) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
+func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
 	ok, err := app.cache.RateLimitCheck(ctx, key, rate)
 	if err != nil {
 		return false, fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)

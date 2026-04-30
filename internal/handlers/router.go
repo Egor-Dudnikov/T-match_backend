@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(app *AuthServiceHandler) *httprouter.Router {
+func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/", ErrorMiddleware(
@@ -43,11 +43,26 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 	router.PUT("/my/profile/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
-				app.RateLimitMiddleware(app.UbdateProfileHandler, 100, "/my/profile/put")))))
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.UbdateProfileHandler, 100, "/my/profile/put"))))))
 
 	router.GET("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.AuthMiddleware(app.RateLimitMiddleware(app.GetMyProfileHandler, 120, "my/profile")))))
+			app.AuthMiddleware(
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.GetMyProfileHandler, 120, "my/profile"))))))
+
+	router.PUT("/my/company/profile/put", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.UpdateCompanyProfileHandler, 100, "/my/company/profile"))))))
+
+	router.GET("/my/company/profile", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, 120, "/my/company/profile"))))))
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
@@ -58,6 +73,8 @@ func NewRouter(app *AuthServiceHandler) *httprouter.Router {
 	router.OPTIONS("/auth/company/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/profile/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/my/company/profile/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/my/company/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }

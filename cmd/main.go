@@ -45,7 +45,7 @@ func main() {
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
 
 	app := service.NewAuthService(repo, redis, email, validate)
-	authHandler := handlers.NewAuthServiceHandler(app, &config.CORSConfig)
+	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)
 

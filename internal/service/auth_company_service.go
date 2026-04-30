@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (app *AuthService) AuthCompany(ctx context.Context, userReg models.CompanyAuth) (string, error) {
+func (app *Service) AuthCompany(ctx context.Context, userReg models.CompanyAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -71,7 +71,7 @@ func (app *AuthService) AuthCompany(ctx context.Context, userReg models.CompanyA
 
 }
 
-func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+func (app *Service) VerifyCompany(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -128,7 +128,7 @@ func (app *AuthService) VerifyCompany(ctx context.Context, sessionID string, ver
 	return accessToken, refreshToken, nil
 }
 
-func (app *AuthService) LoginCompany(ctx context.Context, userLog models.UserAuth) (string, string, error) {
+func (app *Service) LoginCompany(ctx context.Context, userLog models.UserAuth) (string, string, error) {
 	err := app.validate.Struct(userLog)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)

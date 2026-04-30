@@ -27,7 +27,7 @@ func ErrorMiddleware(next ErrorHandler) httprouter.Handle {
 	}
 }
 
-func (h *AuthServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
+func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		w.Header().Set("Access-Control-Allow-Origin", strings.Join(h.corsConfig.ControlAllowOrigin, ", "))
 		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, PATCH")
@@ -43,7 +43,7 @@ func (h *AuthServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
-func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
+func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		tokenStr := r.Header.Get("Token")
 		if tokenStr == "" {
@@ -87,7 +87,7 @@ func (h *AuthServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
-func (h *AuthServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
+func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims := r.Context().Value("claims").(models.Claims)
 		if claims.Role != "intern" {
@@ -97,7 +97,7 @@ func (h *AuthServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
-func (h *AuthServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
+func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims := r.Context().Value("claims").(models.Claims)
 		if claims.Role != "company" {
@@ -107,7 +107,7 @@ func (h *AuthServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
-func (h *AuthServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
+func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		ctx := r.Context()
 		var id string
