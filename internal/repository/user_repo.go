@@ -92,9 +92,9 @@ func (r *Repository) CheckUserEmail(ctx context.Context, email string, role stri
 	return exist, nil
 }
 
-func (r *Repository) GetUser(ctx context.Context, email string) (models.User, error) {
+func (r *Repository) GetUser(ctx context.Context, email string, role string) (models.User, error) {
 	user := models.User{}
-	err := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, role FROM users WHERE email = $1`, email).Scan(
+	err := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, role FROM users WHERE email = $1 AND role = $2`, email, role).Scan(
 		&user.Id,
 		&user.Email,
 		&user.PasswordHash,

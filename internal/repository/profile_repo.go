@@ -75,24 +75,24 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 func (r *Repository) GetMyProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
 	err := r.db.QueryRowContext(ctx, `SELECT first_name, last_name, birth_date, location, university, degree, bio, experience, image 
-	FROM internal
+	FROM interns
 	WHERE user_id = $1`, id).Scan(
-		profile.FirstName,
-		profile.LastName,
-		profile.BirthDate,
-		profile.Location,
-		profile.University,
-		profile.Degree,
-		profile.Bio,
-		profile.Experience,
-		profile.Image)
+		&profile.FirstName,
+		&profile.LastName,
+		&profile.BirthDate,
+		&profile.Location,
+		&profile.University,
+		&profile.Degree,
+		&profile.Bio,
+		&profile.Experience,
+		&profile.Image)
 	return profile, err
 }
 
 func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile models.CompanyProfile) error {
 	var query strings.Builder
 	query.WriteString("Update companies SET ")
-	values := []interface{}{}
+	values := []interface{}{id}
 	cnt := 1
 	delimiter := false
 	addfilled := func(filled string, value any) {
@@ -130,16 +130,17 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile m
 
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
 	profile := models.CompanyProfile{}
-	err := r.db.QueryRowContext(ctx, `SELECT company_name, description, website, inn, ogrn, kpp, legal_address, director_name
+	err := r.db.QueryRowContext(ctx, `SELECT company_name, description, website, inn, ogrn, kpp, legal_address, director_name, image
 	FROM companies 
-	WHERE user_id = $1`).Scan(
-		profile.CompanyName,
-		profile.Description,
-		profile.Website,
-		profile.Inn,
-		profile.Ogrn,
-		profile.Kpp,
-		profile.LegalAddress,
-		profile.DirectorName)
+	WHERE user_id = $1`, id).Scan(
+		&profile.CompanyName,
+		&profile.Description,
+		&profile.Website,
+		&profile.Inn,
+		&profile.Ogrn,
+		&profile.Kpp,
+		&profile.LegalAddress,
+		&profile.DirectorName,
+		&profile.Image)
 	return profile, err
 }

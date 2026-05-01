@@ -143,7 +143,7 @@ func (app *Service) LoginCompany(ctx context.Context, userLog models.UserAuth) (
 	}
 
 	user := models.User{}
-	user, err = app.db.GetUser(ctx, userLog.Email)
+	user, err = app.db.GetUser(ctx, userLog.Email, "company")
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}

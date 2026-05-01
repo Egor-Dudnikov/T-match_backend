@@ -196,7 +196,7 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 	}
 
 	user := models.User{}
-	user, err = app.db.GetUser(ctx, userLog.Email)
+	user, err = app.db.GetUser(ctx, userLog.Email, "intern")
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
