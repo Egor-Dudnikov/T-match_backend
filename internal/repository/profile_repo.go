@@ -91,7 +91,7 @@ func (r *Repository) GetMyProfile(ctx context.Context, id int) (models.Profile, 
 
 func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile models.CompanyProfile) error {
 	var query strings.Builder
-	query.WriteString("Update companies SET ")
+	query.WriteString("UPDATE companies SET ")
 	values := []interface{}{id}
 	cnt := 1
 	delimiter := false
@@ -143,4 +143,18 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 		&profile.DirectorName,
 		&profile.Image)
 	return profile, err
+}
+
+func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE interns SET
+	image = $2
+	WHERE user_id = $1`, id, url)
+	return err
+}
+
+func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE companies SET
+	image = $2
+	WHERE user_id = $1`, id, url)
+	return err
 }

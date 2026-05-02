@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
+	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -48,4 +50,26 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 	}
 	encodeJSON[models.CompanyProfileResponse](w, profile)
 	return nil
+}
+
+func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+	claims := ctx.Value("claims").(models.Claims)
+	id := claims.UserID
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+	}
+
+	file, info, err := r.FormFile("avatar")
+	defer file.Close()
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+	}
+	url, err := h.authService.SetMyAvatar(ctx, info, file, id)
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[string](w, url)
+	return err
 }

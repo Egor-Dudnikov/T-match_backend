@@ -5,6 +5,7 @@ import (
 	"T-match_backend/internal/cache"
 	"T-match_backend/internal/handlers"
 	"T-match_backend/internal/repository"
+	"T-match_backend/internal/s3"
 	"T-match_backend/internal/service"
 	"T-match_backend/internal/utils"
 	"context"
@@ -37,14 +38,22 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	s3Client, err := s3.LoadS3(config.S3Config)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	repo := repository.NewRepository(db)
 	redis := cache.NewRedis(dbr)
 	email := service.NewEmailClient(config.EmailConfig)
+	s3, err := s3.NewS3(s3Client, config.S3Config)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
 
-	app := service.NewAuthService(repo, redis, email, validate)
+	app := service.NewAuthService(repo, redis, email, validate, s3)
 	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)

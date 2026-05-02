@@ -64,6 +64,12 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, 120, "/my/company/profile"))))))
 
+	router.PUT("/my/avatar/put", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.SetMyAvatarHandler, 100, "/my/avatar/put"))))))
+
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
@@ -75,6 +81,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.OPTIONS("/my/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/company/profile/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/company/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/my/avatar/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }

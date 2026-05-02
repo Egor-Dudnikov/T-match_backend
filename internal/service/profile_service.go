@@ -5,6 +5,9 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"strconv"
 	"time"
 )
 
@@ -63,4 +66,18 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return resp, nil
+}
+
+func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, id int) (string, error) {
+	name := "user:" + strconv.Itoa(id) + ":avatar"
+	url, err := app.s3.SetFile(ctx, name, file, "image/jpeg", info)
+	if err != nil {
+		return url, err
+	}
+	err = app.db.SetMyAvatar(ctx, url, id)
+	if err != nil {
+		app.s3.Delete(ctx, name)
+		return "", err
+	}
+	return url, err
 }

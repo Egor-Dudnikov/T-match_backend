@@ -27,5 +27,11 @@
     "CORSConfig": {
         "control_allow_origin": ["http://localhost:8000"],
         "control_allow_headers": ["Content-Type", "Token"]
+    },
+    "S3Config": {
+        "endpoint": "localhost:9000",
+	    "access_key_ID": "minioadmin",
+	    "secret_access_key": "minioadmin",
+	    "use_SSL": false
     }
 }

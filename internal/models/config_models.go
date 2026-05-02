@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Config struct {
 	DbConfig     DbConfig
@@ -8,6 +10,7 @@ type Config struct {
 	RedisConfig  RedisConfig
 	EmailConfig  EmailConfig
 	CORSConfig   CORSConfig
+	S3Config     S3Config
 }
 
 type DbConfig struct {
@@ -41,4 +44,11 @@ type EmailConfig struct {
 type CORSConfig struct {
 	ControlAllowOrigin  []string `json:"control_allow_origin"`
 	ControlAllowHeaders []string `json:"control_allow_headers"`
+}
+
+type S3Config struct {
+	Endpoint        string `json:"endpoint"`
+	AccessKeyID     string `json:"access_key_ID"`
+	SecretAccessKey string `json:"secret_access_key"`
+	UseSSL          bool   `json:"use_SSL"`
 }
