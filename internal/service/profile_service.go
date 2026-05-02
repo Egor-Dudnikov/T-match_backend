@@ -68,13 +68,20 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 	return resp, nil
 }
 
-func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, id int) (string, error) {
-	name := "user:" + strconv.Itoa(id) + ":avatar"
+func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
+
+	name := "user:" + strconv.Itoa(claims.UserID) + ":avatar"
 	url, err := app.s3.SetFile(ctx, name, file, "image/jpeg", info)
 	if err != nil {
 		return url, err
 	}
-	err = app.db.SetMyAvatar(ctx, url, id)
+
+	if claims.Role == "company" {
+		err = app.db.SetMyCompanyAvatar(ctx, url, claims.UserID)
+	} else {
+		err = app.db.SetMyAvatar(ctx, url, claims.UserID)
+	}
+
 	if err != nil {
 		app.s3.Delete(ctx, name)
 		return "", err

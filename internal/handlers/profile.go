@@ -55,7 +55,6 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims := ctx.Value("claims").(models.Claims)
-	id := claims.UserID
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
@@ -66,7 +65,7 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
-	url, err := h.authService.SetMyAvatar(ctx, info, file, id)
+	url, err := h.authService.SetMyAvatar(ctx, info, file, claims)
 	if err != nil {
 		return err
 	}

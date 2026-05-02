@@ -67,8 +67,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.PUT("/my/avatar/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
-				app.InternMiddleware(
-					app.RateLimitMiddleware(app.SetMyAvatarHandler, 100, "/my/avatar/put"))))))
+				app.RateLimitMiddleware(app.SetMyAvatarHandler, 100, "/my/avatar/put")))))
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))

@@ -103,3 +103,5 @@ ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "in
 ALTER TABLE "internship_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE interns ADD COLUMN image TEXT;
 ALTER TABLE companies ADD COLUMN image TEXT;
+ALTER TABLE internships 
+ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT FALSE;
