@@ -36,6 +36,8 @@ var (
 
 	ErrForbidden    = errors.New("access forbidden")
 	ErrUserMustBe16 = errors.New("birth date is invalid")
+
+	ErrInternshipIsArchived = errors.New("internship is archived")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -70,6 +72,10 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusNotFound, "User with this email not exists"
 	case errors.Is(err, ErrCompanyNotExists):
 		return http.StatusNotFound, "Company with this TIN not exists"
+
+	// 410 Gone
+	case errors.Is(err, ErrInternshipIsArchived):
+		return http.StatusGone, "Internship is archived"
 
 	// 422 Unprocessable Entity
 	case errors.Is(err, ErrUserMustBe16):

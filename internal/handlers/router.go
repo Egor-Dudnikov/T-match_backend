@@ -75,6 +75,10 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.NewIntershipHandler, 120, "/my/avatar/put"))))))
 
+	router.GET("/internships/:id", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.NewIntershipHandler)))
+
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/login", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
@@ -88,6 +92,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.OPTIONS("/my/company/profile", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/my/avatar/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/internships", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/internships/:id", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }
