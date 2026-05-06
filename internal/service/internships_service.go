@@ -36,3 +36,46 @@ func (app Service) GetInternshipById(ctx context.Context, id int) (models.Intern
 	}
 	return internship, err
 }
+
+func (app Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
+	err := app.validate.Struct(internship)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+	}
+
+	err = app.IsCompanysInternship(ctx, internship.Id)
+	if err != nil {
+		return err
+	}
+
+	err = app.db.UpdateInternships(ctx, internship)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
+}
+
+func (app Service) ArchivedInternship(ctx context.Context, id int) error {
+	err := app.IsCompanysInternship(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = app.db.ArchivedInternship(ctx, id)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
+}
+
+func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
+	companyId, err := app.db.GetCompanyIdByInternshipId(ctx, id)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
+	companyIdUser, err := app.db.GetCmpanyIdByUserId(ctx, ctx.Value("claims").(models.Claims).UserID)
+	if companyId != companyIdUser {
+		return apierrors.ErrForbidden
+	}
+	return nil
+}

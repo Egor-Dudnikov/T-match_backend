@@ -15,7 +15,7 @@ type Internship struct {
 }
 
 type InternshipUpdate struct {
-	Id            int    `json:"id" validate:"required"`
+	Id            int    `json:"id,omitempty"`
 	Title         string `json:"title,omitempty" validate:"omitempty,max=200"`
 	Description   string `json:"description,omitempty" validate:"omitempty,max=5000"`
 	Salary        *int   `json:"salary,omitempty" validate:"omitempty,min=0"`

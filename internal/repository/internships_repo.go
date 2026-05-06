@@ -73,3 +73,14 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	return err
 }
+
+func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (int, error) {
+	var companyId int
+	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1`, id).Scan(&companyId)
+	return companyId, err
+}
+
+func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = FALSE`)
+	return err
+}

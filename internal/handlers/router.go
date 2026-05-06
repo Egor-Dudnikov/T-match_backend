@@ -73,11 +73,23 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.NewIntershipHandler, 120, "/my/avatar/put"))))))
+					app.RateLimitMiddleware(app.NewIntershipHandler, 12, "/my/avatar/put"))))))
 
 	router.GET("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.NewIntershipHandler)))
+
+	router.PUT("/internships/update/:id", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.UpdateInternshipHandler, 12, "/internships/update/"))))))
+
+	router.DELETE("/internships/delete/:id", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.ArchivedInternshipHandler, 5, "/internships/delete/"))))))
 
 	router.OPTIONS("/auth/students", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/auth/students/verify", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
@@ -93,6 +105,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.OPTIONS("/my/avatar/put", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/internships", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 	router.OPTIONS("/internships/:id", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
+	router.OPTIONS("/internships/update/:id", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }
