@@ -158,3 +158,20 @@ func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int)
 	WHERE user_id = $1`, id, url)
 	return err
 }
+
+func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
+	skills := []models.Skill{}
+	rows, err := r.db.QueryContext(ctx, `SELECT * FROM skills;`)
+	if err != nil {
+		return skills, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var name string
+		rows.Scan(&id, &name)
+		skills = append(skills, models.Skill{Id: id, Name: name})
+	}
+
+	return skills, nil
+}

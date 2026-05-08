@@ -38,6 +38,7 @@ var (
 	ErrUserMustBe16 = errors.New("birth date is invalid")
 
 	ErrInternshipIsArchived = errors.New("internship is archived")
+	ErrInternshipNotFound   = errors.New("internship not found")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -72,6 +73,8 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusNotFound, "User with this email not exists"
 	case errors.Is(err, ErrCompanyNotExists):
 		return http.StatusNotFound, "Company with this TIN not exists"
+	case errors.Is(err, ErrInternshipNotFound):
+		return http.StatusNotFound, "Internship not found"
 
 	// 410 Gone
 	case errors.Is(err, ErrInternshipIsArchived):

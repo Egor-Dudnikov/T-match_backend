@@ -12,6 +12,7 @@ type Profile struct {
 	Bio        *string    `json:"bio,omitempty" validate:"omitempty,max=2000"`
 	Experience *string    `json:"experience,omitempty" validate:"omitempty,max=5000"`
 	Image      *string    `json:"image,omitempty" validate:"omitempty"`
+	SkillIDs   *[]int     `json:"skill_ids,omitempty"`
 }
 
 type CompanyProfile struct {
@@ -34,4 +35,9 @@ type ProfileResponse struct {
 type CompanyProfileResponse struct {
 	Email   string         `json:"email"`
 	Profile CompanyProfile `json:"profile"`
+}
+
+type Skill struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
 }

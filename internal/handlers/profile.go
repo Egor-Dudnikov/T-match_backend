@@ -72,3 +72,12 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	err = encodeJSON[string](w, url)
 	return err
 }
+
+func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	skills, err := h.authService.GetAllSkills(r.Context())
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[[]models.Skill](w, skills)
+	return err
+}

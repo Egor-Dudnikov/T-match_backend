@@ -21,19 +21,6 @@ func (app Service) NewInternship(ctx context.Context, internship models.Internsh
 
 func (app Service) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
 	internship, err := app.db.GetInternshipById(ctx, id)
-	if err != nil {
-		return internship, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
-	}
-	if internship.IsArchived {
-		claims := ctx.Value("claims").(models.Claims)
-		CompanyId, err := app.db.GetCmpanyIdByUserId(ctx, claims.UserID)
-		if err != nil {
-			return internship, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
-		}
-		if CompanyId != internship.CompanyId {
-			return internship, apierrors.ErrInternshipIsArchived
-		}
-	}
 	return internship, err
 }
 
@@ -49,10 +36,7 @@ func (app Service) UpdateInternship(ctx context.Context, internship models.Inter
 	}
 
 	err = app.db.UpdateInternships(ctx, internship)
-	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
-	}
-	return nil
+	return err
 }
 
 func (app Service) ArchivedInternship(ctx context.Context, id int) error {

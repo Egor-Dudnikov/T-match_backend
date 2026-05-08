@@ -51,7 +51,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 		}
 		token, claims, err := utils.DecodeJWT(tokenStr)
 		if err != nil {
-			return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
+			return fmt.Errorf("%w: %v", apierrors.ErrUnauthorized, err)
 		}
 		ctx := context.WithValue(r.Context(), "claims", claims)
 		if !token.Valid {

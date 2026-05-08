@@ -1,8 +1,12 @@
 package repository
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -19,17 +23,24 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 
 func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
-	err := r.db.QueryRowContext(ctx, `SELECT * FROM internships WHERE id = $1`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `SELECT * FROM internships WHERE id = $1 AND is_archived = TRUE`, id).Scan(
 		&internship.Id,
 		&internship.CompanyId,
 		&internship.Title,
 		&internship.Description,
 		&internship.Salary,
-		&internship.Location,
-		&internship.IsArchived,
 		&internship.DurationMonth,
+		&internship.Location,
 		&internship.CreatedAt,
+		&internship.IsArchived,
 	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return internship, apierrors.ErrInternshipNotFound
+		}
+		return internship, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
 	return internship, err
 }
 
@@ -68,9 +79,16 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 		addFilled("duration_month", internship.DurationMonth)
 	}
 
-	query.WriteString(" WHERE id = $1")
+	query.WriteString(" WHERE id = $1 AND is_archived = TRUE")
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return apierrors.ErrInternshipNotFound
+		}
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
 	return err
 }
 
