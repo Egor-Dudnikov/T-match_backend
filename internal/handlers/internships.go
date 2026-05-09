@@ -89,11 +89,11 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 		return err
 	}
 
-	skillIDs, err := decodeJSON[[]int](r)
+	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
-	err = h.authService.AddInternshipSkills(ctx, skillIDs, id)
+	err = h.authService.AddInternshipSkills(ctx, skillIDs.Id, id)
 	return err
 }
 
@@ -104,10 +104,10 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 		return err
 	}
 
-	skillIDs, err := decodeJSON[[]int](r)
+	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
-	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs)
+	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs.Id)
 	return err
 }

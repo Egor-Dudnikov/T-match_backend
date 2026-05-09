@@ -23,7 +23,7 @@ func (app Service) GetInternshipById(ctx context.Context, id int) (models.Intern
 	res := models.InternshipResponse{}
 	internship, err := app.db.GetInternshipById(ctx, id)
 	if err != nil {
-		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return res, err
 	}
 
 	res.Internship = internship

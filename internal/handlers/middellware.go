@@ -127,6 +127,5 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 			return apierrors.ErrTooManyInvalidAttempts
 		}
 		return next(w, r, ps)
-
 	}
 }

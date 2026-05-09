@@ -25,7 +25,7 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 
 func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
-	err := r.db.QueryRowContext(ctx, `SELECT * FROM internships WHERE id = $1 AND is_archived = TRUE`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `SELECT * FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(
 		&internship.Id,
 		&internship.CompanyId,
 		&internship.Title,
@@ -81,7 +81,7 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 		addFilled("duration_month", internship.DurationMonth)
 	}
 
-	query.WriteString(" WHERE id = $1 AND is_archived = TRUE")
+	query.WriteString(" WHERE id = $1 AND is_archived = FALSE")
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
@@ -101,6 +101,6 @@ func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (in
 }
 
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = FALSE`)
+	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE`)
 	return err
 }

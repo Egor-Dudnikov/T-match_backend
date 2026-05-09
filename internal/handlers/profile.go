@@ -83,19 +83,19 @@ func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ h
 }
 
 func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	skillIDs, err := decodeJSON[[]int](r)
+	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
 		return err
 	}
-	err = h.authService.AddInternSkills(r.Context(), skillIDs)
+	err = h.authService.AddInternSkills(r.Context(), skillIDs.Id)
 	return err
 }
 
 func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	skillIDs, err := decodeJSON[[]int](r)
+	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
 		return err
 	}
-	err = h.authService.DeleteInternSkills(r.Context(), skillIDs)
+	err = h.authService.DeleteInternSkills(r.Context(), skillIDs.Id)
 	return err
 }

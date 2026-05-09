@@ -50,13 +50,13 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 		return res, err
 	}
 	rows, err := r.db.QueryContext(ctx, `SELECT skill_id FROM intern_skills WHERE intern_id = $1`, id)
-	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return res, nil
 		}
 		return res, nil
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var skillID int
@@ -195,7 +195,7 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 	}
 
 	var query strings.Builder
-	query.WriteString("SELECT * FROM skills WHERE skill_id IN (")
+	query.WriteString("SELECT name FROM skills WHERE id IN (")
 	delimiter := false
 	values := []interface{}{}
 	for i, value := range skillsID {
@@ -204,16 +204,17 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 		if delimiter {
 			query.WriteString(", ")
 		}
+		query.WriteString("$")
 		query.WriteString(strconv.Itoa(i + 1))
 		delimiter = true
 	}
 	query.WriteString(")")
 
-	rows, err := r.db.QueryContext(ctx, query.String(), values)
-	defer rows.Close()
+	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	ptr := 0
 	for rows.Next() {

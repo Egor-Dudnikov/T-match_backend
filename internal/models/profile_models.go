@@ -41,3 +41,7 @@ type Skill struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+type SkillID struct {
+	Id []int `json:"skill_id"`
+}
