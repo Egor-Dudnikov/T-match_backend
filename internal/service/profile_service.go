@@ -89,6 +89,10 @@ func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, 
 	return url, err
 }
 
+func (app Service) AddSkills() error {
+
+}
+
 func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills, err := app.db.GetAllSkills(ctx)
 	if err != nil {

@@ -10,7 +10,6 @@ type Internship struct {
 	Salary        int       `json:"salary" validate:"omitempty,min=0"`
 	Location      string    `json:"location" validate:"required,max=200"`
 	IsArchived    bool      `json:"is_archived"`
-	SkillIDs      []int     `json:"skill_ids,omitempty"`
 	DurationMonth int       `json:"duration_month" validate:"required,min=1"`
 	CreatedAt     time.Time `json:"created_at"`
 }

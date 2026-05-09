@@ -81,3 +81,5 @@ func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ h
 	err = encodeJSON[[]models.Skill](w, skills)
 	return err
 }
+
+func (h ServiceHandler) AddSkillsHandler() error
