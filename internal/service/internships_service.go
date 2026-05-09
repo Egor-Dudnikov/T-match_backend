@@ -116,3 +116,8 @@ func (app Service) GetInternshipResponses(ctx context.Context, internshipID int)
 	responses, err := app.db.GetMyResponses(ctx, internshipID)
 	return responses, err
 }
+
+func (app Service) SetResponseStatus(ctx context.Context, ResponseID int, status string) error {
+	err := app.db.SetResponseStatus(ctx, ResponseID, status)
+	return err
+}

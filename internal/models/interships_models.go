@@ -35,3 +35,7 @@ type Response struct {
 	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 }
+
+type ResponseRequest struct {
+	Status string `json:"status"`
+}
