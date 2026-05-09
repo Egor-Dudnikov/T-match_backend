@@ -122,3 +122,15 @@ func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http
 	err = h.authService.RespondInternship(ctx, id)
 	return err
 }
+
+func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+
+	responses, err := h.authService.GetInternshipResponses(ctx, id)
+	encodeJSON[[]models.Response](w, responses)
+	return nil
+}

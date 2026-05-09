@@ -124,6 +124,18 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.InternMiddleware(
 					app.RateLimitMiddleware(app.AddInternSkillsHandler, 10, "/internships/:id/respond"))))))
 
+	router.GET("/my/responses", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.GetMyResponsesHandler, 20, "/my/responses"))))))
+
+	router.GET("/internships/:id/responses", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.GetMyResponsesHandler, 20, "/internships/:id/responses"))))))
+
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router

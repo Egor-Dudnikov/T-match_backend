@@ -27,3 +27,11 @@ type InternshipResponse struct {
 	Internship Internship `json:"internship"`
 	Skills     []Skill    `json:"skills"`
 }
+
+type Response struct {
+	ID           int       `json:"id"`
+	InternID     int       `json:"intern_id"`
+	InternshipID int       `json:"internship_id"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}

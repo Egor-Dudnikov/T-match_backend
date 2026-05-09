@@ -108,7 +108,7 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 }
 
 func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) error {
-	_, err := r.db.ExecContext(ctx, `INSERT (intern_id, internship_id) VALUES ($1, $2)`, internID, internshipID)
+	_, err := r.db.ExecContext(ctx, `INSERT INTO applications (intern_id, internship_id) VALUES ($1, $2)`, internID, internshipID)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			return apierrors.ErrAlreadyResponded

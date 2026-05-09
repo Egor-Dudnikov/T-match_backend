@@ -111,3 +111,8 @@ func (app Service) RespondInternship(ctx context.Context, internshipID int) erro
 	}
 	return nil
 }
+
+func (app Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
+	responses, err := app.db.GetMyResponses(ctx, internshipID)
+	return responses, err
+}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
@@ -109,4 +110,23 @@ func (r *Repository) GetCmpanyIdByUserId(ctx context.Context, userID int) (int, 
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
 	return id, err
+}
+
+func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models.Response, error) {
+	res := []models.Response{}
+	rows, err := r.db.QueryContext(ctx, `SELECT * FROM applications WHERE intern_id = $1`, internID)
+	if err != nil {
+		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		response := models.Response{}
+		rows.Scan(&response.ID,
+			&response.InternID,
+			&response.InternshipID,
+			&response.Status,
+			&response.CreatedAt)
+		res = append(res, response)
+	}
+	return res, err
 }

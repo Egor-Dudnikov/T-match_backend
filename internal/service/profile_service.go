@@ -118,3 +118,14 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 	}
 	return nil
 }
+
+func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
+	responses := []models.Response{}
+	claims := ctx.Value("claims").(models.Claims)
+	internID, err := app.db.GetInternId(ctx, claims.UserID)
+	if err != nil {
+		return responses, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	responses, err = app.db.GetMyResponses(ctx, internID)
+	return responses, err
+}

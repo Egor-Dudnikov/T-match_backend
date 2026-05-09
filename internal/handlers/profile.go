@@ -99,3 +99,13 @@ func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http
 	err = h.authService.DeleteInternSkills(r.Context(), skillIDs.Id)
 	return err
 }
+
+func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	responses, err := h.authService.GetMyResponses(ctx)
+	if err != nil {
+		return err
+	}
+	encodeJSON[[]models.Response](w, responses)
+	return nil
+}
