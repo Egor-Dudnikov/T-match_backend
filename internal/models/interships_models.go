@@ -22,3 +22,8 @@ type InternshipUpdate struct {
 	Location      string `json:"location,omitempty" validate:"omitempty,max=200"`
 	DurationMonth int    `json:"duration_month,omitempty" validate:"omitempty,min=1"`
 }
+
+type InternshipResponse struct {
+	Internship Internship `json:"internship"`
+	Skills     []Skill    `json:"skills"`
+}

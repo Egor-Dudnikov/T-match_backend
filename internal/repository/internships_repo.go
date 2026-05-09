@@ -11,14 +11,16 @@ import (
 	"strings"
 )
 
-func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) error {
+func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
 	id, err := r.GetCmpanyIdByUserId(ctx, userID)
 	if err != nil {
-		return err
+		return 0, err
 	}
+
+	var internshipID int
 	err = r.db.QueryRowContext(ctx, `INSERT INTO internships (company_id, title, description, salary, duration_months, location, created_at)
-	VALUES ($1, $2, $3, $4, $5, $6, NOW())`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.Location).Err()
-	return err
+	VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.Location).Scan(&internshipID)
+	return internshipID, err
 }
 
 func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {

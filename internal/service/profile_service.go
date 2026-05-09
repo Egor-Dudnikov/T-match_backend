@@ -40,6 +40,10 @@ func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, er
 	if err != nil {
 		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
+	resp.Skills, err = app.db.GetInternSkills(ctx, claims.UserID)
+	if err != nil {
+		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
 	return resp, nil
 }
 
@@ -100,6 +104,15 @@ func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims := ctx.Value("claims").(models.Claims)
 	err := app.db.AddInternSkills(ctx, skills, claims.UserID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
+}
+
+func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
+	claims := ctx.Value("claims").(models.Claims)
+	err := app.db.DeleteInternSkills(ctx, skillIDs, claims.UserID)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}

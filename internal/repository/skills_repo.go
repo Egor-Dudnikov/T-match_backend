@@ -42,9 +42,10 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 	return err
 }
 
-func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]int, error) {
+func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.Skill, error) {
 	id, err := r.GetInternId(ctx, userID)
-	res := []int{}
+	res := []models.Skill{}
+	skillIDs := []int{}
 	if err != nil {
 		return res, err
 	}
@@ -60,9 +61,11 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]int, er
 	for rows.Next() {
 		var skillID int
 		rows.Scan(&skillID)
-		res = append(res, skillID)
+		skillIDs = append(skillIDs, skillID)
 	}
-	return res, nil
+
+	res, err = r.GetNameSkills(ctx, skillIDs)
+	return res, err
 }
 
 func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userID int) error {

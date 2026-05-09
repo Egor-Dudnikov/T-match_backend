@@ -29,6 +29,7 @@ type CompanyProfile struct {
 type ProfileResponse struct {
 	Email   string  `json:"email"`
 	Profile Profile `json:"profile"`
+	Skills  []Skill `json:"skills"`
 }
 
 type CompanyProfileResponse struct {

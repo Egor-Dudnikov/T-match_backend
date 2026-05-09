@@ -18,10 +18,11 @@ func (h *ServiceHandler) NewIntershipHandler(w http.ResponseWriter, r *http.Requ
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 	internship.CompanyId = claims.UserID
-	err = h.authService.NewInternship(ctx, internship, claims.UserID)
+	internshipID, err := h.authService.NewInternship(ctx, internship, claims.UserID)
 	if err != nil {
 		return err
 	}
+	encodeJSON[int](w, internshipID)
 	return nil
 }
 
@@ -32,11 +33,11 @@ func (h *ServiceHandler) GetInternshipByIdHandler(w http.ResponseWriter, r *http
 		return err
 	}
 
-	internship, err := h.authService.GetInternshipById(ctx, id)
+	internshipResp, err := h.authService.GetInternshipById(ctx, id)
 	if err != nil {
 		return err
 	}
-	err = encodeJSON[models.Internship](w, internship)
+	err = encodeJSON[models.InternshipResponse](w, internshipResp)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
 	}
@@ -79,4 +80,34 @@ func (h *ServiceHandler) ArchivedInternshipHandler(w http.ResponseWriter, r *htt
 		return err
 	}
 	return nil
+}
+
+func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+
+	skillIDs, err := decodeJSON[[]int](r)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+	}
+	err = h.authService.AddInternshipSkills(ctx, skillIDs, id)
+	return err
+}
+
+func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+
+	skillIDs, err := decodeJSON[[]int](r)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+	}
+	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs)
+	return err
 }

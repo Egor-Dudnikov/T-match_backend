@@ -7,21 +7,32 @@ import (
 	"fmt"
 )
 
-func (app Service) NewInternship(ctx context.Context, internship models.Internship, id int) error {
+func (app Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
 	err := app.validate.Struct(internship)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return 0, fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
-	err = app.db.NewInternship(ctx, internship, id)
+	internshipID, err := app.db.NewInternship(ctx, internship, id)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return internshipID, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
-	return nil
+	return internshipID, nil
 }
 
-func (app Service) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
+func (app Service) GetInternshipById(ctx context.Context, id int) (models.InternshipResponse, error) {
+	res := models.InternshipResponse{}
 	internship, err := app.db.GetInternshipById(ctx, id)
-	return internship, err
+	if err != nil {
+		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
+	res.Internship = internship
+	res.Skills, err = app.db.GetInternshipSkills(ctx, id)
+	if err != nil {
+		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+
+	return res, nil
 }
 
 func (app Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
@@ -60,6 +71,30 @@ func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 	companyIdUser, err := app.db.GetCmpanyIdByUserId(ctx, ctx.Value("claims").(models.Claims).UserID)
 	if companyId != companyIdUser {
 		return apierrors.ErrForbidden
+	}
+	return nil
+}
+
+func (app Service) AddInternshipSkills(ctx context.Context, skills []int, id int) error {
+	err := app.IsCompanysInternship(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = app.db.AddInternshipSkills(ctx, skills, id)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
+}
+
+func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int, skillIDs []int) error {
+	err := app.IsCompanysInternship(ctx, internshipID)
+	if err != nil {
+		return err
+	}
+	err = app.db.DeleteInternshipSkills(ctx, skillIDs, internshipID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
