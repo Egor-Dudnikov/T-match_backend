@@ -89,14 +89,19 @@ func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, 
 	return url, err
 }
 
-func (app Service) AddSkills() error {
-
-}
-
 func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills, err := app.db.GetAllSkills(ctx)
 	if err != nil {
 		return skills, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return skills, nil
+}
+
+func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
+	claims := ctx.Value("claims").(models.Claims)
+	err := app.db.AddInternSkills(ctx, skills, claims.UserID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
 }

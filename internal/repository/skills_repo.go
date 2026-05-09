@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
 	"errors"
@@ -133,8 +134,9 @@ func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, inte
 	return err
 }
 
-func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) ([]int, error) {
-	res := []int{}
+func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) ([]models.Skill, error) {
+	res := []models.Skill{}
+	skillIDs := []int{}
 	rows, err := r.db.QueryContext(ctx, `SELECT skill_id FROM internship_skills WHERE internship_id = $1`, internshipID)
 	defer rows.Close()
 	if err != nil {
@@ -147,9 +149,11 @@ func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) 
 	for rows.Next() {
 		var skillID int
 		rows.Scan(&skillID)
-		res = append(res, skillID)
+		skillIDs = append(skillIDs, skillID)
 	}
-	return res, nil
+
+	res, err = r.GetNameSkills(ctx, skillIDs)
+	return res, err
 }
 
 func (r *Repository) DeleteInternshipSkills(ctx context.Context, skills []int, internshipID int) error {
@@ -179,4 +183,40 @@ func (r *Repository) DeleteInternshipSkills(ctx context.Context, skills []int, i
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	return err
+}
+
+func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]models.Skill, error) {
+	res := []models.Skill{}
+	if len(skillsID) == 0 {
+		return res, nil
+	}
+
+	var query strings.Builder
+	query.WriteString("SELECT * FROM skills WHERE skill_id IN (")
+	delimiter := false
+	values := []interface{}{}
+	for i, value := range skillsID {
+		values = append(values, value)
+		res = append(res, models.Skill{Id: value})
+		if delimiter {
+			query.WriteString(", ")
+		}
+		query.WriteString(strconv.Itoa(i + 1))
+		delimiter = true
+	}
+	query.WriteString(")")
+
+	rows, err := r.db.QueryContext(ctx, query.String(), values)
+	defer rows.Close()
+	if err != nil {
+		return res, err
+	}
+
+	ptr := 0
+	for rows.Next() {
+		rows.Scan(&res[ptr].Name)
+		ptr++
+	}
+
+	return res, nil
 }
