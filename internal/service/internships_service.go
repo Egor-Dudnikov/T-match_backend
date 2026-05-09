@@ -113,11 +113,35 @@ func (app Service) RespondInternship(ctx context.Context, internshipID int) erro
 }
 
 func (app Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
-	responses, err := app.db.GetMyResponses(ctx, internshipID)
+	err := app.IsCompanysInternship(ctx, internshipID)
+	if err != nil {
+		return []models.Response{}, err
+	}
+	responses, err := app.db.InternshipsResponse(ctx, internshipID)
 	return responses, err
 }
 
-func (app Service) SetResponseStatus(ctx context.Context, ResponseID int, status string) error {
-	err := app.db.SetResponseStatus(ctx, ResponseID, status)
+func (app Service) SetResponseStatus(ctx context.Context, responseID int, status string) error {
+	statuses := [4]string{"pending", "reviewing", "accepted", "rejected"}
+	ok := false
+	for _, st := range statuses {
+		if status == st {
+			ok = true
+		}
+	}
+	if !ok {
+		return apierrors.ErrBadRequest
+	}
+	internshipID, err := app.db.GetInternshipIdByResponseId(ctx, responseID)
+	if err != nil {
+		return err
+	}
+
+	err = app.IsCompanysInternship(ctx, internshipID)
+	if err != nil {
+		return err
+	}
+
+	err = app.db.SetResponseStatus(ctx, responseID, status)
 	return err
 }

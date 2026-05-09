@@ -29,7 +29,7 @@ func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models
 }
 
 func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) error {
-	_, err := r.db.ExecContext(ctx, `INSERT INTO applications (intern_id, internship_id) VALUES ($1, $2)`, internID, internshipID)
+	_, err := r.db.ExecContext(ctx, `INSERT INTO applications (intern_id, internship_id, created_at) VALUES ($1, $2, NOW())`, internID, internshipID)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			return apierrors.ErrAlreadyResponded
@@ -73,4 +73,13 @@ func (r *Repository) SetResponseStatus(ctx context.Context, ID int, status strin
 		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return nil
+}
+
+func (r *Repository) GetInternshipIdByResponseId(ctx context.Context, ResponseID int) (int, error) {
+	var internshipID int
+	err := r.db.QueryRowContext(ctx, `SELECT internship_id FROM applications WHERE id = $1`, ResponseID).Scan(&internshipID)
+	if err != nil {
+		return internshipID, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return internshipID, nil
 }

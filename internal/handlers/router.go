@@ -122,7 +122,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.AddInternSkillsHandler, 10, "/internships/:id/respond"))))))
+					app.RateLimitMiddleware(app.RespondInternshipHandler, 10, "/internships/:id/respond"))))))
 
 	router.GET("/my/responses", ErrorMiddleware(
 		app.CorsMiddleware(
@@ -134,7 +134,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.GetMyResponsesHandler, 20, "/internships/:id/responses"))))))
+					app.RateLimitMiddleware(app.GetInternshipResponses, 20, "/internships/:id/responses"))))))
 
 	router.PUT("/responses/:id/status", ErrorMiddleware(
 		app.CorsMiddleware(
