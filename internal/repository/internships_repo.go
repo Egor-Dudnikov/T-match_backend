@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/lib/pq"
 )
 
 func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
@@ -103,4 +105,15 @@ func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (in
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE`)
 	return err
+}
+
+func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) error {
+	_, err := r.db.ExecContext(ctx, `INSERT (intern_id, internship_id) VALUES ($1, $2)`, internID, internshipID)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return apierrors.ErrAlreadyResponded
+		}
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
 }

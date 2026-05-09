@@ -111,3 +111,14 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs.Id)
 	return err
 }
+
+func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+
+	err = h.authService.RespondInternship(ctx, id)
+	return err
+}

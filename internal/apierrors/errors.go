@@ -39,6 +39,7 @@ var (
 
 	ErrInternshipIsArchived = errors.New("internship is archived")
 	ErrInternshipNotFound   = errors.New("internship not found")
+	ErrAlreadyResponded     = errors.New("already responded to this internship")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -67,6 +68,8 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	// 409 Conflict
 	case errors.Is(err, ErrUserAlreadyExists):
 		return http.StatusConflict, "User with this email already exists"
+	case errors.Is(err, ErrAlreadyResponded):
+		return http.StatusConflict, "You have already responded to this internship"
 
 	// 404 Not Found
 	case errors.Is(err, ErrUserNotExists):

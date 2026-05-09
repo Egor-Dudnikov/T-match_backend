@@ -98,3 +98,16 @@ func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int,
 	}
 	return nil
 }
+
+func (app Service) RespondInternship(ctx context.Context, internshipID int) error {
+	claims := ctx.Value("claims").(models.Claims)
+	internID, err := app.db.GetInternId(ctx, claims.UserID)
+	if err != nil {
+		return err
+	}
+	err = app.db.RespondInternship(ctx, internID, internshipID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
