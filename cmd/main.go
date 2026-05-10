@@ -24,10 +24,7 @@ func main() {
 	if os.Getenv("JWT_SECRET") == "" {
 		log.Fatalln("not JWT_SECRET in env")
 	}
-	config, err := configs.LoadConfig()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	config := configs.LoadConfig()
 
 	db, err := repository.PingDatabase(config.DbConfig)
 	if err != nil {
