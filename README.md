@@ -30,6 +30,7 @@
 7. [Система токенов](#7-система-токенов)
 8. [Rate Limiting](#8-rate-limiting)
 9. [Обработка ошибок](#9-обработка-ошибок)
+10. []
 
 ---
 
@@ -582,5 +583,106 @@ PUT /responses/:id/status
 | `500` | `Internal server error` | Ошибка сервера |
 | `502` | `External service error` | Ошибка DaData API |
 | `503` | `Service unavailable` | Redis или email недоступны |
+
+---
+
+## 10. Запуск приложения
+
+### Требования
+
+| Компонент | Версия |
+| :--- | :--- |
+| **Docker** | ≥ 20.10 |
+| **Docker Compose** | ≥ 1.29 |
+
+### Быстрый старт (Docker)
+
+#### 1. Клонирование репозитория
+```bash
+git clone https://github.com/Egor-Dudnikov/T-match_backend.git
+cd T-match_backend
+```
+
+#### 2. Настройка окружения
+
+Переименуйте файл `.env.example` в `.env` и отредактируйте его:
+
+```bash
+mv .env.example .env
+nano .env
+```
+
+**Содержимое `.env` (отредактируйте под себя):**
+```env
+# JWT (обязательно сгенерируйте свой)
+JWT_SECRET=your_jwt_secret_32chars_minimum
+
+# Database
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=t_match_database
+DB_USER=postgres
+DB_PASSWORD=your_db_password
+DB_SSLMODE=disable
+
+# Server
+SERVER_HOST=0.0.0.0
+SERVER_PORT=:8080
+
+# Redis
+REDIS_ADDR=redis:6379
+REDIS_DB=0
+REDIS_USER=
+REDIS_MAX_RETRIES=3
+REDIS_DIAL_TIMEOUT=5000000000
+REDIS_TIMEOUT=3000000000
+
+# Email (оставьте пустыми, если не нужна почта)
+EMAIL_ADDR=
+EMAIL_HOST=
+EMAIL_IDENTITY=
+EMAIL_USERNAME=
+EMAIL_PASSWORD=
+
+# CORS
+CORS_ALLOW_ORIGIN=http://localhost:8000
+CORS_ALLOW_HEADERS=Content-Type,Token
+
+# S3/MinIO
+S3_ENDPOINT=minio:9000
+S3_ACCESS_KEY_ID=minioadmin
+S3_SECRET_ACCESS_KEY=minioadmin
+S3_USE_SSL=false
+
+# DaData (обязательно получите свой ключ)
+DA_DATA_API_KEY=your_dadata_api_key
+
+# Config
+CONFIG_PATH=./configs/configuration.json
+```
+
+#### 3. Где взять ключи
+
+| Переменная | Где получить |
+| :--- | :--- |
+| `DA_DATA_API_KEY` | Зарегистрироваться на [dadata.ru](https://dadata.ru) → API → Ключи доступа |
+| `JWT_SECRET` | Сгенерировать: `openssl rand -base64 32` |
+| `DB_PASSWORD` | Придумать самостоятельно |
+| `EMAIL_*` | Оставить пустыми, почта не обязательна |
+
+#### 4. Запуск всех сервисов
+```bash
+docker-compose up -d
+```
+
+#### 5. Проверка статуса
+```bash
+docker-compose ps
+docker-compose logs app
+```
+
+---
+
+**API доступно:** `http://localhost:8080`
 
 ---
