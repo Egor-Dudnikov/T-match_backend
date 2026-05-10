@@ -30,7 +30,7 @@ CREATE TABLE "interns" (
   "degree" VARCHAR,
   "bio" TEXT,
   "experience" TEXT,
-  "image" TEXT
+  "image" TEXT  -- image уже здесь!
 );
 
 CREATE TABLE "companies" (
@@ -101,7 +101,8 @@ ALTER TABLE "intern_skills" ADD FOREIGN KEY ("intern_id") REFERENCES "interns" (
 ALTER TABLE "intern_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "internships" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "internship_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-ALTER TABLE interns ADD COLUMN image TEXT;
-ALTER TABLE companies ADD COLUMN image TEXT;
+
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS image TEXT;
+
 ALTER TABLE internships 
-ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
