@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package handlers
 
 import (
@@ -141,6 +144,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.SetResponseStatus, 20, "/responses/:id/status"))))))
+
+	router.GET("/internships", ErrorMiddleware(
+		app.CorsMiddleware(app.SearchInternshipHandler)))
 
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 

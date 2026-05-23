@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package models
 
 import "time"
@@ -38,4 +41,18 @@ type Response struct {
 
 type ResponseRequest struct {
 	Status string `json:"status"`
+}
+
+type SearchInternship struct {
+	Query       *string
+	Location    *string
+	SalaryMax   *int
+	SalaryMin   *int
+	DurationMin *int
+	DurationMax *int
+	Skills      *[]int
+	Sort        *string
+	Order       *int
+	Offset      *int
+	Limit       *int
 }

@@ -30,7 +30,7 @@ CREATE TABLE "interns" (
   "degree" VARCHAR,
   "bio" TEXT,
   "experience" TEXT,
-  "image" TEXT  -- image уже здесь!
+  "image" TEXT  
 );
 
 CREATE TABLE "companies" (
@@ -106,3 +106,12 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS image TEXT;
 
 ALTER TABLE internships 
 ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE internships ADD COLUMN tsv_content tsvector 
+    
+CREATE OR REPLACE FUNCTION update_internships_search_vector() RETURNS trigger AS $$
+BEGIN
+  NEW.tsv_content :=
+    
+END;
+$$ LANGUAGE plpgsql;

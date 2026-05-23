@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package handlers
 
 import (
@@ -148,5 +151,95 @@ func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Reques
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
 	h.authService.SetResponseStatus(ctx, id, resp.Status)
+	return nil
+}
+
+func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	query := r.URL.Query().Get("query")
+	location := r.URL.Query().Get("location")
+	salaryMax := r.URL.Query().Get("salary_max")
+	salaryMin := r.URL.Query().Get("salary_min")
+	durationMin := r.URL.Query().Get("duration_min")
+	durationMax := r.URL.Query().Get("duration_max")
+	skills := r.URL.Query()["skills"]
+	sort := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+	offset := r.URL.Query().Get("offset")
+	limit := r.URL.Query().Get("limit")
+
+	filters := models.SearchInternship{}
+
+	if len(query) != 0 {
+		filters.Query = &query
+	}
+
+	if len(location) != 0 {
+		filters.Location = &location
+	}
+
+	if len(salaryMax) != 0 {
+		if val, err := strconv.Atoi(salaryMax); err == nil {
+			filters.SalaryMax = &val
+		}
+	}
+
+	if len(salaryMin) != 0 {
+		if val, err := strconv.Atoi(salaryMin); err == nil {
+			filters.SalaryMin = &val
+		}
+	}
+
+	if len(durationMin) != 0 {
+		if val, err := strconv.Atoi(durationMin); err == nil {
+			filters.DurationMin = &val
+		}
+	}
+
+	if len(durationMax) != 0 {
+		if val, err := strconv.Atoi(durationMax); err == nil {
+			filters.DurationMax = &val
+		}
+	}
+
+	if len(skills) != 0 {
+		var skillIds []int
+		for _, s := range skills {
+			if id, err := strconv.Atoi(s); err == nil {
+				skillIds = append(skillIds, id)
+			}
+		}
+		if len(skillIds) > 0 {
+			filters.Skills = &skillIds
+		}
+	}
+
+	if len(sort) != 0 {
+		filters.Sort = &sort
+	}
+
+	if len(order) != 0 {
+		if val, err := strconv.Atoi(order); err == nil {
+			filters.Order = &val
+		}
+	}
+
+	if len(offset) != 0 {
+		if val, err := strconv.Atoi(offset); err == nil {
+			filters.Offset = &val
+		}
+	}
+
+	if len(limit) != 0 {
+		if val, err := strconv.Atoi(limit); err == nil {
+			filters.Limit = &val
+		}
+	}
+
+	res, err := h.authService.SearchInternship(r.Context(), filters)
+	if err != nil {
+		return err
+	}
+
+	encodeJSON[[]models.Internship](w, res)
 	return nil
 }

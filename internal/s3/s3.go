@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package s3
 
 import (

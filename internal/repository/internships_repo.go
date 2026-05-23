@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package repository
 
 import (
@@ -25,7 +28,9 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 
 func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
-	err := r.db.QueryRowContext(ctx, `SELECT * FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `SELECT id, company_id, title, description, 
+           salary, duration_months, location, 
+           created_at, is_archived FROM internships FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(
 		&internship.Id,
 		&internship.CompanyId,
 		&internship.Title,
@@ -103,4 +108,36 @@ func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (in
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE`)
 	return err
+}
+
+func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
+	res := []models.Internship{}
+	query := `SELECT id, company_id, title, description, 
+           salary, duration_months, location, 
+           created_at, is_archived FROM internships
+				WHERE (tsv_content @@ plainto_tsquery('russian', $1)) AND is_archived = FALSE;
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, filters.Query)
+	if err != nil {
+		return res, err
+	}
+
+	for rows.Next() {
+		internship := models.Internship{}
+		rows.Scan(
+			&internship.Id,
+			&internship.CompanyId,
+			&internship.Title,
+			&internship.Description,
+			&internship.Salary,
+			&internship.DurationMonth,
+			&internship.Location,
+			&internship.CreatedAt,
+			&internship.IsArchived,
+		)
+		res = append(res, internship)
+	}
+
+	return res, nil
 }

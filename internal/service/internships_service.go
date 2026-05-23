@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Egor Dudnikov
+// SPDX-License-Identifier: MIT
+
 package service
 
 import (
@@ -144,4 +147,9 @@ func (app Service) SetResponseStatus(ctx context.Context, responseID int, status
 
 	err = app.db.SetResponseStatus(ctx, responseID, status)
 	return err
+}
+
+func (app Service) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
+	res, err := app.db.SearchInternship(ctx, filters)
+	return res, err
 }
