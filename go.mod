@@ -1,9 +1,6 @@
 module T-match_backend
 
 go 1.25.0
-
-license "MIT"
-
 require (
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

@@ -178,3 +178,17 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 
 	return skills, nil
 }
+
+func SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
+	res := []models.CompanyProfile{}
+
+	var query strings.Builder
+	query.WriteString("SELECT id, user_id, company_name, description, website, inn, kpp, ogrn, legal_address, director_name, image FROM companies ")
+	query.WriteString("WHERE ")
+
+	values := []interface{}{}
+	if filters.Query != nil {
+		values = append(values, query)
+	}
+	return res, nil
+}

@@ -112,13 +112,104 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 
 func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res := []models.Internship{}
-	query := `SELECT id, company_id, title, description, 
-           salary, duration_months, location, 
-           created_at, is_archived FROM internships
-				WHERE (tsv_content @@ plainto_tsquery('russian', $1)) AND is_archived = FALSE;
-	`
+	var query strings.Builder
+	query.WriteString("SELECT id, company_id, title, description, salary, duration_months, location, created_at, is_archived FROM internships")
 
-	rows, err := r.db.QueryContext(ctx, query, filters.Query)
+	index := 1
+	values := []interface{}{}
+	query.WriteString(" WHERE is_archived = FALSE")
+	if filters.Query != nil {
+		query.WriteString(" AND ")
+		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString(strconv.Itoa(index))
+		query.WriteString(")")
+		values = append(values, *filters.Query)
+		index++
+	}
+
+	if filters.SalaryMax != nil {
+		query.WriteString(" AND ")
+		query.WriteString("salary <= $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.SalaryMax)
+		index++
+	}
+
+	if filters.SalaryMin != nil {
+		query.WriteString(" AND ")
+		query.WriteString("salary >= $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.SalaryMin)
+		index++
+	}
+
+	if filters.DurationMin != nil {
+		query.WriteString(" AND ")
+		query.WriteString("duration_months >= $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.DurationMin)
+		index++
+	}
+
+	if filters.DurationMax != nil {
+		query.WriteString(" AND ")
+		query.WriteString("duration_months <= $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.DurationMax)
+		index++
+	}
+
+	if filters.Location != nil {
+		query.WriteString(" AND ")
+		query.WriteString("location ILIKE $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, (fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')))
+		index++
+	}
+
+	query.WriteString(" ORDER BY ")
+	delimiter := false
+	if filters.Offset != nil && filters.Sort != nil && sortValid(*filters.Sort) {
+		query.WriteString(*filters.Sort)
+
+		if *filters.Order == 1 {
+			query.WriteString(" ASC")
+		} else {
+			query.WriteString(" DESC")
+		}
+		delimiter = true
+	}
+
+	if filters.Query != nil {
+		if delimiter {
+			query.WriteString(", ")
+		}
+		query.WriteString("ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+		delimiter = true
+	}
+
+	if delimiter {
+		query.WriteString(", ")
+	}
+	query.WriteString("created_at DESC")
+
+	if filters.Limit != nil {
+		query.WriteString(" LIMIT $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Limit)
+		index++
+	}
+
+	if filters.Offset != nil {
+		query.WriteString(" OFFSET $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Offset)
+		index++
+	}
+
+	query.WriteString(";")
+
+	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
 		return res, err
 	}
@@ -140,4 +231,13 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	}
 
 	return res, nil
+}
+
+func sortValid(sort string) bool {
+	if sort == "salary" {
+		return true
+	} else if sort == "duration_month" {
+		return true
+	}
+	return false
 }

@@ -8,6 +8,7 @@ import (
 	"T-match_backend/internal/models"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -110,5 +111,38 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 	encodeJSON[[]models.Response](w, responses)
+	return nil
+}
+
+func SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	query := r.URL.Query().Get("query")
+	location := r.URL.Query().Get("location")
+	offset := r.URL.Query().Get("offset")
+	limit := r.URL.Query().Get("limit")
+
+	filters := models.SearchCompany{}
+
+	if len(query) != 0 {
+		filters.Query = &query
+	}
+
+	if len(location) != 0 {
+		filters.Location = &location
+	}
+
+	if len(offset) != 0 {
+		if val, err := strconv.Atoi(offset); err == nil {
+			filters.Offset = &val
+		}
+	}
+
+	if len(limit) != 0 {
+		if val, err := strconv.Atoi(limit); err == nil {
+			filters.Limit = &val
+		}
+	}
+	res := []models.Internship{}
+
+	encodeJSON[[]models.Internship](w, res)
 	return nil
 }

@@ -107,11 +107,19 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS image TEXT;
 ALTER TABLE internships 
 ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
 
-ALTER TABLE internships ADD COLUMN tsv_content tsvector 
+ALTER TABLE internships ADD COLUMN tsv_content tsvector;
     
 CREATE OR REPLACE FUNCTION update_internships_search_vector() RETURNS trigger AS $$
 BEGIN
-  NEW.tsv_content :=
-    
+  NEW.tsv_content := 
+  setweight(to_tsvector('russian', coalesce(NEW.title, '')), 'A') || 
+  setweight(to_tsvector('russian', coalesce(NEW.description, '')), 'B') ||
+  setweight(to_tsvector('russian', coalesce(NEW.location, '')), 'C') ||
+  setweight(to_tsvector('russian', coalesce((SELECT company_name FROM companies WHERE id = NEW.company_id), '')), 'D');
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER internship_tsv_trigger
+BEFORE INSERT OR UPDATE ON internships
+FOR EACH ROW EXECUTE FUNCTION update_internships_search_vector();

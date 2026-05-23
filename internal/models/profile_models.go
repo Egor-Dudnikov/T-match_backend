@@ -48,3 +48,23 @@ type Skill struct {
 type SkillID struct {
 	Id []int `json:"skill_id"`
 }
+
+type SearchCompany struct {
+	Query    *string
+	Location *string
+	Limit    *int
+	Offset   *int
+}
+
+type Company struct {
+	Id           *int
+	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
+	Description  *string `json:"descrption,omitempty" validate:"omitempty,max=2000"`
+	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
+	Inn          *string `json:"inn,omitempty"`
+	Kpp          *string `json:"kpp,omitempty"`
+	Ogrn         *string `json:"ogrn,omitempty"`
+	LegalAddress *string `json:"legal_address,omitempty"`
+	DirectorName *string `json:"director_name,omitempty"`
+	Image        *string `json:"image,omitempty" validate:"omitempty"`
+}
