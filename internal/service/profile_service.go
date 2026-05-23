@@ -132,3 +132,8 @@ func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error
 	responses, err = app.db.GetMyResponses(ctx, internID)
 	return responses, err
 }
+
+func (app Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.Company, error) {
+	res, err := app.db.SearchCompany(ctx, filters)
+	return res, err
+}

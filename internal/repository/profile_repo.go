@@ -6,6 +6,7 @@ package repository
 import (
 	"T-match_backend/internal/models"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -179,16 +180,80 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	return skills, nil
 }
 
-func SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
-	res := []models.CompanyProfile{}
+func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.Company, error) {
+	res := []models.Company{}
 
 	var query strings.Builder
-	query.WriteString("SELECT id, user_id, company_name, description, website, inn, kpp, ogrn, legal_address, director_name, image FROM companies ")
-	query.WriteString("WHERE ")
+	query.WriteString("SELECT id, company_name, description, website, inn, kpp, ogrn, legal_address, director_name, image FROM companies ")
 
+	correctFl := false
+	correct := func() {
+		if !correctFl {
+			query.WriteString("WHERE ")
+			correctFl = true
+		} else {
+			query.WriteString(" AND ")
+		}
+	}
+	index := 1
 	values := []interface{}{}
 	if filters.Query != nil {
-		values = append(values, query)
+		correct()
+		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString(strconv.Itoa(index))
+		query.WriteString(")")
+		values = append(values, *filters.Query)
+		index++
+	}
+
+	if filters.Location != nil {
+		correct()
+		query.WriteString("legal_address ILIKE $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, (fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')))
+		index++
+	}
+
+	if filters.Query != nil {
+		query.WriteString("ORDER BY ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+	}
+
+	if filters.Limit != nil {
+		query.WriteString(" LIMIT $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Limit)
+		index++
+	}
+
+	if filters.Offset != nil {
+		query.WriteString(" OFFSET $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Offset)
+		index++
+	}
+
+	query.WriteString(";")
+
+	rows, err := r.db.QueryContext(ctx, query.String(), values...)
+	if err != nil {
+		return res, err
+	}
+
+	for rows.Next() {
+		company := models.Company{}
+		rows.Scan(
+			&company.Id,
+			&company.CompanyName,
+			&company.Description,
+			&company.Website,
+			&company.Inn,
+			&company.Kpp,
+			&company.Ogrn,
+			&company.LegalAddress,
+			&company.DirectorName,
+			&company.Image,
+		)
+		res = append(res, company)
 	}
 	return res, nil
 }

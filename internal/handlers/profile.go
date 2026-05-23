@@ -114,7 +114,7 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 	return nil
 }
 
-func SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	location := r.URL.Query().Get("location")
 	offset := r.URL.Query().Get("offset")
@@ -141,8 +141,11 @@ func SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 			filters.Limit = &val
 		}
 	}
-	res := []models.Internship{}
+	res, err := h.authService.SearchCompany(r.Context(), filters)
+	if err != nil {
+		return err
+	}
 
-	encodeJSON[[]models.Internship](w, res)
+	encodeJSON[[]models.Company](w, res)
 	return nil
 }
