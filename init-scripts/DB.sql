@@ -130,7 +130,7 @@ ADD COLUMN tsv_content tsvector;
 CREATE OR REPLACE FUNCTION update_company_search_vector() RETURNS trigger AS $$
 BEGIN
   NEW.tsv_content := 
-    setweight(to_tsvector('russian', coalesce(NEW.title, '')), 'A') ||
+    setweight(to_tsvector('russian', coalesce(NEW.company_name, '')), 'A') ||
     setweight(to_tsvector('russian', coalesce(NEW.description, '')), 'B') ||
     setweight(to_tsvector('russian', coalesce(NEW.legal_address, '')), 'C');
   RETURN NEW;
