@@ -688,6 +688,10 @@ docker-compose logs app
 
 ---
 
-**API доступно:** `http://localhost:8080`
+## License
+
+MIT License — see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Egor Dudnikov
 
 ---
