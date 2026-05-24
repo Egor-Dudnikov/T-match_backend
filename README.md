@@ -783,7 +783,7 @@ PUT /responses/:id/status
 
 ---
 
-```markdown
+
 ## 11. Запуск приложения
 
 ### Требования
