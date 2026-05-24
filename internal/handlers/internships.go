@@ -134,6 +134,9 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 	}
 
 	responses, err := h.authService.GetInternshipResponses(ctx, id)
+	if err != nil {
+		return err
+	}
 	encodeJSON[[]models.Response](w, responses)
 	return nil
 }
@@ -150,8 +153,8 @@ func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
 	}
-	h.authService.SetResponseStatus(ctx, id, resp.Status)
-	return nil
+	err = h.authService.SetResponseStatus(ctx, id, resp.Status)
+	return err
 }
 
 func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
