@@ -160,3 +160,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER intern_tsv_trigger
 BEFORE INSERT OR UPDATE ON interns
 FOR EACH ROW EXECUTE FUNCTION update_intern_search_vector();
+
+CREATE INDEX idx_intenship_tsv ON internships USING GIN(tsv_content);
+CREATE INDEX idx_companies_tsv ON companies USING GIN(tsv_content);
+CREATE INDEX idx_interns_tsv ON interns USING GIN(tsv_content);
