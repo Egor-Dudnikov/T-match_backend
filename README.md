@@ -783,7 +783,7 @@ PUT /responses/:id/status
 
 ---
 
-```markdown
+
 ## 11. Запуск приложения
 
 ### Требования
@@ -952,4 +952,3 @@ docker compose -f docker-compose.dev.yml up -d
 MIT License — see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2026 Egor Dudnikov
-```
