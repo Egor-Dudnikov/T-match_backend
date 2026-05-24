@@ -19,7 +19,7 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 	if profile.BirthDate != nil {
 		now := time.Now()
 		age := now.Year() - profile.BirthDate.Year()
-		if profile.BirthDate.YearDay() < now.YearDay() {
+		if profile.BirthDate.YearDay() > now.YearDay() {
 			age--
 		}
 		if age < 16 {
