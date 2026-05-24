@@ -257,3 +257,81 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	}
 	return res, nil
 }
+
+func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.Intern, error) {
+	res := []models.Intern{}
+
+	var query strings.Builder
+	query.WriteString("SELECT id, first_name, last_name, birth_date, location, university, degree, bio, experience, image FROM interns")
+
+	correctFl := false
+	correct := func() {
+		if !correctFl {
+			query.WriteString("WHERE ")
+			correctFl = true
+		} else {
+			query.WriteString(" AND ")
+		}
+	}
+	index := 1
+	values := []interface{}{}
+	if filters.Query != nil {
+		correct()
+		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString(strconv.Itoa(index))
+		query.WriteString(")")
+		values = append(values, *filters.Query)
+		index++
+	}
+
+	if filters.University != nil {
+		correct()
+		query.WriteString("university ILIKE $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, (fmt.Sprintf("%c%s%c", '%', *filters.University, '%')))
+		index++
+	}
+
+	if filters.Query != nil {
+		query.WriteString(" ORDER BY ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+	}
+
+	if filters.Limit != nil {
+		query.WriteString(" LIMIT $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Limit)
+		index++
+	}
+
+	if filters.Offset != nil {
+		query.WriteString(" OFFSET $")
+		query.WriteString(strconv.Itoa(index))
+		values = append(values, *filters.Offset)
+		index++
+	}
+
+	query.WriteString(";")
+
+	rows, err := r.db.QueryContext(ctx, query.String(), values...)
+	if err != nil {
+		return res, err
+	}
+
+	for rows.Next() {
+		intern := models.Intern{}
+		rows.Scan(
+			&intern.Id,
+			&intern.FirstName,
+			&intern.LastName,
+			&intern.BirthDate,
+			&intern.Location,
+			&intern.University,
+			&intern.Degree,
+			&intern.Bio,
+			&intern.Experience,
+			&intern.Image,
+		)
+		res = append(res, intern)
+	}
+	return res, nil
+}

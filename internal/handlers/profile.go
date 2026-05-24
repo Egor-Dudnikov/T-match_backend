@@ -149,3 +149,52 @@ func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Reque
 	encodeJSON[[]models.Company](w, res)
 	return nil
 }
+
+func (h ServiceHandler) SerchInternHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	query := r.URL.Query().Get("query")
+	university := r.URL.Query().Get("university")
+	skills := r.URL.Query()["skills"]
+	offset := r.URL.Query().Get("offset")
+	limit := r.URL.Query().Get("limit")
+
+	filters := models.SearchIntern{}
+
+	if len(query) != 0 {
+		filters.Query = &query
+	}
+
+	if len(university) != 0 {
+		filters.University = &university
+	}
+
+	if len(skills) != 0 {
+		var skillIds []int
+		for _, s := range skills {
+			if id, err := strconv.Atoi(s); err == nil {
+				skillIds = append(skillIds, id)
+			}
+		}
+		if len(skillIds) > 0 {
+			filters.Skills = &skillIds
+		}
+	}
+
+	if len(offset) != 0 {
+		if val, err := strconv.Atoi(offset); err == nil {
+			filters.Offset = &val
+		}
+	}
+
+	if len(limit) != 0 {
+		if val, err := strconv.Atoi(limit); err == nil {
+			filters.Limit = &val
+		}
+	}
+	res, err := h.authService.SearchIntern(r.Context(), filters)
+	if err != nil {
+		return err
+	}
+
+	encodeJSON[[]models.Intern](w, res)
+	return nil
+}

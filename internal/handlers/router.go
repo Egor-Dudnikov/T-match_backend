@@ -151,6 +151,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.GET("/companies", ErrorMiddleware(
 		app.CorsMiddleware(app.SerchCompanyHandler)))
 
+	router.GET("/students", ErrorMiddleware(
+		app.CorsMiddleware(app.SerchCompanyHandler)))
+
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router

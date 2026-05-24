@@ -137,3 +137,8 @@ func (app Service) SearchCompany(ctx context.Context, filters models.SearchCompa
 	res, err := app.db.SearchCompany(ctx, filters)
 	return res, err
 }
+
+func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.Intern, error) {
+	res, err := app.db.SearchIntern(ctx, filters)
+	return res, err
+}
