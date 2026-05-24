@@ -199,7 +199,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	values := []interface{}{}
 	if filters.Query != nil {
 		correct()
-		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString("tsv_content @@ to_tsquery('russian', $")
 		query.WriteString(strconv.Itoa(index))
 		query.WriteString(")")
 		values = append(values, *filters.Query)
@@ -215,7 +215,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	}
 
 	if filters.Query != nil {
-		query.WriteString("ORDER BY ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+		query.WriteString(" ORDER BY ts_rank(tsv_content, to_tsquery('russian', $1)) DESC")
 	}
 
 	if filters.Limit != nil {
@@ -238,6 +238,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		company := models.Company{}
@@ -267,7 +268,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	correctFl := false
 	correct := func() {
 		if !correctFl {
-			query.WriteString("WHERE ")
+			query.WriteString(" WHERE ")
 			correctFl = true
 		} else {
 			query.WriteString(" AND ")
@@ -277,7 +278,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	values := []interface{}{}
 	if filters.Query != nil {
 		correct()
-		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString("tsv_content @@ to_tsquery('russian', $")
 		query.WriteString(strconv.Itoa(index))
 		query.WriteString(")")
 		values = append(values, *filters.Query)
@@ -293,7 +294,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	}
 
 	if filters.Query != nil {
-		query.WriteString(" ORDER BY ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+		query.WriteString(" ORDER BY ts_rank(tsv_content, to_tsquery('russian', $1)) DESC")
 	}
 
 	if filters.Limit != nil {
@@ -316,6 +317,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		intern := models.Intern{}

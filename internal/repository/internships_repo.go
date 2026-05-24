@@ -120,7 +120,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	query.WriteString(" WHERE is_archived = FALSE")
 	if filters.Query != nil {
 		query.WriteString(" AND ")
-		query.WriteString("tsv_content @@ plainto_tsquery('russian', $")
+		query.WriteString("tsv_content @@ to_tsquery('russian', $")
 		query.WriteString(strconv.Itoa(index))
 		query.WriteString(")")
 		values = append(values, *filters.Query)
@@ -184,7 +184,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 		if delimiter {
 			query.WriteString(", ")
 		}
-		query.WriteString("ts_rank(tsv_content, plainto_tsquery('russian', $1)) DESC")
+		query.WriteString("ts_rank(tsv_content, to_tsquery('russian', $1)) DESC")
 		delimiter = true
 	}
 
@@ -213,6 +213,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		internship := models.Internship{}

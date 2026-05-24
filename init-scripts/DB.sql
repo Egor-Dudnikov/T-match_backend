@@ -140,3 +140,23 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER companies_tsv_trigger
 BEFORE INSERT OR UPDATE ON companies
 FOR EACH ROW EXECUTE FUNCTION update_company_search_vector();
+
+ALTER TABLE interns
+ADD COLUMN tsv_content tsvector;
+
+CREATE OR REPLACE FUNCTION update_intern_search_vector() RETURNS trigger AS $$
+BEGIN
+  NEW.tsv_content :=
+    setweight(to_tsvector('russian', coalesce(NEW.first_name, '')), 'A') ||
+    setweight(to_tsvector('russian', coalesce(NEW.last_name, '')), 'A') ||
+    setweight(to_tsvector('russian', coalesce(NEW.bio, '')), 'B') ||
+    setweight(to_tsvector('russian', coalesce(NEW.experience, '')), 'C') ||
+    setweight(to_tsvector('russian', coalesce(NEW.degree, '')), 'C') ||
+    setweight(to_tsvector('russian', coalesce(NEW.university , '')), 'D');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER intern_tsv_trigger
+BEFORE INSERT OR UPDATE ON interns
+FOR EACH ROW EXECUTE FUNCTION update_intern_search_vector();
