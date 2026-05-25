@@ -172,7 +172,7 @@ func encodeJSON[T any](w http.ResponseWriter, resp T) error {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(respJson)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
 	}
 	return nil
 }

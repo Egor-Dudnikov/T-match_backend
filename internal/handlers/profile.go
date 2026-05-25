@@ -20,10 +20,7 @@ func (h *ServiceHandler) UbdateProfileHandler(w http.ResponseWriter, r *http.Req
 	}
 	ctx := r.Context()
 	err = h.authService.UpdateStudentProfile(ctx, profile)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -41,10 +38,7 @@ func (h *ServiceHandler) UpdateCompanyProfileHandler(w http.ResponseWriter, r *h
 		return err
 	}
 	err = h.authService.UpdateCompanyProfile(r.Context(), profile)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -52,8 +46,8 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 	if err != nil {
 		return err
 	}
-	encodeJSON[models.CompanyProfileResponse](w, profile)
-	return nil
+	err = encodeJSON[models.CompanyProfileResponse](w, profile)
+	return err
 }
 
 func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -110,8 +104,8 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	encodeJSON[[]models.Response](w, responses)
-	return nil
+	err = encodeJSON[[]models.Response](w, responses)
+	return err
 }
 
 func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -146,8 +140,8 @@ func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	encodeJSON[[]models.Company](w, res)
-	return nil
+	err = encodeJSON[[]models.Company](w, res)
+	return err
 }
 
 func (h ServiceHandler) SerchInternHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -195,6 +189,6 @@ func (h ServiceHandler) SerchInternHandler(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	encodeJSON[[]models.Intern](w, res)
-	return nil
+	err = encodeJSON[[]models.Intern](w, res)
+	return err
 }

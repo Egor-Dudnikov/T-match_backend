@@ -9,6 +9,12 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+var (
+	hasUpper = regexp.MustCompile(`[A-Z]`)
+	hasDigit = regexp.MustCompile(`[0-9]`)
+	hasLower = regexp.MustCompile(`[a-z]`)
+)
+
 func ValidPassword(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 
@@ -16,9 +22,9 @@ func ValidPassword(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
-	hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
-	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
+	has1 := hasUpper.MatchString(password)
+	has2 := hasDigit.MatchString(password)
+	has3 := hasLower.MatchString(password)
 
-	return hasUpper && hasDigit && hasLower
+	return has1 && has2 && has3
 }

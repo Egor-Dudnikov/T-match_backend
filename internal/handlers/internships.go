@@ -18,15 +18,15 @@ func (h *ServiceHandler) NewIntershipHandler(w http.ResponseWriter, r *http.Requ
 	claims := ctx.Value("claims").(models.Claims)
 	internship, err := decodeJSON[models.Internship](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 	internship.CompanyId = claims.UserID
 	internshipID, err := h.authService.NewInternship(ctx, internship, claims.UserID)
 	if err != nil {
 		return err
 	}
-	encodeJSON[int](w, internshipID)
-	return nil
+	err = encodeJSON[int](w, internshipID)
+	return err
 }
 
 func (h *ServiceHandler) GetInternshipByIdHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -42,7 +42,7 @@ func (h *ServiceHandler) GetInternshipByIdHandler(w http.ResponseWriter, r *http
 	}
 	err = encodeJSON[models.InternshipResponse](w, internshipResp)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
+		return err
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.
 	internship, err := decodeJSON[models.InternshipUpdate](r)
 	internship.Id = id
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 	err = h.authService.UpdateInternship(ctx, internship)
 	return err
@@ -67,7 +67,7 @@ func getIdURL(ps httprouter.Params) (int, error) {
 	idStr := ps.ByName("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return id, fmt.Errorf("%w: %v", apierrors.ErrInternalServer, err)
+		return id, fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 	return id, nil
 }
@@ -94,7 +94,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 	err = h.authService.AddInternshipSkills(ctx, skillIDs.Id, id)
 	return err
@@ -109,7 +109,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs.Id)
 	return err
@@ -137,8 +137,8 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 	if err != nil {
 		return err
 	}
-	encodeJSON[[]models.Response](w, responses)
-	return nil
+	err = encodeJSON[[]models.Response](w, responses)
+	return err
 }
 
 func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -151,7 +151,7 @@ func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Reques
 
 	resp, err := decodeJSON[models.ResponseRequest](r)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return err
 	}
 	err = h.authService.SetResponseStatus(ctx, id, resp.Status)
 	return err
@@ -243,6 +243,6 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 		return err
 	}
 
-	encodeJSON[[]models.Internship](w, res)
-	return nil
+	err = encodeJSON[[]models.Internship](w, res)
+	return err
 }

@@ -4,6 +4,7 @@
 package repository
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
@@ -71,7 +72,7 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 	}
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -90,6 +91,9 @@ func (r *Repository) GetMyProfile(ctx context.Context, id int) (models.Profile, 
 		&profile.Bio,
 		&profile.Experience,
 		&profile.Image)
+	if err != nil {
+		return profile, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
 	return profile, err
 }
 
@@ -129,7 +133,10 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile m
 	query.WriteString(" WHERE user_id = $1")
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
-	return err
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
 }
 
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
@@ -146,28 +153,37 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 		&profile.LegalAddress,
 		&profile.DirectorName,
 		&profile.Image)
-	return profile, err
+	if err != nil {
+		return profile, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return profile, nil
 }
 
 func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE interns SET
 	image = $2
 	WHERE user_id = $1`, id, url)
-	return err
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
 }
 
 func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE companies SET
 	image = $2
 	WHERE user_id = $1`, id, url)
-	return err
+	if err != nil {
+		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+	}
+	return nil
 }
 
 func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills := []models.Skill{}
 	rows, err := r.db.QueryContext(ctx, `SELECT * FROM skills;`)
 	if err != nil {
-		return skills, err
+		return skills, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -236,7 +252,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 
@@ -315,7 +331,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 

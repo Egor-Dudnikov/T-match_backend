@@ -839,10 +839,11 @@ REDIS_DIAL_TIMEOUT=5000000000
 REDIS_TIMEOUT=3000000000
 
 # Email 
-EMAIL_ADDR=
-EMAIL_HOST=
+# По умолчанию использует MailHog, для тестирования и разработки
+EMAIL_ADDR=mailhog:1025
+EMAIL_HOST=mailhog
 EMAIL_IDENTITY=
-EMAIL_USERNAME=
+EMAIL_USERNAME=noreply@tmatch.space
 EMAIL_PASSWORD=
 
 # CORS
@@ -869,6 +870,10 @@ CONFIG_PATH=./configs/configuration.json
 | `DA_DATA_API_KEY` | Зарегистрироваться на [dadata.ru](https://dadata.ru) → API → Ключи доступа |
 | `JWT_SECRET` | Сгенерировать: `openssl rand -base64 32` |
 | `DB_PASSWORD` | Придумать самостоятельно |
+
+#### Примечания:
+
+Email: если EMAIL_PASSWORD не задан, автоматически используется MailHog — все письма перехватываются и отображаются в веб-интерфейсе http://localhost:8025, реальным пользователям ничего не отправляется
 
 ---
 

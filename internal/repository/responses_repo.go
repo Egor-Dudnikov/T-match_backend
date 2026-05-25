@@ -28,7 +28,7 @@ func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models
 			&response.CreatedAt)
 		res = append(res, response)
 	}
-	return res, err
+	return res, nil
 }
 
 func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) error {
