@@ -81,7 +81,7 @@ services:
       - backend
   
   mailhog:
-    image: mailhog/mailhog:latest
+    image: mailhog/mailhog:v1.0.0
     container_name: t-match-mailhog
     ports:
       - "1025:1025"

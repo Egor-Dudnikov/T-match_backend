@@ -27,7 +27,7 @@ func (r *EmailClient) SendVerifyCode(to string, code string) error {
 		"\r\n" +
 		"Code:" + code + "\r\n")
 	var err error
-	password := os.Getenv("SMTP_PASSWORD")
+	password := os.Getenv("EMAIL_PASSWORD")
 	if len(password) == 0 {
 		err = smtp.SendMail(addr, nil, from, []string{to}, msg)
 	} else {
