@@ -19,7 +19,7 @@ type Profile struct {
 
 type CompanyProfile struct {
 	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
-	Description  *string `json:"descrption,omitempty" validate:"omitempty,max=2000"`
+	Description  *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
 	Inn          *string `json:"inn,omitempty"`
 	Kpp          *string `json:"kpp,omitempty"`
@@ -59,7 +59,7 @@ type SearchCompany struct {
 type Company struct {
 	Id           *int    `json:"id,omitempty" validate:"omitempty"`
 	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
-	Description  *string `json:"descrption,omitempty" validate:"omitempty,max=2000"`
+	Description  *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
 	Inn          *string `json:"inn,omitempty"`
 	Kpp          *string `json:"kpp,omitempty"`

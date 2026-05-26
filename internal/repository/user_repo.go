@@ -108,7 +108,7 @@ func (r *Repository) GetUser(ctx context.Context, email string, role string) (mo
 	return user, nil
 }
 
-func (r *Repository) GetCmpanyIdByUserId(ctx context.Context, userID int) (int, error) {
+func (r *Repository) GetCompanyIdByUserId(ctx context.Context, userID int) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
 	return id, err

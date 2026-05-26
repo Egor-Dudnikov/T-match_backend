@@ -47,7 +47,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.UbdateProfileHandler, 100, "/my/profile/put"))))))
+					app.RateLimitMiddleware(app.UpdateProfileHandler, 100, "/my/profile/put"))))))
 
 	router.GET("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(
@@ -149,10 +149,10 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(app.SearchInternshipHandler)))
 
 	router.GET("/companies", ErrorMiddleware(
-		app.CorsMiddleware(app.SerchCompanyHandler)))
+		app.CorsMiddleware(app.SearchCompanyHandler)))
 
 	router.GET("/students", ErrorMiddleware(
-		app.CorsMiddleware(app.SerchInternHandler)))
+		app.CorsMiddleware(app.SearchInternHandler)))
 
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 

@@ -13,7 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (h *ServiceHandler) UbdateProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.Profile](r)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
-func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	location := r.URL.Query().Get("location")
 	offset := r.URL.Query().Get("offset")
@@ -144,7 +144,7 @@ func (h ServiceHandler) SerchCompanyHandler(w http.ResponseWriter, r *http.Reque
 	return err
 }
 
-func (h ServiceHandler) SerchInternHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	university := r.URL.Query().Get("university")
 	skills := r.URL.Query()["skills"]

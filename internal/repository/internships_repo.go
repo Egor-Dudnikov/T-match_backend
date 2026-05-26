@@ -15,7 +15,7 @@ import (
 )
 
 func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
-	id, err := r.GetCmpanyIdByUserId(ctx, userID)
+	id, err := r.GetCompanyIdByUserId(ctx, userID)
 	if err != nil {
 		return 0, err
 	}

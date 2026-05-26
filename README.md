@@ -301,7 +301,7 @@ PUT /my/avatar/put
 **Ответ:** `200 OK` — возвращает URL аватара
 
 ```json
-"http://localhost:9000/t-match-storge/user_17_avatar"
+"http://localhost:9000/t-match-storage/user_17_avatar"
 ```
 
 ---

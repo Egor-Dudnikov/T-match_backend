@@ -34,22 +34,22 @@ func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storge, error) {
                 "Effect": "Allow",
                 "Principal": {"AWS": "*"},
                 "Action": ["s3:GetObject"],
-                "Resource": ["arn:aws:s3:::` + "t-match-storge" + `/*"]
+                "Resource": ["arn:aws:s3:::` + "t-match-storage" + `/*"]
             }
         ]
     }`
-	exist, err := s3client.BucketExists(context.Background(), "t-match-storge")
+	exist, err := s3client.BucketExists(context.Background(), "t-match-storage")
 	if err != nil {
 		return nil, err
 	}
 	if !exist {
-		err := s3client.MakeBucket(context.Background(), "t-match-storge", minio.MakeBucketOptions{Region: "ru-central-1"})
+		err := s3client.MakeBucket(context.Background(), "t-match-storage", minio.MakeBucketOptions{Region: "ru-central-1"})
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = s3client.SetBucketPolicy(context.Background(), "t-match-storge", policy)
+	err = s3client.SetBucketPolicy(context.Background(), "t-match-storage", policy)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +57,13 @@ func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storge, error) {
 }
 
 func (s3 S3Storge) SetFile(ctx context.Context, objectName string, file io.Reader, contentType string, fileHandler *multipart.FileHeader) (string, error) {
-	info, err := s3.client.PutObject(ctx, "t-match-storge", objectName, file, fileHandler.Size, minio.PutObjectOptions{ContentType: contentType})
+	info, err := s3.client.PutObject(ctx, "t-match-storage", objectName, file, fileHandler.Size, minio.PutObjectOptions{ContentType: contentType})
 	url := s3.GetURL(info)
 	return url, err
 }
 
 func (s3 S3Storge) Delete(ctx context.Context, objectName string) error {
-	err := s3.client.RemoveObject(ctx, "t-match-storge", objectName, minio.RemoveObjectOptions{})
+	err := s3.client.RemoveObject(ctx, "t-match-storage", objectName, minio.RemoveObjectOptions{})
 	return err
 }
 
