@@ -48,10 +48,18 @@ func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		tokenStr := r.Header.Get("Token")
-		if tokenStr == "" {
+		authHader := r.Header.Get("Authorization")
+
+		if authHader == "" {
 			return apierrors.ErrUnauthorized
 		}
+
+		parts := strings.SplitN(authHader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return apierrors.ErrUnauthorized
+		}
+
+		tokenStr := parts[1]
 		token, claims, err := utils.DecodeJWT(tokenStr)
 		if err != nil {
 			return fmt.Errorf("%w: %v", apierrors.ErrUnauthorized, err)
@@ -79,7 +87,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 				if err != nil {
 					return fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 				}
-				w.Header().Set("Token", newToken)
+				w.Header().Set("X-New-Access-Token", newToken)
 				return next(w, r.WithContext(ctx), ps)
 			} else {
 				return apierrors.ErrUnauthorized
@@ -118,7 +126,7 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 		if claims != nil {
 			id = strconv.Itoa(claims.(models.Claims).UserID)
 		} else {
-			id = r.Header.Get("Token")
+			id = r.RemoteAddr
 		}
 		key := id + "." + endpoint
 		key = key

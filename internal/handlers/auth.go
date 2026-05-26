@@ -42,14 +42,14 @@ func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	w.Header().Set("Token", sessionID)
+	w.Header().Set("X-Verify-Session", sessionID)
 	log.Println(sessionID)
 	return nil
 }
 
 func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	sessionID := r.Header.Get("Token")
+	sessionID := r.Header.Get("X-Verify-Session")
 	if sessionID == "" {
 		return fmt.Errorf("%w", apierrors.ErrBadRequest)
 	}
@@ -65,14 +65,13 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 
 	SetRefreshCookie(w, refreshToken)
 
-	w.Header().Set("Token", accessToken)
-	log.Println(sessionID)
+	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
 
 func (h *ServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	sessionID := r.Header.Get("Token")
+	sessionID := r.Header.Get("X-Verify-Session")
 	err := h.authService.NewCode(ctx, sessionID)
 	if err != nil {
 		return err
@@ -92,7 +91,7 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	SetRefreshCookie(w, refreshToken)
-	w.Header().Set("Token", accessToken)
+	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
 
@@ -108,14 +107,13 @@ func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	w.Header().Set("Token", sessionID)
-	log.Println(sessionID)
+	w.Header().Set("X-Verify-Session", sessionID)
 	return nil
 }
 
 func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	sessionID := r.Header.Get("Token")
+	sessionID := r.Header.Get("X-Verify-Session")
 	if sessionID == "" {
 		return fmt.Errorf("%w", apierrors.ErrBadRequest)
 	}
@@ -130,9 +128,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	SetRefreshCookie(w, refreshToken)
-
-	w.Header().Set("Token", accessToken)
-	log.Println(sessionID)
+	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
 
@@ -148,7 +144,7 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	SetRefreshCookie(w, refreshToken)
-	w.Header().Set("Token", accessToken)
+	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
 

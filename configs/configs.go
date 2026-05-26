@@ -32,14 +32,14 @@ func LoadConfig() models.Config {
 			Timeout:     getEnvAsDuration("REDIS_TIMEOUT", 3*time.Second),
 		},
 		EmailConfig: models.EmailConfig{
-			Addr:     getEnv("EMAIL_ADDR", "mail.hosting.reg.ru:587"),
-			Host:     getEnv("EMAIL_HOST", "mail.hosting.reg.ru"),
+			Addr:     getEnv("EMAIL_ADDR", ""),
+			Host:     getEnv("EMAIL_HOST", ""),
 			Identity: getEnv("EMAIL_IDENTITY", ""),
-			Username: getEnv("EMAIL_USERNAME", "support@tmatch.space"),
+			Username: getEnv("EMAIL_USERNAME", ""),
 		},
 		CORSConfig: models.CORSConfig{
 			ControlAllowOrigin:  getEnvAsSlice("CORS_ALLOW_ORIGIN", []string{"http://localhost:8000"}),
-			ControlAllowHeaders: getEnvAsSlice("CORS_ALLOW_HEADERS", []string{"Content-Type", "Token"}),
+			ControlAllowHeaders: getEnvAsSlice("CORS_ALLOW_HEADERS", []string{"Content-Type", "Authorization", "X-Verify-Session", "X-New-Access-Token"}),
 		},
 		S3Config: models.S3Config{
 			Endpoint:        getEnv("S3_ENDPOINT", "minio:9000"),

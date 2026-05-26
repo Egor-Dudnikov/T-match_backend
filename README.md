@@ -50,7 +50,7 @@
 | :--- | :--- |
 | **Базовый URL** | `http://localhost:8080` |
 | **Формат данных** | `application/json` (кроме загрузки аватара) |
-| **Аутентификация** | Заголовок `Token: <access_token>` |
+| **Аутентификация** | Заголовок `Authorization: Bearer <access_token>` |
 | **Cookies** | `refresh_token` (HttpOnly, для обновления токенов) |
 
 ---
@@ -86,7 +86,7 @@ POST /auth/students
 
 | Статус | Заголовки | Описание |
 | :--- | :--- | :--- |
-| `200 OK` | `Token: <session_id>` | Успех. Session ID (7 минут) |
+| `200 OK` | `X-Verify-Session: <session_id>` | Успех. Session ID (7 минут) |
 | `400 Bad Request` | - | Ошибка валидации |
 | `409 Conflict` | - | Email уже существует |
 | `422 Unprocessable Entity` | - | Возраст < 16 лет |
@@ -122,7 +122,7 @@ POST /auth/company
 
 | Статус | Заголовки | Описание |
 | :--- | :--- | :--- |
-| `200 OK` | `Token: <session_id>` | Успех |
+| `200 OK` | `X-Verify-Session: <session_id>` | Успех |
 | `400 Bad Request` | - | Ошибка валидации |
 | `404 Not Found` | - | Компания не найдена или неактивна |
 | `409 Conflict` | - | Email уже существует |
@@ -137,7 +137,7 @@ POST /auth/students/verify   # студент
 POST /auth/company/verify    # компания
 ```
 
-**Заголовки:** `Token: <session_id>`
+**Заголовки:** `X-Verify-Session: <session_id>`
 
 **Тело запроса:**
 ```json
@@ -148,12 +148,12 @@ POST /auth/company/verify    # компания
 
 **Ответы:**
 
-| Статус | Заголовки | Описание |
-| :--- | :--- | :--- |
-| `200 OK` | `Token: <access_token>`<br>`Set-Cookie: refresh_token=...` | Успех |
-| `400 Bad Request` | - | Неверный код или формат |
-| `400 Bad Request` | - | Код истёк |
-| `429 Too Many Requests` | - | Слишком много попыток |
+| Статус | Заголовки | Тело ответа | Описание |
+| :--- | :--- | :--- | :--- |
+| `200 OK` | `Set-Cookie: refresh_token=...` | `{"access_token": "<access_token>"}` | Успех |
+| `400 Bad Request` | - | - | Неверный код или формат |
+| `400 Bad Request` | - | - | Код истёк |
+| `429 Too Many Requests` | - | - | Слишком много попыток |
 
 ---
 
@@ -163,7 +163,7 @@ POST /auth/company/verify    # компания
 POST /auth/newverify
 ```
 
-**Заголовки:** `Token: <session_id>`
+**Заголовки:** `X-Verify-Session: <session_id>`
 
 **Ответы:**
 
@@ -192,18 +192,18 @@ POST /auth/company/login    # компания
 
 **Ответы:**
 
-| Статус | Заголовки | Описание |
-| :--- | :--- | :--- |
-| `200 OK` | `Token: <access_token>`<br>`Set-Cookie: refresh_token=...` | Успех |
-| `401 Unauthorized` | - | Неверный пароль |
-| `404 Not Found` | - | Email не найден |
-| `429 Too Many Requests` | - | Превышен лимит попыток |
+| Статус | Заголовки | Тело ответа | Описание |
+| :--- | :--- | :--- | :--- |
+| `200 OK` | `Set-Cookie: refresh_token=...` | `{"access_token": "<access_token>"}` | Успех |
+| `401 Unauthorized` | - | - | Неверный пароль |
+| `404 Not Found` | - | - | Email не найден |
+| `429 Too Many Requests` | - | - | Превышен лимит попыток |
 
 ---
 
 ## 3. Профиль пользователя
 
-*Все эндпоинты требуют Access Token в заголовке `Token`.*
+*Все эндпоинты требуют Access Token в заголовке `Authorization: Bearer <access_token>`.*
 
 ---
 
@@ -727,21 +727,23 @@ PUT /responses/:id/status
 
 | Токен | Передача | TTL | Назначение |
 | :--- | :--- | :--- | :--- |
-| **Session ID** | `Token` header | 7 минут | Верификация email |
-| **Access Token** | `Token` header | 15 минут | Авторизация API |
+| **Session ID** | `X-Verify-Session` header | 7 минут | Верификация email |
+| **Access Token** | `Authorization: Bearer <token>` header | 15 минут | Авторизация API |
 | **Refresh Token** | `HttpOnly` cookie | 7 дней | Обновление Access Token |
 
 **Механизм обновления:**
 1. Запрос с истёкшим Access Token
 2. Сервер проверяет Refresh Token из cookie
 3. Если валиден — генерирует новый Access Token
-4. Возвращает его в заголовке `Token`
+4. Возвращает его в заголовке `X-New-Access-Token`
 
 ---
 
 ## 9. Rate Limiting
 
 Лимиты в **запросах в минуту**:
+
+### Аутентификация
 
 | Эндпоинт | Лимит |
 | :--- | :--- |
@@ -752,16 +754,49 @@ PUT /responses/:id/status
 | `POST /auth/company` | 20 |
 | `POST /auth/company/verify` | 60 |
 | `POST /auth/company/login` | 30 |
+
+### Профиль
+
+| Эндпоинт | Лимит |
+| :--- | :--- |
 | `PUT /my/profile/put` | 100 |
 | `GET /my/profile` | 120 |
+| `POST /my/profile/skills/add` | 5 |
+| `DELETE /my/profile/skills/delete` | 5 |
+| `PUT /my/company/profile/put` | 100 |
+| `GET /my/company/profile` | 120 |
 | `PUT /my/avatar/put` | 100 |
+
+### Стажировки
+
+| Эндпоинт | Лимит |
+| :--- | :--- |
 | `POST /internships` | 12 |
 | `PUT /internships/update/:id` | 12 |
 | `DELETE /internships/delete/:id` | 5 |
+| `POST /internship/:id/skill/add` | 5 |
+| `DELETE /internship/:id/skill/delete` | 5 |
+
+### Отклики
+
+| Эндпоинт | Лимит |
+| :--- | :--- |
 | `POST /internships/:id/respond` | 10 |
 | `GET /my/responses` | 20 |
+| `GET /internships/:id/responses` | 20 |
+| `PUT /responses/:id/status` | 20 |
 
-`GET /internships/:id` — **без лимита**
+### Без лимита (публичные)
+
+| Эндпоинт |
+| :--- |
+| `GET /` |
+| `GET /internships/:id` |
+| `GET /internships` (поиск) |
+| `GET /companies` (поиск) |
+| `GET /students` (поиск) |
+| `GET /skills` |
+| `OPTIONS /*path` |
 
 ---
 
@@ -782,7 +817,6 @@ PUT /responses/:id/status
 | `503` | `Service unavailable` | Redis или email недоступны |
 
 ---
-
 
 ## 11. Запуск приложения
 
@@ -848,7 +882,7 @@ EMAIL_PASSWORD=
 
 # CORS
 CORS_ALLOW_ORIGIN=http://localhost:8000
-CORS_ALLOW_HEADERS=Content-Type,Token
+CORS_ALLOW_HEADERS=Content-Type,Authorization,X-Verify-Session,X-New-Access-Token
 
 # S3/MinIO
 S3_ENDPOINT=minio:9000
