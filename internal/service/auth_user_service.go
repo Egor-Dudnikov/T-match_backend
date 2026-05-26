@@ -24,11 +24,11 @@ type Service struct {
 	db       *repository.Repository
 	cache    *cache.Redis
 	email    *EmailClient
-	s3       *s3.S3Storge
+	s3       *s3.S3Storage
 	validate *validator.Validate
 }
 
-func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storge) *Service {
+func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storage) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,

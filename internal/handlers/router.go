@@ -88,7 +88,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.NewIntershipHandler, 12, "/internships"))))))
+					app.RateLimitMiddleware(app.NewInternshipHandler, 12, "/internships"))))))
 
 	router.GET("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(

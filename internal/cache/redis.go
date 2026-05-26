@@ -57,9 +57,9 @@ func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool,
 					local rate = tonumber(ARGV[1])
 					local time_now = tonumber(ARGV[2])
 
-					local exits = redis.call('EXISTS', key)
+					local exists = redis.call('EXISTS', key)
 
-					if exits == 0 then 
+					if exists == 0 then 
 						redis.call('HSET', key,  "token", rate)
 						redis.call('HSET', key, "last_time", time_now)
 					end

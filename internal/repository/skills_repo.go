@@ -146,7 +146,6 @@ func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, inte
 		values = append(values, value)
 	}
 
-	skills = append(skills)
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	return err
 }

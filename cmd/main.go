@@ -46,14 +46,14 @@ func main() {
 	repo := repository.NewRepository(db)
 	redis := cache.NewRedis(dbr)
 	email := service.NewEmailClient(config.EmailConfig)
-	s3, err := s3.NewS3(s3Client, config.S3Config)
+	s3Storage, err := s3.NewS3(s3Client, config.S3Config)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
 
-	app := service.NewAuthService(repo, redis, email, validate, s3)
+	app := service.NewAuthService(repo, redis, email, validate, s3Storage)
 	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)

@@ -38,7 +38,7 @@ func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
-func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birh_date time.Time) (int, error) {
+func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birthDate time.Time) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -54,7 +54,7 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birh_da
 		return 0, err
 	}
 	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id, birth_date)
-		VALUES ($1, $2)`, id, birh_date).Err()
+		VALUES ($1, $2)`, id, birthDate).Err()
 
 	if err != nil {
 		return 0, err

@@ -48,13 +48,13 @@ func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		authHader := r.Header.Get("Authorization")
+		authHeader := r.Header.Get("Authorization")
 
-		if authHader == "" {
+		if authHeader == "" {
 			return apierrors.ErrUnauthorized
 		}
 
-		parts := strings.SplitN(authHader, " ", 2)
+		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			return apierrors.ErrUnauthorized
 		}
@@ -75,11 +75,11 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 				return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
 			}
 
-			refreshTokenCach, err := h.authService.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
+			refreshTokenCache, err := h.authService.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
 			if err != nil {
 				return err
 			}
-			if refreshTokenCookie.Value != refreshTokenCach {
+			if refreshTokenCookie.Value != refreshTokenCache {
 				return apierrors.ErrUnauthorized
 			}
 			if refreshToken.Valid {
@@ -129,7 +129,6 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 			id = r.RemoteAddr
 		}
 		key := id + "." + endpoint
-		key = key
 		ok, err := h.authService.RateLimitCheck(ctx, key, rate)
 		if err != nil {
 			return err

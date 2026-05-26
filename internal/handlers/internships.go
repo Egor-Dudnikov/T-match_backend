@@ -13,7 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (h *ServiceHandler) NewIntershipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims := ctx.Value("claims").(models.Claims)
 	internship, err := decodeJSON[models.Internship](r)
