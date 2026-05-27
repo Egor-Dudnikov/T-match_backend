@@ -6,6 +6,8 @@ package handlers
 import (
 	"net/http"
 
+	"T-match_backend/internal/constants"
+
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -15,80 +17,83 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.GET("/", ErrorMiddleware(
 		app.CorsMiddleware(app.Index)))
 
+	// Auth routes
 	router.POST("/auth/students", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.AuthStudentHandler, 20, "/auth/students"))))
+			app.RateLimitMiddleware(app.AuthStudentHandler, constants.RateLimitAuthStudent, "/auth/students"))))
 
 	router.POST("/auth/students/verify", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.VerifyUserHandler, 60, "/auth/students/verify"))))
+			app.RateLimitMiddleware(app.VerifyUserHandler, constants.RateLimitAuthStudentVerify, "/auth/students/verify"))))
 
 	router.POST("/auth/newverify", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.NewVerifyCode, 7, "/auth/newverify"))))
+			app.RateLimitMiddleware(app.NewVerifyCode, constants.RateLimitNewVerifyCode, "/auth/newverify"))))
 
 	router.POST("/auth/students/login", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.LoginUserHandler, 30, "/auth/students/login"))))
+			app.RateLimitMiddleware(app.LoginUserHandler, constants.RateLimitAuthStudentLogin, "/auth/students/login"))))
 
 	router.POST("/auth/company", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.AuthCompanyHandler, 20, "/auth/company"))))
+			app.RateLimitMiddleware(app.AuthCompanyHandler, constants.RateLimitAuthCompany, "/auth/company"))))
 
 	router.POST("/auth/company/verify", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.VerifyCompanyHandler, 60, "/auth/company/verify"))))
+			app.RateLimitMiddleware(app.VerifyCompanyHandler, constants.RateLimitAuthCompanyVerify, "/auth/company/verify"))))
 
 	router.POST("/auth/company/login", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.LoginCompanyHandler, 30, "/auth/company/login"))))
+			app.RateLimitMiddleware(app.LoginCompanyHandler, constants.RateLimitAuthCompanyLogin, "/auth/company/login"))))
 
+	// Profile routes
 	router.PUT("/my/profile/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.UpdateProfileHandler, 100, "/my/profile/put"))))))
+					app.RateLimitMiddleware(app.UpdateProfileHandler, constants.RateLimitUpdateProfile, "/my/profile/put"))))))
 
 	router.GET("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.GetMyProfileHandler, 120, "my/profile"))))))
+					app.RateLimitMiddleware(app.GetMyProfileHandler, constants.RateLimitGetProfile, "my/profile"))))))
 
 	router.POST("/my/profile/skills/add", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.AddInternSkillsHandler, 5, "/my/profile/skills/add"))))))
+					app.RateLimitMiddleware(app.AddInternSkillsHandler, constants.RateLimitAddSkills, "/my/profile/skills/add"))))))
 
 	router.DELETE("/my/profile/skills/delete", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, 5, "/my/profile/skills/delete"))))))
+					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, constants.RateLimitDeleteSkills, "/my/profile/skills/delete"))))))
 
 	router.PUT("/my/company/profile/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.UpdateCompanyProfileHandler, 100, "/my/company/profile"))))))
+					app.RateLimitMiddleware(app.UpdateCompanyProfileHandler, constants.RateLimitUpdateCompany, "/my/company/profile"))))))
 
 	router.GET("/my/company/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, 120, "/my/company/profile"))))))
+					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, constants.RateLimitGetCompany, "/my/company/profile"))))))
 
 	router.PUT("/my/avatar/put", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
-				app.RateLimitMiddleware(app.SetMyAvatarHandler, 100, "/my/avatar/put")))))
+				app.RateLimitMiddleware(app.SetMyAvatarHandler, constants.RateLimitSetAvatar, "/my/avatar/put")))))
 
+	// Internship routes
 	router.POST("/internships", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.NewInternshipHandler, 12, "/internships"))))))
+					app.RateLimitMiddleware(app.NewInternshipHandler, constants.RateLimitCreateInternship, "/internships"))))))
 
 	router.GET("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(
@@ -98,13 +103,13 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.UpdateInternshipHandler, 12, "/internships/update/"))))))
+					app.RateLimitMiddleware(app.UpdateInternshipHandler, constants.RateLimitUpdateInternship, "/internships/update/"))))))
 
 	router.DELETE("/internships/delete/:id", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.ArchivedInternshipHandler, 5, "/internships/delete/"))))))
+					app.RateLimitMiddleware(app.ArchivedInternshipHandler, constants.RateLimitArchiveInternship, "/internships/delete/"))))))
 
 	router.GET("/skills", ErrorMiddleware(
 		app.CorsMiddleware(app.GetAllSkills)))
@@ -113,38 +118,39 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.AddInternshipSkillsHandler, 5, "/internship/skill/add"))))))
+					app.RateLimitMiddleware(app.AddInternshipSkillsHandler, constants.RateLimitAddInternshipSkill, "/internship/skill/add"))))))
 
 	router.DELETE("/internship/:id/skill/delete", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.DeleteInternshipSkillsHandler, 5, "/internship/skill/delete"))))))
+					app.RateLimitMiddleware(app.DeleteInternshipSkillsHandler, constants.RateLimitDeleteInternshipSkill, "/internship/skill/delete"))))))
 
 	router.POST("/internships/:id/respond", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.RespondInternshipHandler, 10, "/internships/:id/respond"))))))
+					app.RateLimitMiddleware(app.RespondInternshipHandler, constants.RateLimitRespondToInternship, "/internships/:id/respond"))))))
 
 	router.GET("/my/responses", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.GetMyResponsesHandler, 20, "/my/responses"))))))
+					app.RateLimitMiddleware(app.GetMyResponsesHandler, constants.RateLimitGetMyResponses, "/my/responses"))))))
 
 	router.GET("/internships/:id/responses", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.GetInternshipResponses, 20, "/internships/:id/responses"))))))
+					app.RateLimitMiddleware(app.GetInternshipResponses, constants.RateLimitGetInternshipResponses, "/internships/:id/responses"))))))
 
 	router.PUT("/responses/:id/status", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.SetResponseStatus, 20, "/responses/:id/status"))))))
+					app.RateLimitMiddleware(app.SetResponseStatus, constants.RateLimitSetResponseStatus, "/responses/:id/status"))))))
 
+	// Search routes
 	router.GET("/internships", ErrorMiddleware(
 		app.CorsMiddleware(app.SearchInternshipHandler)))
 
@@ -154,13 +160,13 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.GET("/students", ErrorMiddleware(
 		app.CorsMiddleware(app.SearchInternHandler)))
 
+	// CORS preflight
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 
 	return router
 }
 
-// заглушка для OPTIONS
-
+// handleOptions handles CORS preflight requests
 func handleOptions(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	w.WriteHeader(http.StatusOK)
 	return nil

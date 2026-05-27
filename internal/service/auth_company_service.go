@@ -5,6 +5,7 @@ package service
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
@@ -22,7 +23,7 @@ func (app *Service) AuthCompany(ctx context.Context, userReg models.CompanyAuth)
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "company")
+	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, constants.Company)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -101,7 +102,7 @@ func (app *Service) VerifyCompany(ctx context.Context, sessionID string, verifyR
 
 	user := models.User{
 		Email:        companyVerify.Email,
-		Role:         "company",
+		Role:         constants.Company,
 		PasswordHash: companyVerify.PasswordHash,
 	}
 
@@ -112,12 +113,12 @@ func (app *Service) VerifyCompany(ctx context.Context, sessionID string, verifyR
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, "company", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, constants.Company, time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, "company", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, companyVerify.DeviceID, user.Email, constants.Company, time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
@@ -137,7 +138,7 @@ func (app *Service) LoginCompany(ctx context.Context, userLog models.UserAuth) (
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, "company")
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, constants.Company)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -146,7 +147,7 @@ func (app *Service) LoginCompany(ctx context.Context, userLog models.UserAuth) (
 	}
 
 	user := models.User{}
-	user, err = app.db.GetUser(ctx, userLog.Email, "company")
+	user, err = app.db.GetUser(ctx, userLog.Email, constants.Company)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -156,12 +157,12 @@ func (app *Service) LoginCompany(ctx context.Context, userLog models.UserAuth) (
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "company", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Company, time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "company", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Company, time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}

@@ -6,6 +6,7 @@ package service
 import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/cache"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
@@ -44,17 +45,11 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 		return "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	today := time.Now()
-	age := today.Year() - userReg.BirthDate.Year()
-	if today.YearDay() < userReg.BirthDate.YearDay() {
-		age--
-	}
-
-	if age < 16 {
+	if !utils.ValidAge(userReg.BirthDate) {
 		return "", apierrors.ErrUserMustBe16
 	}
 
-	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, "intern")
+	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, constants.Intern)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -125,7 +120,7 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 
 	user := models.User{
 		Email:        userVerify.Email,
-		Role:         "intern",
+		Role:         constants.Intern,
 		PasswordHash: userVerify.PasswordHash,
 	}
 
@@ -135,12 +130,12 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "intern", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, "intern", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
@@ -193,7 +188,7 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
 	}
 
-	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, "intern")
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, constants.Intern)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -202,7 +197,7 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 	}
 
 	user := models.User{}
-	user, err = app.db.GetUser(ctx, userLog.Email, "intern")
+	user, err = app.db.GetUser(ctx, userLog.Email, constants.Intern)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
@@ -212,12 +207,12 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "intern", time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, time.Minute*15)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, "intern", time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, time.Hour*24*7)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}

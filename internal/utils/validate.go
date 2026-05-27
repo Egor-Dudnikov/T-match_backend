@@ -5,6 +5,7 @@ package utils
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -27,4 +28,16 @@ func ValidPassword(fl validator.FieldLevel) bool {
 	has3 := hasLower.MatchString(password)
 
 	return has1 && has2 && has3
+}
+
+func ValidAge(birthDate time.Time) bool {
+	today := time.Now()
+	age := today.Year() - birthDate.Year()
+	if today.YearDay() < birthDate.YearDay() {
+		age--
+	}
+	if age < 16 {
+		return false
+	}
+	return true
 }

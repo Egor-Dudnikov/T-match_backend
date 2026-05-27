@@ -5,6 +5,7 @@ package service
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
@@ -125,7 +126,7 @@ func (app Service) GetInternshipResponses(ctx context.Context, internshipID int)
 }
 
 func (app Service) SetResponseStatus(ctx context.Context, responseID int, status string) error {
-	statuses := [4]string{"pending", "reviewing", "accepted", "rejected"}
+	statuses := [4]string{constants.Pending, constants.Reviewing, constants.Accepted, constants.Rejected}
 	ok := false
 	for _, st := range statuses {
 		if status == st {

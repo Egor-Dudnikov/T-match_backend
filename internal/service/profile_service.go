@@ -5,24 +5,20 @@ package service
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
+	"T-match_backend/internal/utils"
 	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"strconv"
-	"time"
 )
 
 func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Profile) error {
 	err := app.validate.Struct(profile)
 	if profile.BirthDate != nil {
-		now := time.Now()
-		age := now.Year() - profile.BirthDate.Year()
-		if profile.BirthDate.YearDay() > now.YearDay() {
-			age--
-		}
-		if age < 16 {
+		if !utils.ValidAge(*profile.BirthDate) {
 			return apierrors.ErrUserMustBe16
 		}
 	}
@@ -83,7 +79,7 @@ func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, 
 		return url, err
 	}
 
-	if claims.Role == "company" {
+	if claims.Role == constants.Company {
 		err = app.db.SetMyCompanyAvatar(ctx, url, claims.UserID)
 	} else {
 		err = app.db.SetMyAvatar(ctx, url, claims.UserID)

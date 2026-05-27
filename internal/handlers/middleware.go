@@ -5,6 +5,7 @@ package handlers
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
@@ -101,7 +102,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims := r.Context().Value("claims").(models.Claims)
-		if claims.Role != "intern" {
+		if claims.Role != constants.Intern {
 			return apierrors.ErrForbidden
 		}
 		return next(w, r, ps)
@@ -111,7 +112,7 @@ func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims := r.Context().Value("claims").(models.Claims)
-		if claims.Role != "company" {
+		if claims.Role != constants.Company {
 			return apierrors.ErrForbidden
 		}
 		return next(w, r, ps)
