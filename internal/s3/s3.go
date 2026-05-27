@@ -4,6 +4,7 @@
 package s3
 
 import (
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
 	"io"
@@ -34,22 +35,22 @@ func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storage, error) {
                 "Effect": "Allow",
                 "Principal": {"AWS": "*"},
                 "Action": ["s3:GetObject"],
-                "Resource": ["arn:aws:s3:::` + "t-match-storage" + `/*"]
+                "Resource": ["arn:aws:s3:::` + constants.BucketName + `/*"]
             }
         ]
     }`
-	exist, err := s3client.BucketExists(context.Background(), "t-match-storage")
+	exist, err := s3client.BucketExists(context.Background(), constants.BucketName)
 	if err != nil {
 		return nil, err
 	}
 	if !exist {
-		err := s3client.MakeBucket(context.Background(), "t-match-storage", minio.MakeBucketOptions{Region: "ru-central-1"})
+		err := s3client.MakeBucket(context.Background(), constants.BucketName, minio.MakeBucketOptions{Region: "ru-central-1"})
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = s3client.SetBucketPolicy(context.Background(), "t-match-storage", policy)
+	err = s3client.SetBucketPolicy(context.Background(), constants.BucketName, policy)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +58,13 @@ func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storage, error) {
 }
 
 func (s3 S3Storage) SetFile(ctx context.Context, objectName string, file io.Reader, contentType string, fileHandler *multipart.FileHeader) (string, error) {
-	info, err := s3.client.PutObject(ctx, "t-match-storage", objectName, file, fileHandler.Size, minio.PutObjectOptions{ContentType: contentType})
+	info, err := s3.client.PutObject(ctx, constants.BucketName, objectName, file, fileHandler.Size, minio.PutObjectOptions{ContentType: contentType})
 	url := s3.GetURL(info)
 	return url, err
 }
 
 func (s3 S3Storage) Delete(ctx context.Context, objectName string) error {
-	err := s3.client.RemoveObject(ctx, "t-match-storage", objectName, minio.RemoveObjectOptions{})
+	err := s3.client.RemoveObject(ctx, constants.BucketName, objectName, minio.RemoveObjectOptions{})
 	return err
 }
 

@@ -4,6 +4,7 @@
 package utils
 
 import (
+	"T-match_backend/internal/constants"
 	"regexp"
 	"time"
 
@@ -36,7 +37,7 @@ func ValidAge(birthDate time.Time) bool {
 	if today.YearDay() < birthDate.YearDay() {
 		age--
 	}
-	if age < 16 {
+	if age < constants.MinUserAge {
 		return false
 	}
 	return true

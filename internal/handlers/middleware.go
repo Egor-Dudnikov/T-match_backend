@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -84,7 +83,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 				return apierrors.ErrUnauthorized
 			}
 			if refreshToken.Valid {
-				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, 15*time.Minute)
+				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, constants.AccessTokenTimeLife)
 				if err != nil {
 					return fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 				}

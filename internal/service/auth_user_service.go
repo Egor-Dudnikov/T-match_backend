@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -87,7 +86,7 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 		return "", fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
 	}
 
-	err = app.cache.Set(ctx, sessionID, userJson, time.Minute*7)
+	err = app.cache.Set(ctx, sessionID, userJson, constants.VerifyCodeTimeLife)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apierrors.ErrTooManyInvalidAttempts, err)
 	}
@@ -130,18 +129,18 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, constants.AccessTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
 	key := fmt.Sprintf("%d.%s", id, userVerify.DeviceID)
-	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
@@ -174,7 +173,7 @@ func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("%w: %v", apierrors.ErrEmailSendFailed, err)
 	}
 
-	err = app.cache.Set(ctx, sessionID, jsoneNewCode, time.Minute*7)
+	err = app.cache.Set(ctx, sessionID, jsoneNewCode, constants.VerifyCodeTimeLife)
 	if err != nil {
 		return fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}
@@ -207,18 +206,18 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 		return "", "", fmt.Errorf("%w", apierrors.ErrInvalidPassword)
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, time.Minute*15)
+	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, constants.AccessTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
-	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, time.Hour*24*7)
+	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
 	}
 
 	key := fmt.Sprintf("%d.%s", user.Id, userLog.DeviceID)
-	err = app.cache.Set(ctx, key, []byte(refreshToken), 7*24*time.Hour)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", apierrors.ErrCacheError, err)
 	}

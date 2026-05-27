@@ -75,3 +75,8 @@ const (
 	Accepted  = "accepted"
 	Rejected  = "rejected"
 )
+
+// S3
+const (
+	BucketName = "t-match-storage"
+)
