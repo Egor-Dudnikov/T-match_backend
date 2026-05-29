@@ -6,6 +6,7 @@ package main
 import (
 	"T-match_backend/configs"
 	"T-match_backend/internal/cache"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/handlers"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
@@ -64,9 +65,9 @@ func main() {
 	srv := &http.Server{
 		Addr:         addr + port,
 		Handler:      router,
-		ReadTimeout:  time.Second * 15,
-		WriteTimeout: time.Second * 15,
-		IdleTimeout:  time.Second * 60,
+		ReadTimeout:  constants.ServerReadTimeout,
+		WriteTimeout: constants.ServerWriteTimeout,
+		IdleTimeout:  constants.ServerIdleTimeout,
 	}
 	log.Printf("Starting server at port %s, address %s", port, addr)
 	go func() {

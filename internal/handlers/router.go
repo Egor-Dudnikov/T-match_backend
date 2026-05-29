@@ -47,31 +47,31 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 			app.RateLimitMiddleware(app.LoginCompanyHandler, constants.RateLimitAuthCompanyLogin, "/auth/company/login"))))
 
 	// Profile routes
-	router.PUT("/my/profile/put", ErrorMiddleware(
+	router.PUT("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.UpdateProfileHandler, constants.RateLimitUpdateProfile, "/my/profile/put"))))))
+					app.RateLimitMiddleware(app.UpdateProfileHandler, constants.RateLimitUpdateProfile, "/my/profile"))))))
 
 	router.GET("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.GetMyProfileHandler, constants.RateLimitGetProfile, "my/profile"))))))
+					app.RateLimitMiddleware(app.GetMyProfileHandler, constants.RateLimitGetProfile, "/my/profile"))))))
 
-	router.POST("/my/profile/skills/add", ErrorMiddleware(
+	router.POST("/my/profile/skills", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.AddInternSkillsHandler, constants.RateLimitAddSkills, "/my/profile/skills/add"))))))
+					app.RateLimitMiddleware(app.AddInternSkillsHandler, constants.RateLimitAddSkills, "/my/profile/skills"))))))
 
-	router.DELETE("/my/profile/skills/delete", ErrorMiddleware(
+	router.DELETE("/my/profile/skills", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.InternMiddleware(
-					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, constants.RateLimitDeleteSkills, "/my/profile/skills/delete"))))))
+					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, constants.RateLimitDeleteSkills, "/my/profile/skills"))))))
 
-	router.PUT("/my/company/profile/put", ErrorMiddleware(
+	router.PUT("/my/company/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
@@ -83,10 +83,10 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, constants.RateLimitGetCompany, "/my/company/profile"))))))
 
-	router.PUT("/my/avatar/put", ErrorMiddleware(
+	router.PUT("/my/avatar", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
-				app.RateLimitMiddleware(app.SetMyAvatarHandler, constants.RateLimitSetAvatar, "/my/avatar/put")))))
+				app.RateLimitMiddleware(app.SetMyAvatarHandler, constants.RateLimitSetAvatar, "/my/avatar")))))
 
 	// Internship routes
 	router.POST("/internships", ErrorMiddleware(
@@ -99,32 +99,32 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.GetInternshipByIdHandler)))
 
-	router.PUT("/internships/update/:id", ErrorMiddleware(
+	router.PUT("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.UpdateInternshipHandler, constants.RateLimitUpdateInternship, "/internships/update/"))))))
+					app.RateLimitMiddleware(app.UpdateInternshipHandler, constants.RateLimitUpdateInternship, "/internships/put"))))))
 
-	router.DELETE("/internships/delete/:id", ErrorMiddleware(
+	router.DELETE("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.ArchivedInternshipHandler, constants.RateLimitArchiveInternship, "/internships/delete/"))))))
+					app.RateLimitMiddleware(app.ArchivedInternshipHandler, constants.RateLimitArchiveInternship, "/internships/delete"))))))
 
 	router.GET("/skills", ErrorMiddleware(
 		app.CorsMiddleware(app.GetAllSkills)))
 
-	router.POST("/internship/:id/skill/add", ErrorMiddleware(
+	router.POST("/internships/:id/skill", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.AddInternshipSkillsHandler, constants.RateLimitAddInternshipSkill, "/internship/skill/add"))))))
+					app.RateLimitMiddleware(app.AddInternshipSkillsHandler, constants.RateLimitAddInternshipSkill, "/internship/skill"))))))
 
-	router.DELETE("/internship/:id/skill/delete", ErrorMiddleware(
+	router.DELETE("/internships/:id/skill", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
-					app.RateLimitMiddleware(app.DeleteInternshipSkillsHandler, constants.RateLimitDeleteInternshipSkill, "/internship/skill/delete"))))))
+					app.RateLimitMiddleware(app.DeleteInternshipSkillsHandler, constants.RateLimitDeleteInternshipSkill, "/internship/skill"))))))
 
 	router.POST("/internships/:id/respond", ErrorMiddleware(
 		app.CorsMiddleware(
@@ -152,13 +152,16 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 
 	// Search routes
 	router.GET("/internships", ErrorMiddleware(
-		app.CorsMiddleware(app.SearchInternshipHandler)))
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.SearchInternshipHandler, constants.RateLimitSearchInternship, "/internships"))))
 
 	router.GET("/companies", ErrorMiddleware(
-		app.CorsMiddleware(app.SearchCompanyHandler)))
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.SearchCompanyHandler, constants.RateLimitSearchCompany, "/companies"))))
 
 	router.GET("/students", ErrorMiddleware(
-		app.CorsMiddleware(app.SearchInternHandler)))
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.SearchInternHandler, constants.RateLimitSearchStudent, "/students"))))
 
 	// CORS preflight
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))

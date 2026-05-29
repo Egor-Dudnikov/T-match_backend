@@ -6,7 +6,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"T-match_backend/internal/apierrors"
@@ -43,7 +42,7 @@ func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("X-Verify-Session", sessionID)
-	log.Println(sessionID)
+	w.WriteHeader(http.StatusCreated)
 	return nil
 }
 
@@ -108,6 +107,7 @@ func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("X-Verify-Session", sessionID)
+	w.WriteHeader(http.StatusCreated)
 	return nil
 }
 

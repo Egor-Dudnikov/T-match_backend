@@ -47,11 +47,9 @@ const (
 	RateLimitSetResponseStatus      = 20 // /responses/:id/status
 
 	// Search endpoints (typically higher limits)
-	RateLimitSearchInternship  = 60  // /internships (GET)
-	RateLimitSearchCompany     = 60  // /companies
-	RateLimitSearchStudent     = 60  // /students
-	RateLimitGetSkills         = 120 // /skills
-	RateLimitGetInternshipById = 120 // /internships/:id (GET)
+	RateLimitSearchInternship = 60 // /internships (GET)
+	RateLimitSearchCompany    = 60 // /companies
+	RateLimitSearchStudent    = 60 // /students
 )
 
 // Role
@@ -79,4 +77,11 @@ const (
 // S3
 const (
 	BucketName = "t-match-storage"
+)
+
+// ServerTimeout
+const (
+	ServerReadTimeout  = time.Second * 15
+	ServerWriteTimeout = time.Second * 15
+	ServerIdleTimeout  = time.Second * 60
 )

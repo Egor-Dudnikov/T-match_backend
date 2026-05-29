@@ -68,7 +68,11 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 	err = encodeJSON[string](w, url)
-	return err
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusCreated)
+	return nil
 }
 
 func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -86,7 +90,11 @@ func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Re
 		return err
 	}
 	err = h.authService.AddInternSkills(r.Context(), skillIDs.Id)
-	return err
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusCreated)
+	return nil
 }
 
 func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {

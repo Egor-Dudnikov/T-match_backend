@@ -200,7 +200,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	res := []models.Company{}
 
 	var query strings.Builder
-	query.WriteString("SELECT id, company_name, description, website, inn, kpp, ogrn, legal_address, director_name, image FROM companies ")
+	query.WriteString("SELECT id, company_name, description, website, inn, ogrn, legal_address, image FROM companies ")
 
 	correctFl := false
 	correct := func() {
@@ -264,10 +264,8 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 			&company.Description,
 			&company.Website,
 			&company.Inn,
-			&company.Kpp,
 			&company.Ogrn,
 			&company.LegalAddress,
-			&company.DirectorName,
 			&company.Image,
 		)
 		res = append(res, company)

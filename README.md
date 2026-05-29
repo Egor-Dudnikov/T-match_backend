@@ -86,7 +86,7 @@ POST /auth/students
 
 | Статус | Заголовки | Описание |
 | :--- | :--- | :--- |
-| `200 OK` | `X-Verify-Session: <session_id>` | Успех. Session ID (7 минут) |
+| `201 Created` | `X-Verify-Session: <session_id>` | Успех. Session ID (7 минут) |
 | `400 Bad Request` | - | Ошибка валидации |
 | `409 Conflict` | - | Email уже существует |
 | `422 Unprocessable Entity` | - | Возраст < 16 лет |
@@ -122,7 +122,7 @@ POST /auth/company
 
 | Статус | Заголовки | Описание |
 | :--- | :--- | :--- |
-| `200 OK` | `X-Verify-Session: <session_id>` | Успех |
+| `201 Created` | `X-Verify-Session: <session_id>` | Успех |
 | `400 Bad Request` | - | Ошибка валидации |
 | `404 Not Found` | - | Компания не найдена или неактивна |
 | `409 Conflict` | - | Email уже существует |
@@ -241,7 +241,7 @@ GET /my/profile
 #### Обновление профиля
 
 ```
-PUT /my/profile/put
+PUT /my/profile
 ```
 *Роль: `intern`*
 
@@ -272,7 +272,7 @@ GET /my/company/profile
 #### Обновление профиля
 
 ```
-PUT /my/company/profile/put
+PUT /my/company/profile
 ```
 *Роль: `company`*
 
@@ -290,7 +290,7 @@ PUT /my/company/profile/put
 ### Аватар
 
 ```
-PUT /my/avatar/put
+PUT /my/avatar
 ```
 *Content-Type: `multipart/form-data`*
 
@@ -298,7 +298,7 @@ PUT /my/avatar/put
 | :--- | :--- | :--- |
 | `avatar` | `File` | Изображение (≤10 МБ, JPEG/PNG) |
 
-**Ответ:** `200 OK` — возвращает URL аватара
+**Ответ:** `201 Created` — возвращает URL аватара
 
 ```json
 "http://localhost:9000/t-match-storage/user_17_avatar"
@@ -326,7 +326,12 @@ POST /internships
 }
 ```
 
-**Ответ:** `200 OK`
+**Ответ:** `201 Created`
+```json
+{
+  "internship_id": 23
+}
+```
 
 ---
 
@@ -340,15 +345,21 @@ GET /internships/:id
 **Пример ответа:**
 ```json
 {
-  "id": 15,
-  "company_id": 5,
-  "title": "Стажер Go",
-  "description": "Ищем мотивированного стажёра...",
-  "salary": 50000,
-  "location": "Москва",
-  "is_archived": false,
-  "duration_month": 3,
-  "created_at": "2025-05-09T10:30:00Z"
+  "internship": {
+    "id": 15,
+    "company_id": 5,
+    "title": "Стажер Go",
+    "description": "Ищем мотивированного стажёра...",
+    "salary": 50000,
+    "location": "Москва",
+    "is_archived": false,
+    "duration_month": 3,
+    "created_at": "2025-05-09T10:30:00Z"
+  },
+  "skills": [
+    {"id": 1, "name": "Go"},
+    {"id": 2, "name": "Docker"}
+  ]
 }
 ```
 
@@ -357,7 +368,7 @@ GET /internships/:id
 ### Обновление стажировки
 
 ```
-PUT /internships/update/:id
+PUT /internships/:id
 ```
 *Роль: `company` (только свои)*
 
@@ -374,7 +385,7 @@ PUT /internships/update/:id
 ### Архивирование стажировки
 
 ```
-DELETE /internships/delete/:id
+DELETE /internships/:id
 ```
 *Роль: `company` (только свои)*
 
@@ -402,7 +413,7 @@ GET /internships
 | `duration_min` | `int` | - | Минимальная длительность (месяцы) |
 | `duration_max` | `int` | - | Максимальная длительность (месяцы) |
 | `skills` | `[]int` | - | ID навыков (AND-логика: все должны быть у стажировки). Передавать несколько раз: `?skills=1&skills=2` |
-| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_months`, `created_at` |
+| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_month`, `created_at` |
 | `order` | `string` | `desc` | Направление: `asc` или `desc` (1 для asc, 0 для desc) |
 | `limit` | `int` | 20 | Записей на странице |
 | `offset` | `int` | 0 | Сдвиг для пагинации |
@@ -538,10 +549,8 @@ GET /companies?query=IT&location=Москва&limit=10
     "description": "Крупная IT-компания, разработка поисковых технологий",
     "website": "https://ya.ru",
     "inn": "7707083893",
-    "kpp": "770701001",
     "ogrn": "1027700229193",
     "legal_address": "Москва, ул. Льва Толстого, 16",
-    "director_name": "Иванов Иван Иванович",
     "image": null
   }
 ]
@@ -594,7 +603,7 @@ GET /skills
 #### Добавить навыки
 
 ```
-POST /my/profile/skills/add
+POST /my/profile/skills
 ```
 *Роль: `intern`*
 
@@ -608,7 +617,7 @@ POST /my/profile/skills/add
 #### Удалить навыки
 
 ```
-DELETE /my/profile/skills/delete
+DELETE /my/profile/skills
 ```
 *Роль: `intern`*
 
@@ -626,7 +635,7 @@ DELETE /my/profile/skills/delete
 #### Добавить навыки
 
 ```
-POST /internship/:id/skill/add
+POST /internships/:id/skill
 ```
 *Роль: `company` (владелец)*
 
@@ -640,7 +649,7 @@ POST /internship/:id/skill/add
 #### Удалить навыки
 
 ```
-DELETE /internship/:id/skill/delete
+DELETE /internships/:id/skill
 ```
 *Роль: `company` (владелец)*
 
@@ -759,23 +768,23 @@ PUT /responses/:id/status
 
 | Эндпоинт | Лимит |
 | :--- | :--- |
-| `PUT /my/profile/put` | 100 |
+| `PUT /my/profile` | 100 |
 | `GET /my/profile` | 120 |
-| `POST /my/profile/skills/add` | 5 |
-| `DELETE /my/profile/skills/delete` | 5 |
-| `PUT /my/company/profile/put` | 100 |
+| `POST /my/profile/skills` | 5 |
+| `DELETE /my/profile/skills` | 5 |
+| `PUT /my/company/profile` | 100 |
 | `GET /my/company/profile` | 120 |
-| `PUT /my/avatar/put` | 100 |
+| `PUT /my/avatar` | 100 |
 
 ### Стажировки
 
 | Эндпоинт | Лимит |
 | :--- | :--- |
 | `POST /internships` | 12 |
-| `PUT /internships/update/:id` | 12 |
-| `DELETE /internships/delete/:id` | 5 |
-| `POST /internship/:id/skill/add` | 5 |
-| `DELETE /internship/:id/skill/delete` | 5 |
+| `PUT /internships/:id` | 12 |
+| `DELETE /internships/:id` | 5 |
+| `POST /internships/:id/skill` | 5 |
+| `DELETE /internships/:id/skill` | 5 |
 
 ### Отклики
 

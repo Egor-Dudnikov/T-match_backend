@@ -26,6 +26,7 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 	err = encodeJSON[int](w, internshipID)
+	w.WriteHeader(http.StatusCreated)
 	return err
 }
 
@@ -97,6 +98,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 		return err
 	}
 	err = h.authService.AddInternshipSkills(ctx, skillIDs.Id, id)
+	w.WriteHeader(http.StatusCreated)
 	return err
 }
 
