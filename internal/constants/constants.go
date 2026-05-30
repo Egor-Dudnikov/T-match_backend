@@ -85,3 +85,8 @@ const (
 	ServerWriteTimeout = time.Second * 15
 	ServerIdleTimeout  = time.Second * 60
 )
+
+// Client timeout
+const (
+	DadataTimeout = time.Second * 10
+)

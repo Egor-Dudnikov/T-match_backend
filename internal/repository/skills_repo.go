@@ -159,13 +159,13 @@ func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) 
 	res := []models.Skill{}
 	skillIDs := []int{}
 	rows, err := r.db.QueryContext(ctx, `SELECT skill_id FROM internship_skills WHERE internship_id = $1`, internshipID)
-	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return res, nil
 		}
 		return res, nil
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var skillID int

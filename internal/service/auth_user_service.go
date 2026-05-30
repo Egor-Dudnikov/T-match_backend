@@ -7,6 +7,7 @@ import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/cache"
 	"T-match_backend/internal/constants"
+	"T-match_backend/internal/dadata"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
@@ -26,16 +27,18 @@ type Service struct {
 	cache    *cache.Redis
 	email    *EmailClient
 	s3       *s3.S3Storage
+	dadata   *dadata.DadataClient
 	validate *validator.Validate
 }
 
-func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storage) *Service {
+func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storage, dadataclient *dadata.DadataClient) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,
 		email:    email,
 		validate: validate,
 		s3:       s3,
+		dadata:   dadataclient,
 	}
 }
 

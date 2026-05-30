@@ -31,7 +31,7 @@ func (app *Service) AuthCompany(ctx context.Context, userReg models.CompanyAuth)
 		return "", apierrors.ErrUserAlreadyExists
 	}
 
-	companyData, err := ValidTIN(userReg.Inn)
+	companyData, err := app.dadata.ValidTIN(userReg.Inn)
 	if err != nil {
 		return "", err
 	}

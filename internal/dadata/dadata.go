@@ -1,10 +1,8 @@
-// Copyright (c) 2026 Egor Dudnikov
-// SPDX-License-Identifier: MIT
-
-package service
+package dadata
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"bytes"
 	"encoding/json"
@@ -14,7 +12,21 @@ import (
 	"os"
 )
 
-func ValidTIN(TIN string) (models.CompanyData, error) {
+type DadataClient struct {
+	apiKey     string
+	httpClient *http.Client
+}
+
+func NewClient() *DadataClient {
+	return &DadataClient{
+		apiKey: os.Getenv("DA_DATA_API_KEY"),
+		httpClient: &http.Client{
+			Timeout: constants.DadataTimeout,
+		},
+	}
+}
+
+func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 	company := models.CompanyData{}
 
 	requestBody, err := json.Marshal(map[string]string{
@@ -31,10 +43,9 @@ func ValidTIN(TIN string) (models.CompanyData, error) {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", os.Getenv("DA_DATA_API_KEY")))
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.apiKey))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return company, apierrors.Warp(apierrors.ErrBadGateway, err)
 	}

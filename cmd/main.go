@@ -7,6 +7,7 @@ import (
 	"T-match_backend/configs"
 	"T-match_backend/internal/cache"
 	"T-match_backend/internal/constants"
+	"T-match_backend/internal/dadata"
 	"T-match_backend/internal/handlers"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
@@ -53,8 +54,9 @@ func main() {
 	}
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
+	dadataClient := dadata.NewClient()
 
-	app := service.NewAuthService(repo, redis, email, validate, s3Storage)
+	app := service.NewAuthService(repo, redis, email, validate, s3Storage, dadataClient)
 	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)
