@@ -74,7 +74,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 				return err
 			}
 
-			refreshTokenCache, err := h.authService.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
+			refreshTokenCache, err := h.service.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
 			if err != nil {
 				return err
 			}
@@ -128,7 +128,7 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 			id = r.RemoteAddr
 		}
 		key := id + "." + endpoint
-		ok, err := h.authService.RateLimitCheck(ctx, key, rate)
+		ok, err := h.service.RateLimitCheck(ctx, key, rate)
 		if err != nil {
 			return err
 		}

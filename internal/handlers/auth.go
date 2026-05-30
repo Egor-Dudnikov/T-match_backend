@@ -15,12 +15,12 @@ import (
 )
 
 type ServiceHandler struct {
-	authService *service.Service
-	corsConfig  *models.CORSConfig
+	service    *service.Service
+	corsConfig *models.CORSConfig
 }
 
-func NewServiceHandler(authService *service.Service, cfg *models.CORSConfig) *ServiceHandler {
-	return &ServiceHandler{authService: authService, corsConfig: cfg}
+func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *ServiceHandler {
+	return &ServiceHandler{service: service, corsConfig: cfg}
 }
 
 func (h *ServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -35,7 +35,7 @@ func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	sessionID, err := h.authService.AuthUser(ctx, userReg)
+	sessionID, err := h.service.AuthUser(ctx, userReg)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.authService.VerifyUser(ctx, sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 func (h *ServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
-	err := h.authService.NewCode(ctx, sessionID)
+	err := h.service.NewCode(ctx, sessionID)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.authService.LoginUser(ctx, userLog)
+	accessToken, refreshToken, err := h.service.LoginUser(ctx, userLog)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	sessionID, err := h.authService.AuthCompany(ctx, userReg)
+	sessionID, err := h.service.AuthCompany(ctx, userReg)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.authService.VerifyCompany(ctx, sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.service.VerifyCompany(ctx, sessionID, verifyRequest)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.authService.LoginCompany(ctx, userLog)
+	accessToken, refreshToken, err := h.service.LoginCompany(ctx, userLog)
 	if err != nil {
 		return err
 	}

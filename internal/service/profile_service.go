@@ -32,13 +32,12 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 
 func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
 	claims := ctx.Value("claims").(models.Claims)
-	resp := models.ProfileResponse{Email: claims.Email}
-	profile, err := app.db.GetMyProfile(ctx, claims.UserID)
-	resp.Profile = profile
+	resp := models.ProfileResponse{}
+	id, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
 		return resp, err
 	}
-	resp.Skills, err = app.db.GetInternSkills(ctx, claims.UserID)
+	resp, err = app.profileResponse(ctx, id, claims.UserID, claims.Email)
 	if err != nil {
 		return resp, err
 	}
@@ -59,10 +58,28 @@ func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.Comp
 }
 
 func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
+	resp := models.CompanyProfileResponse{}
+
 	claims := ctx.Value("claims").(models.Claims)
-	resp := models.CompanyProfileResponse{
-		Email: claims.Email}
-	profile, err := app.db.GetCompanyProfile(ctx, claims.UserID)
+
+	id, err := app.db.GetCompanyIdByUserId(ctx, claims.UserID)
+	if err != nil {
+		return resp, err
+	}
+
+	profile, err := app.db.GetCompanyProfile(ctx, id)
+	resp.Profile = profile
+	if err != nil {
+		return resp, err
+	}
+	resp.Email = claims.Email
+	return resp, nil
+}
+
+func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
+	resp := models.CompanyProfileResponse{}
+
+	profile, err := app.db.GetCompanyProfile(ctx, id)
 	resp.Profile = profile
 	if err != nil {
 		return resp, err
@@ -71,9 +88,17 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 }
 
 func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
+	if info.Size > constants.MaxSizeImage {
+		return "", apierrors.ErrBadRequest
+	}
+
+	contentType := info.Header.Get("Content-Type")
+	if contentType != "image/jpeg" && contentType != "image/png" {
+		return "", apierrors.ErrBadRequest
+	}
 
 	name := "user:" + strconv.Itoa(claims.UserID) + ":avatar"
-	url, err := app.s3.SetFile(ctx, name, file, "image/jpeg", info)
+	url, err := app.s3.SetFile(ctx, name, file, contentType, info)
 	if err != nil {
 		return url, err
 	}
@@ -128,12 +153,35 @@ func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error
 	return responses, err
 }
 
-func (app Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.Company, error) {
+func (app Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res, err := app.db.SearchCompany(ctx, filters)
 	return res, err
 }
 
-func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.Intern, error) {
+func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res, err := app.db.SearchIntern(ctx, filters)
 	return res, err
+}
+
+func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileResponse, error) {
+	userId, err := app.db.GetUserIdByProfileId(ctx, id)
+	resp, err := app.profileResponse(ctx, id, userId, "")
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (app Service) profileResponse(ctx context.Context, internId int, userId int, email string) (models.ProfileResponse, error) {
+	resp := models.ProfileResponse{Email: email}
+	profile, err := app.db.GetProfile(ctx, internId)
+	resp.Profile = profile
+	if err != nil {
+		return resp, err
+	}
+	resp.Skills, err = app.db.GetInternSkills(ctx, userId)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
 }

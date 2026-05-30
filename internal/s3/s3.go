@@ -9,6 +9,7 @@ import (
 	"context"
 	"io"
 	"mime/multipart"
+	"os"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -74,7 +75,8 @@ func (s3 S3Storage) GetURL(info minio.UploadInfo) string {
 		url = "https"
 	}
 	url += "://"
-	url += "localhost:9000"
+	url += os.Getenv("S3_HOST")
+	url += os.Getenv("S3_PORT")
 	url += "/"
 	url += info.Bucket
 	url += "/"

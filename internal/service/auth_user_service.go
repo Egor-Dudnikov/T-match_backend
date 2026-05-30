@@ -31,7 +31,7 @@ type Service struct {
 	validate *validator.Validate
 }
 
-func NewAuthService(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storage, dadataclient *dadata.DadataClient) *Service {
+func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.S3Storage, dadataclient *dadata.DadataClient) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,

@@ -20,7 +20,7 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 	internship.CompanyId = claims.UserID
-	internshipID, err := h.authService.NewInternship(ctx, internship, claims.UserID)
+	internshipID, err := h.service.NewInternship(ctx, internship, claims.UserID)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (h *ServiceHandler) GetInternshipByIdHandler(w http.ResponseWriter, r *http
 		return err
 	}
 
-	internshipResp, err := h.authService.GetInternshipById(ctx, id)
+	internshipResp, err := h.service.GetInternshipById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.
 	if err != nil {
 		return err
 	}
-	err = h.authService.UpdateInternship(ctx, internship)
+	err = h.service.UpdateInternship(ctx, internship)
 	return err
 
 }
@@ -78,7 +78,7 @@ func (h *ServiceHandler) ArchivedInternshipHandler(w http.ResponseWriter, r *htt
 	if err != nil {
 		return err
 	}
-	err = h.authService.ArchivedInternship(ctx, id)
+	err = h.service.ArchivedInternship(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 	if err != nil {
 		return err
 	}
-	err = h.authService.AddInternshipSkills(ctx, skillIDs.Id, id)
+	err = h.service.AddInternshipSkills(ctx, skillIDs.Id, id)
 	w.WriteHeader(http.StatusCreated)
 	return err
 }
@@ -112,7 +112,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 	if err != nil {
 		return err
 	}
-	err = h.authService.DeleteInternshipSkills(ctx, id, skillIDs.Id)
+	err = h.service.DeleteInternshipSkills(ctx, id, skillIDs.Id)
 	return err
 }
 
@@ -123,7 +123,7 @@ func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http
 		return err
 	}
 
-	err = h.authService.RespondInternship(ctx, id)
+	err = h.service.RespondInternship(ctx, id)
 	return err
 }
 
@@ -134,7 +134,7 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 		return err
 	}
 
-	responses, err := h.authService.GetInternshipResponses(ctx, id)
+	responses, err := h.service.GetInternshipResponses(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	err = h.authService.SetResponseStatus(ctx, id, resp.Status)
+	err = h.service.SetResponseStatus(ctx, id, resp.Status)
 	return err
 }
 
@@ -239,7 +239,7 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 		}
 	}
 
-	res, err := h.authService.SearchInternship(r.Context(), filters)
+	res, err := h.service.SearchInternship(r.Context(), filters)
 	if err != nil {
 		return err
 	}

@@ -90,3 +90,7 @@ const (
 const (
 	DadataTimeout = time.Second * 10
 )
+
+const (
+	MaxSizeImage = 5 * 1024 * 1024
+)

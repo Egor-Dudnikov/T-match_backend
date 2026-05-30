@@ -18,12 +18,12 @@ func (h *ServiceHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 	ctx := r.Context()
-	err = h.authService.UpdateStudentProfile(ctx, profile)
+	err = h.service.UpdateStudentProfile(ctx, profile)
 	return err
 }
 
 func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	profile, err := h.authService.GetMyProfile(r.Context())
+	profile, err := h.service.GetMyProfile(r.Context())
 	if err != nil {
 		return err
 	}
@@ -36,12 +36,25 @@ func (h *ServiceHandler) UpdateCompanyProfileHandler(w http.ResponseWriter, r *h
 	if err != nil {
 		return err
 	}
-	err = h.authService.UpdateCompanyProfile(r.Context(), profile)
+	err = h.service.UpdateCompanyProfile(r.Context(), profile)
 	return err
 }
 
 func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	profile, err := h.authService.GetMyCompanyProfile(r.Context())
+	profile, err := h.service.GetMyCompanyProfile(r.Context())
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[models.CompanyProfileResponse](w, profile)
+	return err
+}
+
+func (h *ServiceHandler) GetCompanyProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+	profile, err := h.service.GetCompanyProfile(r.Context(), id)
 	if err != nil {
 		return err
 	}
@@ -62,7 +75,7 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
-	url, err := h.authService.SetMyAvatar(ctx, info, file, claims)
+	url, err := h.service.SetMyAvatar(ctx, info, file, claims)
 	if err != nil {
 		return err
 	}
@@ -75,7 +88,7 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	skills, err := h.authService.GetAllSkills(r.Context())
+	skills, err := h.service.GetAllSkills(r.Context())
 	if err != nil {
 		return err
 	}
@@ -88,7 +101,7 @@ func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	err = h.authService.AddInternSkills(r.Context(), skillIDs.Id)
+	err = h.service.AddInternSkills(r.Context(), skillIDs.Id)
 	if err != nil {
 		return err
 	}
@@ -101,13 +114,13 @@ func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		return err
 	}
-	err = h.authService.DeleteInternSkills(r.Context(), skillIDs.Id)
+	err = h.service.DeleteInternSkills(r.Context(), skillIDs.Id)
 	return err
 }
 
 func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	responses, err := h.authService.GetMyResponses(ctx)
+	responses, err := h.service.GetMyResponses(ctx)
 	if err != nil {
 		return err
 	}
@@ -142,12 +155,12 @@ func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Requ
 			filters.Limit = &val
 		}
 	}
-	res, err := h.authService.SearchCompany(r.Context(), filters)
+	res, err := h.service.SearchCompany(r.Context(), filters)
 	if err != nil {
 		return err
 	}
 
-	err = encodeJSON[[]models.Company](w, res)
+	err = encodeJSON[[]models.CompanyProfile](w, res)
 	return err
 }
 
@@ -191,11 +204,25 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 			filters.Limit = &val
 		}
 	}
-	res, err := h.authService.SearchIntern(r.Context(), filters)
+	res, err := h.service.SearchIntern(r.Context(), filters)
 	if err != nil {
 		return err
 	}
 
-	err = encodeJSON[[]models.Intern](w, res)
+	err = encodeJSON[[]models.ShortProfile](w, res)
 	return err
+}
+
+func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIdURL(ps)
+	if err != nil {
+		return err
+	}
+	resp, err := h.service.GetProfile(ctx, id)
+	if err != nil {
+		return err
+	}
+	encodeJSON[models.ProfileResponse](w, resp)
+	return nil
 }

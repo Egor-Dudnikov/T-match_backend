@@ -71,6 +71,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.InternMiddleware(
 					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, constants.RateLimitDeleteSkills, "/my/profile/skills"))))))
 
+	router.GET("/profile/:id", ErrorMiddleware(
+		app.CorsMiddleware(app.GetProfileHandler)))
+
 	router.PUT("/my/company/profile", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
@@ -82,6 +85,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, constants.RateLimitGetCompany, "/my/company/profile"))))))
+
+	router.GET("/profile/company/:id", ErrorMiddleware(
+		app.CorsMiddleware(app.GetCompanyProfileHandler)))
 
 	router.PUT("/my/avatar", ErrorMiddleware(
 		app.CorsMiddleware(
