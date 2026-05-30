@@ -88,7 +88,7 @@ func (r *Repository) GetProfileIdByUserId(ctx context.Context, userId int) (int,
 
 func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
-	err := r.db.QueryRowContext(ctx, `SELECT first_name, last_name, birth_date, location, university, degree, bio, experience, image 
+	err := r.db.QueryRowContext(ctx, `SELECT id, first_name, last_name, birth_date, location, university, degree, bio, experience, image 
 	FROM interns
 	WHERE id = $1`, id).Scan(
 		&profile.Id,
@@ -138,7 +138,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	res := []models.ShortProfile{}
 
 	var query strings.Builder
-	query.WriteString("SELECT id, first_name, last_name, birth_date, location, university, degree, bio, experience, image FROM interns")
+	query.WriteString("SELECT id, first_name, last_name, location, university, degree, image FROM interns")
 
 	correctFl := false
 	correct := func() {

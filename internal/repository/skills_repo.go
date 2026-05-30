@@ -14,7 +14,7 @@ import (
 )
 
 func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID int) error {
-	id, err := r.GetInternId(ctx, userID)
+	id, err := r.GetProfileIdByUserId(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 }
 
 func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.Skill, error) {
-	id, err := r.GetInternId(ctx, userID)
+	id, err := r.GetProfileIdByUserId(ctx, userID)
 	res := []models.Skill{}
 	skillIDs := []int{}
 	if err != nil {
@@ -83,7 +83,7 @@ func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userI
 		return nil
 	}
 
-	id, err := r.GetInternId(ctx, userID)
+	id, err := r.GetProfileIdByUserId(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -113,15 +113,6 @@ func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userI
 		return apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	return nil
-}
-
-func (r *Repository) GetInternId(ctx context.Context, UserID int) (int, error) {
-	var id int
-	err := r.db.QueryRowContext(ctx, `SELECT id FROM interns WHERE user_id = $1`, UserID).Scan(&id)
-	if err != nil {
-		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
-	}
-	return id, nil
 }
 
 func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, internshipID int) error {

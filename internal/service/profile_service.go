@@ -145,7 +145,7 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
 	responses := []models.Response{}
 	claims := ctx.Value("claims").(models.Claims)
-	internID, err := app.db.GetInternId(ctx, claims.UserID)
+	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
 		return responses, err
 	}

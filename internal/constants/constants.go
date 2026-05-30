@@ -92,5 +92,5 @@ const (
 )
 
 const (
-	MaxSizeImage = 5 * 1024 * 1024
+	MaxSizeImage = 10 * 1024 * 1024
 )
