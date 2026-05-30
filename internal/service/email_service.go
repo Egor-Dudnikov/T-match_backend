@@ -4,6 +4,7 @@
 package service
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"net/smtp"
 	"os"
@@ -36,7 +37,7 @@ func (r *EmailClient) SendVerifyCode(to string, code string) error {
 	}
 
 	if err != nil {
-		return err
+		return apierrors.Warp(apierrors.ErrEmailSendFailed, err)
 	}
 	return nil
 }

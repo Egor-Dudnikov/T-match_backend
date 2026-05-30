@@ -6,7 +6,6 @@ package handlers
 import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -68,7 +67,7 @@ func getIdURL(ps httprouter.Params) (int, error) {
 	idStr := ps.ByName("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return id, fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return id, apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 	return id, nil
 }

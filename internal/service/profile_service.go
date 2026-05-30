@@ -9,7 +9,6 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"strconv"
@@ -26,7 +25,7 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 	claims := ctx.Value("claims").(models.Claims)
 	err = app.db.QueryProfile(ctx, claims.UserID, profile)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }
@@ -37,11 +36,11 @@ func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, er
 	profile, err := app.db.GetMyProfile(ctx, claims.UserID)
 	resp.Profile = profile
 	if err != nil {
-		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return resp, err
 	}
 	resp.Skills, err = app.db.GetInternSkills(ctx, claims.UserID)
 	if err != nil {
-		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return resp, err
 	}
 	return resp, nil
 }
@@ -66,7 +65,7 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 	profile, err := app.db.GetCompanyProfile(ctx, claims.UserID)
 	resp.Profile = profile
 	if err != nil {
-		return resp, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return resp, err
 	}
 	return resp, nil
 }
@@ -95,7 +94,7 @@ func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, 
 func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills, err := app.db.GetAllSkills(ctx)
 	if err != nil {
-		return skills, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return skills, err
 	}
 	return skills, nil
 }
@@ -104,7 +103,7 @@ func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims := ctx.Value("claims").(models.Claims)
 	err := app.db.AddInternSkills(ctx, skills, claims.UserID)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }
@@ -113,7 +112,7 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 	claims := ctx.Value("claims").(models.Claims)
 	err := app.db.DeleteInternSkills(ctx, skillIDs, claims.UserID)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }
@@ -123,7 +122,7 @@ func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error
 	claims := ctx.Value("claims").(models.Claims)
 	internID, err := app.db.GetInternId(ctx, claims.UserID)
 	if err != nil {
-		return responses, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return responses, err
 	}
 	responses, err = app.db.GetMyResponses(ctx, internID)
 	return responses, err

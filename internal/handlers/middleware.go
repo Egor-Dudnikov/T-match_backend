@@ -9,7 +9,6 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -62,17 +61,17 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 		tokenStr := parts[1]
 		token, claims, err := utils.DecodeJWT(tokenStr)
 		if err != nil {
-			return fmt.Errorf("%w: %v", apierrors.ErrUnauthorized, err)
+			return apierrors.Warp(apierrors.ErrUnauthorized, err)
 		}
 		ctx := context.WithValue(r.Context(), "claims", claims)
 		if !token.Valid {
 			refreshTokenCookie, err := r.Cookie("refresh_token")
 			if err != nil {
-				return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+				return apierrors.Warp(apierrors.ErrBadRequest, err)
 			}
 			refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
 			if err != nil {
-				return fmt.Errorf("%w: %v", apierrors.ErrJWTDecodingFailed, err)
+				return err
 			}
 
 			refreshTokenCache, err := h.authService.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
@@ -85,7 +84,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 			if refreshToken.Valid {
 				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, constants.AccessTokenTimeLife)
 				if err != nil {
-					return fmt.Errorf("%w: %v", apierrors.ErrJWTGenerationFailed, err)
+					return err
 				}
 				w.Header().Set("X-New-Access-Token", newToken)
 				return next(w, r.WithContext(ctx), ps)

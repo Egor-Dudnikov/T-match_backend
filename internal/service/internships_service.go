@@ -8,17 +8,16 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
-	"fmt"
 )
 
 func (app Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
 	err := app.validate.Struct(internship)
 	if err != nil {
-		return 0, fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return 0, apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 	internshipID, err := app.db.NewInternship(ctx, internship, id)
 	if err != nil {
-		return internshipID, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return internshipID, err
 	}
 	return internshipID, nil
 }
@@ -33,7 +32,7 @@ func (app Service) GetInternshipById(ctx context.Context, id int) (models.Intern
 	res.Internship = internship
 	res.Skills, err = app.db.GetInternshipSkills(ctx, id)
 	if err != nil {
-		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return res, err
 	}
 
 	return res, nil
@@ -42,7 +41,7 @@ func (app Service) GetInternshipById(ctx context.Context, id int) (models.Intern
 func (app Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
 	err := app.validate.Struct(internship)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
 	err = app.IsCompanysInternship(ctx, internship.Id)
@@ -61,7 +60,7 @@ func (app Service) ArchivedInternship(ctx context.Context, id int) error {
 	}
 	err = app.db.ArchivedInternship(ctx, id)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }
@@ -69,7 +68,7 @@ func (app Service) ArchivedInternship(ctx context.Context, id int) error {
 func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 	companyId, err := app.db.GetCompanyIdByInternshipId(ctx, id)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 
 	companyIdUser, err := app.db.GetCompanyIdByUserId(ctx, ctx.Value("claims").(models.Claims).UserID)
@@ -86,7 +85,7 @@ func (app Service) AddInternshipSkills(ctx context.Context, skills []int, id int
 	}
 	err = app.db.AddInternshipSkills(ctx, skills, id)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }
@@ -98,7 +97,7 @@ func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int,
 	}
 	err = app.db.DeleteInternshipSkills(ctx, skillIDs, internshipID)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return err
 	}
 	return nil
 }

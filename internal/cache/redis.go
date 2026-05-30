@@ -4,8 +4,10 @@
 package cache
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"context"
+	"errors"
 	"os"
 	"time"
 
@@ -38,12 +40,21 @@ func NewRedis(r *redis.Client) *Redis {
 
 func (r *Redis) Set(ctx context.Context, key string, value []byte, time time.Duration) error {
 	err := r.cache.Set(ctx, key, value, time).Err()
-	return err
+	if err != nil {
+		return apierrors.Warp(apierrors.ErrCacheError, err)
+	}
+	return nil
 }
 
 func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	value, err := r.cache.Get(ctx, key).Result()
-	return value, err
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return value, apierrors.ErrKeyNotFound
+		}
+		return value, apierrors.Warp(apierrors.ErrCacheError, err)
+	}
+	return value, nil
 }
 
 func (r *Redis) Del(ctx context.Context, key string) {
@@ -93,7 +104,7 @@ func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool,
 	cmd := r.cache.Eval(ctx, rate_script, []string{key}, rate, now)
 	res, err := cmd.Int64()
 	if err != nil {
-		return false, err
+		return false, apierrors.Warp(apierrors.ErrCacheError, err)
 	}
 	if res == 1 {
 		return true, nil

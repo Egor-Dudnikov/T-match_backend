@@ -24,7 +24,7 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 	err = r.db.QueryRowContext(ctx, `INSERT INTO internships (company_id, title, description, salary, duration_months, location, created_at)
 	VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.Location).Scan(&internshipID)
 	if err != nil {
-		return 0, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	return internshipID, nil
 }
@@ -48,7 +48,7 @@ func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Inte
 		if errors.Is(err, sql.ErrNoRows) {
 			return internship, apierrors.ErrInternshipNotFound
 		}
-		return internship, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return internship, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 
 	return internship, nil
@@ -96,7 +96,7 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 		if errors.Is(err, sql.ErrNoRows) {
 			return apierrors.ErrInternshipNotFound
 		}
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 
 	return err
@@ -104,12 +104,12 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 
 func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (int, error) {
 	var companyId int
-	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1`, id).Scan(&companyId)
+	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(&companyId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return companyId, fmt.Errorf("%w: %v", apierrors.ErrCompanyNotExists, err)
+			return companyId, apierrors.Warp(apierrors.ErrInternshipNotFound, err)
 		}
-		return companyId, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return companyId, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	return companyId, nil
 }
@@ -117,7 +117,7 @@ func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (in
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE WHERE id = $1`, id)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -223,7 +223,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, fmt.Errorf("%w: %v", apierrors.ErrDatabaseError, err)
+		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 

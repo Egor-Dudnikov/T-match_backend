@@ -5,7 +5,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"T-match_backend/internal/apierrors"
@@ -50,7 +49,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
 	if sessionID == "" {
-		return fmt.Errorf("%w", apierrors.ErrBadRequest)
+		return apierrors.ErrBadRequest
 	}
 
 	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
@@ -115,7 +114,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
 	if sessionID == "" {
-		return fmt.Errorf("%w", apierrors.ErrBadRequest)
+		return apierrors.ErrBadRequest
 	}
 
 	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
@@ -155,7 +154,7 @@ func decodeJSON[T any](r *http.Request) (T, error) {
 
 	err := decoder.Decode(&res)
 	if err != nil {
-		return res, fmt.Errorf("%w: %v", apierrors.ErrJSONDecodeFailed, err)
+		return res, apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
 	return res, nil
 }
@@ -163,12 +162,12 @@ func decodeJSON[T any](r *http.Request) (T, error) {
 func encodeJSON[T any](w http.ResponseWriter, resp T) error {
 	respJson, err := json.Marshal(resp)
 	if err != nil {
-		return err
+		return apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(respJson)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrJSONEncodeFailed, err)
+		return apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
 	}
 	return nil
 }

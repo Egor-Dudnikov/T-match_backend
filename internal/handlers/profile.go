@@ -6,7 +6,6 @@ package handlers
 import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -55,13 +54,13 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	claims := ctx.Value("claims").(models.Claims)
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
 	file, info, err := r.FormFile("avatar")
 	defer file.Close()
 	if err != nil {
-		return fmt.Errorf("%w: %v", apierrors.ErrBadRequest, err)
+		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 	url, err := h.authService.SetMyAvatar(ctx, info, file, claims)
 	if err != nil {

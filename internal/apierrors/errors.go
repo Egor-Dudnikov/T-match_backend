@@ -5,6 +5,7 @@ package apierrors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -12,8 +13,9 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrUserNotExists     = errors.New("user not exists")
 
-	ErrInvalidCode = errors.New("invalid verification code")
-	ErrCodeExpired = errors.New("verification code expired")
+	ErrInvalidCode    = errors.New("invalid verification code")
+	ErrCodeExpired    = errors.New("verification code expired")
+	ErrSessionExpired = errors.New("verification session expired")
 
 	ErrDatabaseError = errors.New("database error")
 
@@ -45,6 +47,7 @@ var (
 	ErrAlreadyResponded     = errors.New("already responded to this internship")
 
 	ErrSkillsNotFound = errors.New("skills not found")
+	ErrKeyNotFound    = errors.New("redis key not found")
 )
 
 func HTTPStatusMapping(err error) (status int, message string) {
@@ -53,6 +56,8 @@ func HTTPStatusMapping(err error) (status int, message string) {
 		return http.StatusBadRequest, "Invalid verification code format"
 	case errors.Is(err, ErrCodeExpired):
 		return http.StatusBadRequest, "Verification code expired"
+	case errors.Is(err, ErrSessionExpired):
+		return http.StatusBadRequest, "Verification session expired"
 	case errors.Is(err, ErrJSONDecodeFailed):
 		return http.StatusBadRequest, "Invalid JSON format"
 	case errors.Is(err, ErrJSONEncodeFailed):
@@ -121,4 +126,8 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	default:
 		return http.StatusInternalServerError, "Internal server error"
 	}
+}
+
+func Warp(apierror error, err error) error {
+	return fmt.Errorf("%w: %w", apierror, err)
 }

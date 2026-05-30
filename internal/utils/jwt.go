@@ -4,6 +4,7 @@
 package utils
 
 import (
+	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"os"
 	"time"
@@ -27,7 +28,11 @@ func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Durat
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
+	tokenStr, err := token.SignedString(secretKey)
+	if err != nil {
+		return tokenStr, apierrors.Warp(apierrors.ErrJWTGenerationFailed, err)
+	}
+	return tokenStr, nil
 
 }
 
@@ -35,7 +40,7 @@ func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
 	claims := models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
 	if err != nil {
-		return nil, claims, err
+		return nil, claims, apierrors.Warp(apierrors.ErrJWTDecodingFailed, err)
 	}
 	return token, claims, nil
 }
