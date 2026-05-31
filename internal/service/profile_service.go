@@ -251,9 +251,13 @@ func (app Service) existStudentMatch(ctx context.Context, companyId, internId in
 }
 
 func (app Service) existCompanyMatch(ctx context.Context, companyId, internId int) (bool, error) {
-	exist, err := app.db.ExistStatus(ctx, companyId, internId, constants.Reviewing)
+	exist1, err := app.db.ExistStatus(ctx, companyId, internId, constants.Reviewing)
 	if err != nil {
-		return exist, err
+		return exist1, err
 	}
-	return exist, nil
+	exist2, err := app.db.ExistStatus(ctx, companyId, internId, constants.Accepted)
+	if err != nil {
+		return exist2, err
+	}
+	return exist1 || exist2, nil
 }

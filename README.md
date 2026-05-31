@@ -25,6 +25,7 @@
 | **Формат данных** | `application/json` (кроме загрузки аватара — `multipart/form-data`) |
 | **Аутентификация** | Заголовок `Authorization: Bearer <access_token>` |
 | **Cookies** | `refresh_token` (HttpOnly, SameSite=Strict, 7 дней) |
+| **CORS** | Настраивается через `CORS_ALLOW_ORIGIN`, по умолчанию `http://localhost:8000` |
 | **Даты** | ISO 8601 (`2026-05-15T00:00:00Z`) |
 
 ### Особенности работы с токенами
@@ -201,6 +202,27 @@ POST /auth/company/login    # компания
 
 ---
 
+### 2.6 Выход из системы
+```
+POST /auth/logout
+```
+
+*Требуется авторизация*
+
+**Успешный ответ (200 OK):** пустое тело
+
+**Что происходит при выходе:**
+- Refresh Token удаляется из Redis
+- Кука `refresh_token` очищается (Max-Age=-1)
+- Клиент должен удалить Access Token из локального хранилища
+
+**Возможные ошибки:**
+| Статус | Описание |
+| :--- | :--- |
+| `401` | Неавторизован |
+
+---
+
 ## 3. Профиль пользователя
 
 *Все эндпоинты требуют `Authorization: Bearer <access_token>`*
@@ -362,7 +384,9 @@ GET /profile/:id
 }
 ```
 
-**Отличие от `/my/profile`:** нет поля `email`.
+**Особенности:**
+- Поле `email` обычно отсутствует
+- **Исключение:** если запрос делает авторизованная компания, и этот студент имеет статус `reviewing` или `accepted` хотя бы по одной стажировке этой компании — поле `email` будет заполнено
 
 ---
 
@@ -388,11 +412,14 @@ GET /profile/company/:id
     "legal_address": "Москва, ул. Льва Толстого, 16",
     "director_name": "Иванов Иван Иванович",
     "image": null
-  }
+  },
 }
 ```
 
-**Отличие от `/my/company/profile`:** нет поля `email`.
+**Особенности:**
+- Поле `email` обычно отсутствует
+- **Исключение:** если запрос делает авторизованный студент, который был **принят** (статус `accepted`) хотя бы на одну стажировку этой компании — поле `email` будет заполнено
+
 
 ---
 
@@ -544,7 +571,6 @@ GET /internships?query=backend&sort=salary&order=desc&limit=20&offset=0
     "id": 15,
     "company_id": 5,
     "title": "Go разработчик",
-    "description": "Ищем начинающего Go разработчика для работы над микросервисами. Опыт работы с PostgreSQL приветствуется.",
     "salary": 80000,
     "location": "Москва",
     "is_archived": false,
@@ -555,7 +581,6 @@ GET /internships?query=backend&sort=salary&order=desc&limit=20&offset=0
     "id": 16,
     "company_id": 8,
     "title": "Python Backend Developer",
-    "description": "Разработка API на Python и FastAPI. Работа с PostgreSQL и Redis.",
     "salary": 70000,
     "location": "Санкт-Петербург",
     "is_archived": false,
@@ -872,6 +897,17 @@ PUT /responses/:id/status
 2. Сервер проверяет Refresh Token из cookie
 3. Если Refresh Token валиден — возвращает новый Access Token в заголовке `X-New-Access-Token`
 4. Фронтенд должен перехватывать этот заголовок и сохранять новый токен
+
+### Выход из системы и инвалидация токенов
+
+При вызове `POST /auth/logout`:
+1. Сервер удаляет Refresh Token из Redis
+2. Кука `refresh_token` очищается (устанавливается `Max-Age=-1`)
+3. Клиент **должен удалить** Access Token из локального хранилища
+
+### Вход с нового устройства
+
+При входе с новым `device_id` создается новая пара токенов. Старый Refresh Token (для предыдущего `device_id`) остается активным до истечения срока (7 дней) или до ручного выхода.
 
 ---
 
