@@ -218,3 +218,17 @@ func (r *Repository) GetUserIdByProfileId(ctx context.Context, id int) (int, err
 	}
 	return userId, nil
 }
+
+func (r *Repository) ExistStatus(ctx context.Context, companyId, internId int, status string) (bool, error) {
+	exist := false
+	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(
+		SELECT 1 FROM applications 
+		WHERE intern_id = $1 AND EXISTS(
+			SELECT 1 FROM internships
+			WHERE id = applications.internship_id AND company_id = $2) 
+		AND status = $3)`, internId, companyId, status).Scan(&exist)
+	if err != nil {
+		return exist, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return exist, nil
+}

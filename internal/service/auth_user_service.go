@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -80,7 +81,6 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 	user := models.UserVerify{
 		Email:        userReg.Email,
 		PasswordHash: string(hashPassword),
-		Code:         code,
 		DeviceID:     userReg.DeviceID,
 		BirthDate:    userReg.BirthDate,
 	}
@@ -94,9 +94,38 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 	if err != nil {
 		return "", err
 	}
+	err = app.cache.Set(ctx, sessionID+".code", userJson, constants.VerifyCodeTimeLife)
+	if err != nil {
+		return "", err
+	}
 
 	return sessionID, nil
 
+}
+
+func (app *Service) verify(ctx context.Context, key string, code string) error {
+	codeRedis, err := app.cache.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return apierrors.ErrCodeExpired
+		}
+		return err
+	}
+	if codeRedis != code {
+		return apierrors.ErrInvalidCode
+	}
+	return nil
+}
+
+func (app *Service) resetCode(ctx context.Context, key, newCode string) error {
+	err := app.cache.ResetCode(ctx, key, newCode)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return apierrors.ErrSessionExpired
+		}
+		return err
+	}
+	return nil
 }
 
 func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
@@ -120,8 +149,9 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	if userVerify.Code != verifyRequest.Code {
-		return "", "", apierrors.ErrInvalidCode
+	err = app.verify(ctx, sessionID+".code", verifyRequest.Code)
+	if err != nil {
+		return "", "", err
 	}
 
 	user := models.User{
@@ -168,22 +198,19 @@ func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 		}
 		return err
 	}
+
 	user := models.UserVerify{}
-	json.Unmarshal([]byte(res), &user)
-
-	user.Code = newCode
-	jsoneNewCode, err := json.Marshal(user)
-
+	err = json.Unmarshal([]byte(res), &user)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
+		return apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	err = app.email.SendVerifyCode(user.Email, newCode)
+	err = app.cache.ResetCode(ctx, sessionID+".code", newCode)
 	if err != nil {
 		return err
 	}
 
-	err = app.cache.Set(ctx, sessionID, jsoneNewCode, constants.VerifyCodeTimeLife)
+	err = app.email.SendVerifyCode(user.Email, newCode)
 	if err != nil {
 		return err
 	}
@@ -253,4 +280,9 @@ func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (b
 		return false, err
 	}
 	return ok, nil
+}
+
+func (app *Service) DeleteRefreshToken(ctx context.Context) {
+	claims := ctx.Value("claims").(models.Claims)
+	app.cache.Del(ctx, claims.ID)
 }

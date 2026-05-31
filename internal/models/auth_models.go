@@ -28,7 +28,6 @@ type UserVerify struct {
 	PasswordHash string
 	DeviceID     string
 	BirthDate    time.Time
-	Code         string
 }
 
 type CompanyAuth struct {
@@ -43,7 +42,6 @@ type CompanyVerify struct {
 	Email        string
 	PasswordHash string
 	DeviceID     string
-	Code         string
 }
 
 type CompanyData struct {

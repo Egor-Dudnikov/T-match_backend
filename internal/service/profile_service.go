@@ -79,6 +79,32 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
+	claims := ctx.Value("claims").(models.Claims)
+	var email string
+
+	if claims.Role == constants.Intern {
+
+		internId, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
+		if err != nil {
+			return resp, err
+		}
+
+		exist, err := app.existStudentMatch(ctx, id, internId)
+		if err != nil {
+			return resp, err
+		}
+		if exist {
+			userId, err := app.db.GetUserIdByCompanyId(ctx, id)
+			if err != nil {
+				return resp, err
+			}
+			email, err = app.db.GetEmailByUserId(ctx, userId)
+			if err != nil {
+				return resp, err
+			}
+		}
+	}
+	resp.Email = email
 	profile, err := app.db.GetCompanyProfile(ctx, id)
 	resp.Profile = profile
 	if err != nil {
@@ -164,8 +190,27 @@ func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern
 }
 
 func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileResponse, error) {
+	resp := models.ProfileResponse{}
+	claims := ctx.Value("claims").(models.Claims)
 	userId, err := app.db.GetUserIdByProfileId(ctx, id)
-	resp, err := app.profileResponse(ctx, id, userId, "")
+	var email string
+	if claims.Role == constants.Company {
+		companyId, err := app.db.GetCompanyIdByUserId(ctx, claims.UserID)
+		if err != nil {
+			return resp, err
+		}
+		exist, err := app.existCompanyMatch(ctx, companyId, id)
+		if err != nil {
+			return resp, err
+		}
+		if exist {
+			email, err = app.db.GetEmailByUserId(ctx, userId)
+			if err != nil {
+				return resp, err
+			}
+		}
+	}
+	resp, err = app.profileResponse(ctx, id, userId, email)
 	if err != nil {
 		return resp, err
 	}
@@ -184,4 +229,20 @@ func (app Service) profileResponse(ctx context.Context, internId int, userId int
 		return resp, err
 	}
 	return resp, nil
+}
+
+func (app Service) existStudentMatch(ctx context.Context, companyId, internId int) (bool, error) {
+	exist, err := app.db.ExistStatus(ctx, companyId, internId, constants.Accepted)
+	if err != nil {
+		return exist, err
+	}
+	return exist, nil
+}
+
+func (app Service) existCompanyMatch(ctx context.Context, companyId, internId int) (bool, error) {
+	exist, err := app.db.ExistStatus(ctx, companyId, internId, constants.Reviewing)
+	if err != nil {
+		return exist, err
+	}
+	return exist, nil
 }

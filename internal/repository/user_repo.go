@@ -114,3 +114,21 @@ func (r *Repository) GetCompanyIdByUserId(ctx context.Context, userID int) (int,
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
 	return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
 }
+
+func (r *Repository) GetEmailByUserId(ctx context.Context, id int) (string, error) {
+	var email string
+	err := r.db.QueryRowContext(ctx, `SELECT email FROM users WHERE id = $1`, id).Scan(&email)
+	if err != nil {
+		return email, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return email, err
+}
+
+func (r *Repository) GetUserIdByCompanyId(ctx context.Context, id int) (int, error) {
+	var userId int
+	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM companies WHERE id = $1`, id).Scan(&userId)
+	if err != nil {
+		return userId, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return userId, err
+}

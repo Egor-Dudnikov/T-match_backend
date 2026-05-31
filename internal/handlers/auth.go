@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/service"
 
@@ -61,7 +62,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken)
+	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 
 	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
@@ -88,7 +89,7 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken)
+	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
@@ -126,7 +127,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken)
+	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	encodeJSON(w, map[string]string{"access_token": accessToken})
 	return nil
 }
@@ -142,8 +143,14 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken)
+	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	encodeJSON(w, map[string]string{"access_token": accessToken})
+	return nil
+}
+
+func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	h.service.DeleteRefreshToken(r.Context())
+	SetRefreshCookie(w, "", -1)
 	return nil
 }
 
@@ -172,7 +179,7 @@ func encodeJSON[T any](w http.ResponseWriter, resp T) error {
 	return nil
 }
 
-func SetRefreshCookie(w http.ResponseWriter, value string) {
+func SetRefreshCookie(w http.ResponseWriter, value string, maxAge int) {
 	// при переходе на https заменить Secure на true
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
@@ -181,6 +188,6 @@ func SetRefreshCookie(w http.ResponseWriter, value string) {
 		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
-		MaxAge:   604800,
+		MaxAge:   maxAge,
 	})
 }

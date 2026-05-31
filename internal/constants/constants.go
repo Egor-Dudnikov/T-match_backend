@@ -10,6 +10,7 @@ const (
 	AccessTokenTimeLife  = 15 * time.Minute
 	RefreshTokenTimeLife = 7 * 24 * time.Hour
 	VerifyCodeTimeLife   = 7 * time.Minute
+	MaxAgeRefreshToken   = 604800
 )
 
 // RateLimit

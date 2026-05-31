@@ -56,7 +56,6 @@ func (app *Service) AuthCompany(ctx context.Context, userReg models.CompanyAuth)
 	user := models.CompanyVerify{
 		Email:        userReg.Email,
 		PasswordHash: string(hashPassword),
-		Code:         code,
 		DeviceID:     userReg.DeviceID,
 		CompanyData:  companyData,
 	}
@@ -67,6 +66,10 @@ func (app *Service) AuthCompany(ctx context.Context, userReg models.CompanyAuth)
 	}
 
 	err = app.cache.Set(ctx, sessionID, userJson, constants.VerifyCodeTimeLife)
+	if err != nil {
+		return "", apierrors.Warp(apierrors.ErrTooManyInvalidAttempts, err)
+	}
+	err = app.cache.Set(ctx, sessionID+".code", []byte(code), constants.VerifyCodeTimeLife)
 	if err != nil {
 		return "", apierrors.Warp(apierrors.ErrTooManyInvalidAttempts, err)
 	}
@@ -96,11 +99,9 @@ func (app *Service) VerifyCompany(ctx context.Context, sessionID string, verifyR
 		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	if companyVerify.Code != verifyRequest.Code {
-		if err != nil {
-			return "", "", err
-		}
-		return "", "", apierrors.ErrInvalidCode
+	err = app.verify(ctx, sessionID+".code", verifyRequest.Code)
+	if err != nil {
+		return "", "", err
 	}
 
 	user := models.User{

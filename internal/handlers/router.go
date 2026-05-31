@@ -46,6 +46,10 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.RateLimitMiddleware(app.LoginCompanyHandler, constants.RateLimitAuthCompanyLogin, "/auth/company/login"))))
 
+	router.POST("/auth/logout", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(app.LogoutHandler))))
+
 	// Profile routes
 	router.PUT("/my/profile", ErrorMiddleware(
 		app.CorsMiddleware(

@@ -111,3 +111,27 @@ func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool,
 	}
 	return false, nil
 }
+
+func (r *Redis) ResetCode(ctx context.Context, key, newValue string) error {
+	script := `local key = KEYS[1]
+				local value = ARGV[1]
+
+				local ttl = redis.call('TTL', KEYS[1])
+				if ttl < 0 then 
+					return 0
+				end
+				redis.call('DEL', key)
+
+				redis.call('SET', key, value)
+				redis.call('EXPIRE', key, ttl)
+				return 1`
+	cmd := r.cache.Eval(ctx, script, []string{key}, newValue)
+	ok, err := cmd.Int64()
+	if err != nil {
+		return apierrors.Warp(apierrors.ErrCacheError, err)
+	}
+	if ok == 1 {
+		return redis.Nil
+	}
+	return nil
+}
