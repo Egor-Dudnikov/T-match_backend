@@ -125,7 +125,7 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res := []models.Internship{}
 	var query strings.Builder
-	query.WriteString("SELECT id, company_id, title, description, salary, duration_months, location, created_at, is_archived FROM internships")
+	query.WriteString("SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships")
 
 	index := 1
 	values := []interface{}{}
@@ -233,7 +233,6 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 			&internship.Id,
 			&internship.CompanyId,
 			&internship.Title,
-			&internship.Description,
 			&internship.Salary,
 			&internship.DurationMonth,
 			&internship.Location,

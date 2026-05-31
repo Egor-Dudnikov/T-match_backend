@@ -79,10 +79,10 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value("claims").(models.Claims)
 	var email string
 
-	if claims.Role == constants.Intern {
+	if ok && claims.Role == constants.Intern {
 
 		internId, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 		if err != nil {
@@ -152,6 +152,7 @@ func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 
 func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims := ctx.Value("claims").(models.Claims)
+
 	err := app.db.AddInternSkills(ctx, skills, claims.UserID)
 	if err != nil {
 		return err
@@ -161,6 +162,7 @@ func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 
 func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
 	claims := ctx.Value("claims").(models.Claims)
+
 	err := app.db.DeleteInternSkills(ctx, skillIDs, claims.UserID)
 	if err != nil {
 		return err
@@ -171,10 +173,12 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
 	responses := []models.Response{}
 	claims := ctx.Value("claims").(models.Claims)
+
 	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
 		return responses, err
 	}
+
 	responses, err = app.db.GetMyResponses(ctx, internID)
 	return responses, err
 }
@@ -191,10 +195,16 @@ func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern
 
 func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value("claims").(models.Claims)
+
 	userId, err := app.db.GetUserIdByProfileId(ctx, id)
+	if err != nil {
+		return resp, err
+	}
+
 	var email string
-	if claims.Role == constants.Company {
+
+	if ok && claims.Role == constants.Company {
 		companyId, err := app.db.GetCompanyIdByUserId(ctx, claims.UserID)
 		if err != nil {
 			return resp, err
@@ -210,6 +220,7 @@ func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileRespon
 			}
 		}
 	}
+
 	resp, err = app.profileResponse(ctx, id, userId, email)
 	if err != nil {
 		return resp, err

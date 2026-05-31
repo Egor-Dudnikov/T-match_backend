@@ -94,7 +94,7 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 	if err != nil {
 		return "", err
 	}
-	err = app.cache.Set(ctx, sessionID+".code", userJson, constants.VerifyCodeTimeLife)
+	err = app.cache.Set(ctx, sessionID+".code", []byte(code), constants.VerifyCodeTimeLife)
 	if err != nil {
 		return "", err
 	}
@@ -284,5 +284,5 @@ func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (b
 
 func (app *Service) DeleteRefreshToken(ctx context.Context) {
 	claims := ctx.Value("claims").(models.Claims)
-	app.cache.Del(ctx, claims.ID)
+	app.cache.Del(ctx, fmt.Sprintf("%d.%s", claims.UserID, claims.DeviceID))
 }

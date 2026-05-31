@@ -130,7 +130,7 @@ func (r *Redis) ResetCode(ctx context.Context, key, newValue string) error {
 	if err != nil {
 		return apierrors.Warp(apierrors.ErrCacheError, err)
 	}
-	if ok == 1 {
+	if ok == 0 {
 		return redis.Nil
 	}
 	return nil
