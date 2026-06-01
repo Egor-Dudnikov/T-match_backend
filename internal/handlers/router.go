@@ -75,6 +75,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.InternMiddleware(
 					app.RateLimitMiddleware(app.DeleteInternSkillsHandler, constants.RateLimitDeleteSkills, "/my/profile/skills"))))))
 
+	router.GET("/company/profile/:id", ErrorMiddleware(
+		app.CorsMiddleware(app.GetCompanyProfileHandler)))
+
 	router.GET("/profile/:id", ErrorMiddleware(
 		app.CorsMiddleware(app.GetProfileHandler)))
 
@@ -90,15 +93,17 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.GetMyCompanyProfileHandler, constants.RateLimitGetCompany, "/my/company/profile"))))))
 
-	router.GET("/profile/company/:id", ErrorMiddleware(
-		app.CorsMiddleware(app.GetCompanyProfileHandler)))
-
 	router.PUT("/my/avatar", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
 				app.RateLimitMiddleware(app.SetMyAvatarHandler, constants.RateLimitSetAvatar, "/my/avatar")))))
 
 	// Internship routes
+
+	router.GET("/internships", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.SearchInternshipHandler, constants.RateLimitSearchInternship, "/internships"))))
+
 	router.POST("/internships", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(
@@ -161,9 +166,6 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 					app.RateLimitMiddleware(app.SetResponseStatus, constants.RateLimitSetResponseStatus, "/responses/:id/status"))))))
 
 	// Search routes
-	router.GET("/internships", ErrorMiddleware(
-		app.CorsMiddleware(
-			app.RateLimitMiddleware(app.SearchInternshipHandler, constants.RateLimitSearchInternship, "/internships"))))
 
 	router.GET("/companies", ErrorMiddleware(
 		app.CorsMiddleware(

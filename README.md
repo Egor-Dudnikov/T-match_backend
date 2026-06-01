@@ -396,7 +396,7 @@ GET /profile/:id
 GET /profile/company/:id
 ```
 
-**Пример:** `GET /profile/company/5`
+**Пример:** `GET /company/profile/5`
 
 **Ответ (200 OK):**
 ```json

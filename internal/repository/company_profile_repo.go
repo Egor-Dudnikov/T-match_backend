@@ -53,7 +53,7 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile m
 
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
 	profile := models.CompanyProfile{}
-	err := r.db.QueryRowContext(ctx, `SELECT company_name, description, website, inn, ogrn, kpp, legal_address, director_name, image
+	err := r.db.QueryRowContext(ctx, `SELECT id, company_name, description, website, inn, ogrn, kpp, legal_address, director_name, image
 	FROM companies 
 	WHERE id = $1`, id).Scan(
 		&profile.Id,
