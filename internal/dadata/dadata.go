@@ -63,8 +63,13 @@ func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 			return company, apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 		}
 
-		suggestions := res["suggestions"].([]interface{})
-		if len(suggestions) == 0 {
+		suggestionsRaw, ok := res["suggestions"]
+		if !ok || suggestionsRaw == nil {
+			return company, apierrors.ErrCompanyNotExists
+		}
+
+		suggestions, ok := suggestionsRaw.([]interface{})
+		if !ok {
 			return company, apierrors.ErrCompanyNotExists
 		}
 
@@ -83,24 +88,18 @@ func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 		state := data["state"].(map[string]interface{})
 		status := state["status"].(string)
 
-		management := data["management"].(map[string]interface{})
-		director := management["name"].(string)
-		directorPost := management["post"].(string)
-
 		address := data["address"].(map[string]interface{})
 		addrValue := address["value"].(string)
 
 		company = models.CompanyData{
-			Inn:          inn,
-			Kpp:          kpp,
-			Ogrn:         ogrn,
-			Okved:        okved,
-			BranchType:   branchType,
-			ShortName:    shortName,
-			Status:       status,
-			Director:     director,
-			DirectorPost: directorPost,
-			Address:      addrValue,
+			Inn:        inn,
+			Kpp:        kpp,
+			Ogrn:       ogrn,
+			Okved:      okved,
+			BranchType: branchType,
+			ShortName:  shortName,
+			Status:     status,
+			Address:    addrValue,
 		}
 
 		if company.Status != "ACTIVE" {
