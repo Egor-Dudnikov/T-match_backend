@@ -112,7 +112,10 @@ func (r *Repository) GetUser(ctx context.Context, email string, role string) (mo
 func (r *Repository) GetCompanyIdByUserId(ctx context.Context, userID int) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
-	return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	if err != nil {
+		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return id, nil
 }
 
 func (r *Repository) GetEmailByUserId(ctx context.Context, id int) (string, error) {

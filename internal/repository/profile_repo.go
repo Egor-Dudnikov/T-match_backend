@@ -104,7 +104,7 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 	if err != nil {
 		return profile, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
-	return profile, err
+	return profile, nil
 }
 
 func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error {
