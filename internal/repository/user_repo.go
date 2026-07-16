@@ -135,3 +135,20 @@ func (r *Repository) GetUserIdByCompanyId(ctx context.Context, id int) (int, err
 	}
 	return userId, err
 }
+
+func (r *Repository) GetUserIdByEmail(ctx context.Context, email string) (int, error) {
+	var id int
+	err := r.db.QueryRowContext(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&id)
+	if err != nil {
+		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return id, err
+}
+
+func (r *Repository) UpdatePasswordHash(ctx context.Context, newPasswordHash string, id int) error {
+	err := r.db.QueryRowContext(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, newPasswordHash, id).Err()
+	if err != nil {
+		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+	return nil
+}

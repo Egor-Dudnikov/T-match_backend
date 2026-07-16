@@ -68,3 +68,20 @@ type Claims struct {
 	Role     string
 	jwt.RegisteredClaims
 }
+
+type UserInfo struct {
+	UserID   int
+	DeviceID string
+	Email    string
+	Role     string
+}
+
+type FogetPasswordRequest struct {
+	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Role     string `json:"role" validate:"required,valid_role"`
+}
+
+type ChangePasswordRequest struct {
+	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
+}

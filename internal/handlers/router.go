@@ -15,7 +15,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/", ErrorMiddleware(
-		app.CorsMiddleware(app.Index)))
+		app.CorsMiddleware(app.CheckHealth)))
 
 	// Auth routes
 	router.POST("/auth/students", ErrorMiddleware(
@@ -49,6 +49,16 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.POST("/auth/logout", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.AuthMiddleware(app.LogoutHandler))))
+
+	router.POST("/auth/forgot-password", ErrorMiddleware(
+		app.CorsMiddleware(app.ForgotPasswordHandler)))
+
+	router.POST("/auth/forgot-password/verify", ErrorMiddleware(
+		app.CorsMiddleware(app.VerifyForgotPasswordHandler)))
+
+	router.PUT("/auth/change-password", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(app.ChangePasswordHandler))))
 
 	// Profile routes
 	router.PUT("/my/profile", ErrorMiddleware(

@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -260,6 +261,138 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (app Service) FogotPassword(ctx context.Context, user models.FogetPasswordRequest) (string, error) {
+	err := app.validate.Struct(user)
+	if err != nil {
+		return "", apierrors.Warp(apierrors.ErrBadRequest, err)
+	}
+
+	if exists, err := app.db.CheckUserEmail(ctx, user.Email, user.Role); err == nil && !exists {
+		return "", apierrors.ErrUserNotExists
+	} else if err != nil {
+		return "", err
+	}
+
+	id, err := app.db.GetUserIdByEmail(ctx, user.Email)
+	if err != nil {
+		return "", err
+	}
+
+	code, err := utils.NewCode()
+	if err != nil {
+		return "", nil
+	}
+
+	sessionID := uuid.New().String()
+
+	err = app.cache.Set(ctx, sessionID+".code", []byte(code), constants.VerifyCodeTimeLife)
+	if err != nil {
+		return "", err
+	}
+
+	userInfo := models.UserInfo{
+		UserID:   id,
+		Email:    user.Email,
+		Role:     user.Role,
+		DeviceID: user.DeviceID,
+	}
+
+	userJson, err := json.Marshal(userInfo)
+	if err != nil {
+		return "", apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
+	}
+
+	err = app.cache.Set(ctx, sessionID, userJson, constants.VerifyCodeTimeLife)
+	if err != nil {
+		return "", err
+	}
+
+	err = app.cache.Set(ctx, sessionID, []byte(strconv.Itoa(id)), constants.VerifyCodeTimeLife)
+	if err != nil {
+		return "", err
+	}
+
+	err = app.email.SendVerifyCode(user.Email, code)
+
+	return sessionID, err
+}
+
+func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+	err := app.validate.Struct(verifyRequest)
+	if err != nil {
+		return "", "", apierrors.Warp(apierrors.ErrBadRequest, err)
+	}
+
+	userVerify := models.UserVerify{}
+	res, err := app.cache.Get(ctx, sessionID)
+
+	if err != nil {
+		if errors.Is(err, apierrors.ErrKeyNotFound) {
+			return "", "", apierrors.Warp(apierrors.ErrCodeExpired, err)
+		}
+		return "", "", err
+	}
+
+	err = json.Unmarshal([]byte(res), &userVerify)
+	if err != nil {
+		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
+	}
+
+	err = app.verify(ctx, sessionID+".code", verifyRequest.Code)
+	if err != nil {
+		return "", "", err
+	}
+
+	userJson, err := app.cache.Get(ctx, sessionID)
+	if err != nil {
+		return "", "", err
+	}
+
+	userInfo := models.UserInfo{}
+
+	err = json.Unmarshal([]byte(userJson), &userInfo)
+	if err != nil {
+		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
+	}
+
+	accessToken, err := utils.GeneratingJWT(userInfo.UserID, userInfo.DeviceID, userInfo.Email, userInfo.Role, constants.AccessTokenTimeLife)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := utils.GeneratingJWT(userInfo.UserID, userInfo.DeviceID, userInfo.Email, userInfo.Role, constants.RefreshTokenTimeLife)
+	if err != nil {
+		return "", "", err
+	}
+
+	key := fmt.Sprintf("%d.%s", userInfo.UserID, userVerify.DeviceID)
+	err = app.cache.Set(ctx, key, []byte(refreshToken), constants.RefreshTokenTimeLife)
+	if err != nil {
+		return "", "", err
+	}
+	app.cache.Del(ctx, sessionID)
+	return accessToken, refreshToken, nil
+}
+
+func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.ChangePasswordRequest) error {
+	err := app.validate.Struct(newPasswordReq)
+	if err != nil {
+		return apierrors.Warp(apierrors.ErrBadRequest, err)
+	}
+
+	newPassword := newPasswordReq.Password
+
+	claims := ctx.Value("claims").(models.Claims)
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	err = app.db.UpdatePasswordHash(ctx, string(passwordHash), claims.UserID)
+	return err
 }
 
 func (app *Service) GetRefreshToken(ctx context.Context, id int, deviceID string) (string, error) {

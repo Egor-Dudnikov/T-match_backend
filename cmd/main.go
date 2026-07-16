@@ -54,6 +54,7 @@ func main() {
 	}
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", utils.ValidPassword)
+	validate.RegisterValidation("valid_role", utils.ValidRole)
 	dadataClient := dadata.NewClient()
 
 	app := service.Newservice(repo, redis, email, validate, s3Storage, dadataClient)

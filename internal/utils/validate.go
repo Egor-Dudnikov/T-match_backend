@@ -31,6 +31,14 @@ func ValidPassword(fl validator.FieldLevel) bool {
 	return has1 && has2 && has3
 }
 
+func ValidRole(fl validator.FieldLevel) bool {
+	role := fl.Field().String()
+	if role != constants.Intern && role != constants.Company {
+		return false
+	}
+	return true
+}
+
 func ValidAge(birthDate time.Time) bool {
 	today := time.Now()
 	age := today.Year() - birthDate.Year()

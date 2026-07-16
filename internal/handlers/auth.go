@@ -24,8 +24,8 @@ func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *Servic
 	return &ServiceHandler{service: service, corsConfig: cfg}
 }
 
-func (h *ServiceHandler) Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	w.Write([]byte("Hi men"))
+func (h *ServiceHandler) CheckHealth(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	w.Write([]byte("OK"))
 	return nil
 }
 
@@ -152,6 +152,55 @@ func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _
 	h.service.DeleteRefreshToken(r.Context())
 	SetRefreshCookie(w, "", -1)
 	return nil
+}
+
+func (h *ServiceHandler) ForgotPasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	req, err := decodeJSON[models.FogetPasswordRequest](r)
+	if err != nil {
+		return err
+	}
+
+	ctx := r.Context()
+	sessionID, err := h.service.FogotPassword(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("X-Verify-Session", sessionID)
+
+	return nil
+}
+
+func (h *ServiceHandler) VerifyForgotPasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	ctx := r.Context()
+	sessionID := r.Header.Get("X-Verify-Session")
+	if sessionID == "" {
+		return apierrors.ErrBadRequest
+	}
+
+	verifyRequest, err := decodeJSON[models.VerifyRequest](r)
+	if err != nil {
+		return err
+	}
+	accessToken, refreshToken, err := h.service.VerifyFogottenUser(ctx, sessionID, verifyRequest)
+	if err != nil {
+		return err
+	}
+
+	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	encodeJSON(w, map[string]string{"access_token": accessToken})
+	return nil
+}
+
+func (h *ServiceHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	req, err := decodeJSON[models.ChangePasswordRequest](r)
+	if err != nil {
+		return err
+	}
+
+	ctx := r.Context()
+
+	return h.service.ChangePassword(ctx, req)
 }
 
 func decodeJSON[T any](r *http.Request) (T, error) {
