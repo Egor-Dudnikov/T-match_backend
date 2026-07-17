@@ -71,7 +71,7 @@ func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 		return err
 	}
 
-	companyIdUser, err := app.db.GetCompanyIdByUserId(ctx, ctx.Value("claims").(models.Claims).UserID)
+	companyIdUser, err := app.db.GetCompanyIdByUserId(ctx, ctx.Value(constants.ClaimsKey).(models.Claims).UserID)
 	if companyId != companyIdUser {
 		return apierrors.ErrForbidden
 	}
@@ -103,7 +103,10 @@ func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int,
 }
 
 func (app Service) RespondInternship(ctx context.Context, internshipID int) error {
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
 		return err

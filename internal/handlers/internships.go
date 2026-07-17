@@ -5,6 +5,7 @@ package handlers
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"net/http"
 	"strconv"
@@ -14,7 +15,10 @@ import (
 
 func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 	internship, err := decodeJSON[models.Internship](r)
 	if err != nil {
 		return err

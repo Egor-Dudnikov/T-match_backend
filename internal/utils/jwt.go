@@ -40,7 +40,7 @@ func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
 	claims := models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
 	if err != nil {
-		return nil, claims, apierrors.Warp(apierrors.ErrJWTDecodingFailed, err)
+		return token, claims, apierrors.Warp(apierrors.ErrJWTDecodingFailed, err)
 	}
 	return token, claims, nil
 }

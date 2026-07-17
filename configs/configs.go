@@ -38,7 +38,7 @@ func LoadConfig() models.Config {
 			Username: getEnv("EMAIL_USERNAME", ""),
 		},
 		CORSConfig: models.CORSConfig{
-			ControlAllowOrigin:  getEnvAsSlice("CORS_ALLOW_ORIGIN", []string{"http://localhost:8000"}),
+			ControlAllowOrigin:  getEnv("CORS_ALLOW_ORIGIN", "http://localhost:8000"),
 			ControlAllowHeaders: getEnvAsSlice("CORS_ALLOW_HEADERS", []string{"Content-Type", "Authorization", "X-Verify-Session", "X-New-Access-Token"}),
 		},
 		S3Config: models.S3Config{

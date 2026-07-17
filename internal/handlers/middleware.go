@@ -9,11 +9,13 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -31,7 +33,7 @@ func ErrorMiddleware(next ErrorHandler) httprouter.Handle {
 
 func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		w.Header().Set("Access-Control-Allow-Origin", strings.Join(h.corsConfig.ControlAllowOrigin, ", "))
+		w.Header().Set("Access-Control-Allow-Origin", h.corsConfig.ControlAllowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", strings.Join(h.corsConfig.ControlAllowHeaders, ", "))
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -60,10 +62,10 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 
 		tokenStr := parts[1]
 		token, claims, err := utils.DecodeJWT(tokenStr)
-		if err != nil {
+		if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
 			return apierrors.Warp(apierrors.ErrUnauthorized, err)
 		}
-		ctx := context.WithValue(r.Context(), "claims", claims)
+		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
 		if !token.Valid {
 			refreshTokenCookie, err := r.Cookie("refresh_token")
 			if err != nil {
@@ -71,7 +73,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 			}
 			refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
 			if err != nil {
-				return err
+				return apierrors.Warp(apierrors.ErrUnauthorized, err)
 			}
 
 			refreshTokenCache, err := h.service.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
@@ -99,7 +101,7 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		claims := r.Context().Value("claims").(models.Claims)
+		claims := r.Context().Value(constants.ClaimsKey).(models.Claims)
 		if claims.Role != constants.Intern {
 			return apierrors.ErrForbidden
 		}
@@ -109,7 +111,7 @@ func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		claims := r.Context().Value("claims").(models.Claims)
+		claims := r.Context().Value(constants.ClaimsKey).(models.Claims)
 		if claims.Role != constants.Company {
 			return apierrors.ErrForbidden
 		}
@@ -121,7 +123,7 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		ctx := r.Context()
 		var id string
-		claims := ctx.Value("claims")
+		claims := ctx.Value(constants.ClaimsKey)
 		if claims != nil {
 			id = strconv.Itoa(claims.(models.Claims).UserID)
 		} else {

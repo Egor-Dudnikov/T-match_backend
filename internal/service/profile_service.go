@@ -22,7 +22,10 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 		}
 	}
 
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 	err = app.db.QueryProfile(ctx, claims.UserID, profile)
 	if err != nil {
 		return err
@@ -31,8 +34,12 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 }
 
 func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
-	claims := ctx.Value("claims").(models.Claims)
 	resp := models.ProfileResponse{}
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return resp, apierrors.ErrInternalServer
+	}
+
 	id, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
 		return resp, err
@@ -49,7 +56,10 @@ func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.Comp
 	if err != nil {
 		return err
 	}
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 	err = app.db.UpdateCompanyProfile(ctx, claims.UserID, profile)
 	if err != nil {
 		return err
@@ -60,7 +70,10 @@ func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.Comp
 func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return resp, apierrors.ErrInternalServer
+	}
 
 	id, err := app.db.GetCompanyIdByUserId(ctx, claims.UserID)
 	if err != nil {
@@ -79,7 +92,7 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
-	claims, ok := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	var email string
 
 	if ok && claims.Role == constants.Intern {
@@ -151,7 +164,10 @@ func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 }
 
 func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 
 	err := app.db.AddInternSkills(ctx, skills, claims.UserID)
 	if err != nil {
@@ -161,7 +177,10 @@ func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 }
 
 func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 
 	err := app.db.DeleteInternSkills(ctx, skillIDs, claims.UserID)
 	if err != nil {
@@ -172,7 +191,10 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 
 func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
 	responses := []models.Response{}
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return responses, apierrors.ErrInternalServer
+	}
 
 	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
 	if err != nil {
@@ -195,7 +217,7 @@ func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern
 
 func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
-	claims, ok := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 
 	userId, err := app.db.GetUserIdByProfileId(ctx, id)
 	if err != nil {

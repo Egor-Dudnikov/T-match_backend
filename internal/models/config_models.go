@@ -45,7 +45,7 @@ type EmailConfig struct {
 }
 
 type CORSConfig struct {
-	ControlAllowOrigin  []string `json:"control_allow_origin"`
+	ControlAllowOrigin  string   `json:"control_allow_origin"`
 	ControlAllowHeaders []string `json:"control_allow_headers"`
 }
 

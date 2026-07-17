@@ -60,7 +60,12 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birthDa
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
-	tx.Commit()
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+
 	return id, nil
 }
 
@@ -83,7 +88,12 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, c
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
-	tx.Commit()
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+	}
+
 	return id, nil
 }
 

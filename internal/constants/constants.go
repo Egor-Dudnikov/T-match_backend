@@ -95,3 +95,7 @@ const (
 const (
 	MaxSizeImage = 10 * 1024 * 1024
 )
+
+// Claims key
+
+const ClaimsKey = "claims"

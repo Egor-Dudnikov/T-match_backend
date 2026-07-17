@@ -384,7 +384,10 @@ func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.Ch
 
 	newPassword := newPasswordReq.Password
 
-	claims := ctx.Value("claims").(models.Claims)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -415,7 +418,11 @@ func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (b
 	return ok, nil
 }
 
-func (app *Service) DeleteRefreshToken(ctx context.Context) {
-	claims := ctx.Value("claims").(models.Claims)
+func (app *Service) DeleteRefreshToken(ctx context.Context) error {
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
 	app.cache.Del(ctx, fmt.Sprintf("%d.%s", claims.UserID, claims.DeviceID))
+	return nil
 }
