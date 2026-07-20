@@ -129,7 +129,7 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 		var name string
 		err = rows.Scan(&id, &name)
 		if err != nil {
-			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+			return skills, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 		}
 		skills = append(skills, models.Skill{ID: id, Name: name})
 	}

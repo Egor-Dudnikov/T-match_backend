@@ -192,7 +192,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 }
 
 // handleOptions handles CORS preflight requests
-func handleOptions(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func handleOptions(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) error {
 	w.WriteHeader(http.StatusOK)
 	return nil
 }

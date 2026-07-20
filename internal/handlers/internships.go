@@ -51,7 +51,7 @@ func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http
 	return nil
 }
 
-func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) UpdateInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
 	if err != nil {
@@ -76,7 +76,7 @@ func getIDURL(ps httprouter.Params) (int, error) {
 	return id, nil
 }
 
-func (h *ServiceHandler) ArchivedInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) ArchivedInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
 	if err != nil {
@@ -105,7 +105,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 	return err
 }
 
-func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) DeleteInternshipSkillsHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
 	if err != nil {
@@ -120,7 +120,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 	return err
 }
 
-func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) RespondInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
 	if err != nil {
@@ -146,7 +146,7 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 	return err
 }
 
-func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) SetResponseStatus(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 
 	id, err := getIDURL(ps)

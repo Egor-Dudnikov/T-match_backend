@@ -12,13 +12,13 @@ import (
 	"os"
 )
 
-type DadataClient struct {
+type Client struct {
 	apiKey     string
 	httpClient *http.Client
 }
 
-func NewClient() *DadataClient {
-	return &DadataClient{
+func NewClient() *Client {
+	return &Client{
 		apiKey: os.Getenv("DA_DATA_API_KEY"),
 		httpClient: &http.Client{
 			Timeout: constants.DadataTimeout,
@@ -26,7 +26,7 @@ func NewClient() *DadataClient {
 	}
 }
 
-func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
+func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
 	company := models.CompanyData{}
 
 	requestBody, err := json.Marshal(map[string]string{
@@ -73,23 +73,63 @@ func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 			return company, apierrors.ErrCompanyNotExists
 		}
 
-		first := suggestions[0].(map[string]interface{})
-		data := first["data"].(map[string]interface{})
+		first, ok := suggestions[0].(map[string]interface{})
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
 
-		inn := data["inn"].(string)
-		kpp := data["kpp"].(string)
-		ogrn := data["ogrn"].(string)
-		okved := data["okved"].(string)
-		branchType := data["branch_type"].(string)
+		data, ok := first["data"].(map[string]interface{})
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
 
-		name := data["name"].(map[string]interface{})
-		shortName := name["short_with_opf"].(string)
+		inn, ok := data["inn"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		kpp, ok := data["kpp"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		ogrn, ok := data["ogrn"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		okved, ok := data["okved"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		branchType, ok := data["branch_type"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
 
-		state := data["state"].(map[string]interface{})
-		status := state["status"].(string)
+		name, ok := data["name"].(map[string]interface{})
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		shortName, ok := name["short_with_opf"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
 
-		address := data["address"].(map[string]interface{})
-		addrValue := address["value"].(string)
+		state, ok := data["state"].(map[string]interface{})
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		status, ok := state["status"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+
+		address, ok := data["address"].(map[string]interface{})
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
+		addrValue, ok := address["value"].(string)
+		if !ok {
+			return company, apierrors.ErrCompanyNotExists
+		}
 
 		company = models.CompanyData{
 			Inn:        inn,

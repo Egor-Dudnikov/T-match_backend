@@ -239,7 +239,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 			&internship.IsArchived,
 		)
 		if err != nil {
-			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 		}
 		res = append(res, internship)
 	}

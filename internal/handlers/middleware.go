@@ -90,9 +90,8 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 				}
 				w.Header().Set("X-New-Access-Token", newToken)
 				return next(w, r.WithContext(ctx), ps)
-			} else {
-				return apierrors.ErrUnauthorized
 			}
+			return apierrors.ErrUnauthorized
 		}
 
 		return next(w, r.WithContext(ctx), ps)
@@ -101,7 +100,10 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		claims := r.Context().Value(constants.ClaimsKey).(models.Claims)
+		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
+		if !ok {
+			return apierrors.ErrInternalServer
+		}
 		if claims.Role != constants.Intern {
 			return apierrors.ErrForbidden
 		}
@@ -111,7 +113,10 @@ func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		claims := r.Context().Value(constants.ClaimsKey).(models.Claims)
+		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
+		if !ok {
+			return apierrors.ErrInternalServer
+		}
 		if claims.Role != constants.Company {
 			return apierrors.ErrForbidden
 		}
@@ -123,9 +128,13 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		ctx := r.Context()
 		var id string
-		claims := ctx.Value(constants.ClaimsKey)
-		if claims != nil {
-			id = strconv.Itoa(claims.(models.Claims).UserID)
+		claimsContext := ctx.Value(constants.ClaimsKey)
+		if claimsContext != nil {
+			claims, ok := claimsContext.(models.Claims)
+			if !ok {
+				return apierrors.ErrInternalServer
+			}
+			id = strconv.Itoa(claims.UserID)
 		} else {
 			id = r.RemoteAddr
 		}

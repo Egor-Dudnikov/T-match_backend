@@ -66,7 +66,10 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 
 	for rows.Next() {
 		var skillID int
-		rows.Scan(&skillID)
+		err = rows.Scan(&skillID)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		skillIDs = append(skillIDs, skillID)
 	}
 
@@ -159,7 +162,10 @@ func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) 
 
 	for rows.Next() {
 		var skillID int
-		rows.Scan(&skillID)
+		err = rows.Scan(&skillID)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		skillIDs = append(skillIDs, skillID)
 	}
 
@@ -229,7 +235,10 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 
 	ptr := 0
 	for rows.Next() {
-		rows.Scan(&res[ptr].Name)
+		err = rows.Scan(&res[ptr].Name)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		ptr++
 	}
 

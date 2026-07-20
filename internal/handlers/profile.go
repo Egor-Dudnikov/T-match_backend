@@ -13,7 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (h *ServiceHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) UpdateProfileHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.Profile](r)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Requ
 	return err
 }
 
-func (h *ServiceHandler) UpdateCompanyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) UpdateCompanyProfileHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.CompanyProfile](r)
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h ServiceHandler) DeleteInternSkillsHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http
 	return err
 }
 
-func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	responses, err := h.service.GetMyResponses(ctx)
 	if err != nil {
@@ -132,7 +132,7 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
-func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	location := r.URL.Query().Get("location")
 	offset := r.URL.Query().Get("offset")
@@ -227,6 +227,6 @@ func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	encodeJSON[models.ProfileResponse](w, resp)
-	return nil
+	err = encodeJSON[models.ProfileResponse](w, resp)
+	return err
 }

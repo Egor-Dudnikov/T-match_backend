@@ -71,7 +71,15 @@ func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 		return err
 	}
 
-	companyIDUser, err := app.db.GetCompanyIDByUserID(ctx, ctx.Value(constants.ClaimsKey).(models.Claims).UserID)
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
+
+	companyIDUser, err := app.db.GetCompanyIDByUserID(ctx, claims.UserID)
+	if err != nil {
+		return err
+	}
 	if companyID != companyIDUser {
 		return apierrors.ErrForbidden
 	}

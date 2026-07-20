@@ -9,7 +9,6 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/utils"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -21,12 +20,6 @@ type CompanyVerify struct {
 	Email        string
 	PasswordHash string
 	DeviceID     string
-}
-
-func GetCompanyVerify(ctx context.Context, userJSON string) (UserVerify, error) {
-	userVerify := CompanyVerify{}
-	err := json.Unmarshal([]byte(userJSON), &userVerify)
-	return userVerify, err
 }
 
 func (cv CompanyVerify) QueryNewUser(ctx context.Context, db *repository.Repository) (int, error) {

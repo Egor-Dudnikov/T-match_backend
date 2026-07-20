@@ -98,4 +98,6 @@ const (
 
 // Claims key
 
-const ClaimsKey = "claims"
+type contextKey string
+
+const ClaimsKey contextKey = "claims"

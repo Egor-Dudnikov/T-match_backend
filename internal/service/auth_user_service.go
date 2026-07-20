@@ -30,11 +30,11 @@ type Service struct {
 	cache    *cache.Redis
 	email    *EmailClient
 	s3       *s3.Storage
-	dadata   *dadata.DadataClient
+	dadata   *dadata.Client
 	validate *validator.Validate
 }
 
-func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.DadataClient) *Service {
+func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,

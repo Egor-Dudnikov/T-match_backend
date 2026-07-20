@@ -24,7 +24,7 @@ func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *Servic
 	return &ServiceHandler{service: service, corsConfig: cfg}
 }
 
-func (h *ServiceHandler) CheckHealth(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) CheckHealth(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) error {
 	_, err := w.Write([]byte("OK"))
 	return err
 }
@@ -64,11 +64,11 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 
 	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 
-	encodeJSON(w, map[string]string{"access_token": accessToken})
-	return nil
+	err = encodeJSON(w, map[string]string{"access_token": accessToken})
+	return err
 }
 
-func (h *ServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) NewVerifyCode(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
 	err := h.service.NewCode(ctx, sessionID)
@@ -90,8 +90,8 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
-	encodeJSON(w, map[string]string{"access_token": accessToken})
-	return nil
+	err = encodeJSON(w, map[string]string{"access_token": accessToken})
+	return err
 }
 
 func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -128,8 +128,8 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
-	encodeJSON(w, map[string]string{"access_token": accessToken})
-	return nil
+	err = encodeJSON(w, map[string]string{"access_token": accessToken})
+	return err
 }
 
 func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
@@ -144,12 +144,15 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
-	encodeJSON(w, map[string]string{"access_token": accessToken})
-	return nil
+	err = encodeJSON(w, map[string]string{"access_token": accessToken})
+	return err
 }
 
 func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	h.service.DeleteRefreshToken(r.Context())
+	err := h.service.DeleteRefreshToken(r.Context())
+	if err != nil {
+		return err
+	}
 	SetRefreshCookie(w, "", -1)
 	return nil
 }
@@ -188,11 +191,11 @@ func (h *ServiceHandler) VerifyForgotPasswordHandler(w http.ResponseWriter, r *h
 	}
 
 	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
-	encodeJSON(w, map[string]string{"access_token": accessToken})
-	return nil
+	err = encodeJSON(w, map[string]string{"access_token": accessToken})
+	return err
 }
 
-func (h *ServiceHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+func (h *ServiceHandler) ChangePasswordHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	req, err := decodeJSON[models.ChangePasswordRequest](r)
 	if err != nil {
 		return err

@@ -45,6 +45,6 @@ func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
 	return token, claims, nil
 }
 
-func keyfunc(token *jwt.Token) (interface{}, error) {
+func keyfunc(_ *jwt.Token) (interface{}, error) {
 	return []byte(os.Getenv("JWT_SECRET")), nil
 }

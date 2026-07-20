@@ -154,7 +154,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 			&company.Image,
 		)
 		if err != nil {
-			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 		}
 
 		res = append(res, company)
