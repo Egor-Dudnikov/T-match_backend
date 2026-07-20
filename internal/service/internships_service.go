@@ -22,9 +22,9 @@ func (app Service) NewInternship(ctx context.Context, internship models.Internsh
 	return internshipID, nil
 }
 
-func (app Service) GetInternshipById(ctx context.Context, id int) (models.InternshipResponse, error) {
+func (app Service) GetInternshipByID(ctx context.Context, id int) (models.InternshipResponse, error) {
 	res := models.InternshipResponse{}
-	internship, err := app.db.GetInternshipById(ctx, id)
+	internship, err := app.db.GetInternshipByID(ctx, id)
 	if err != nil {
 		return res, err
 	}
@@ -44,7 +44,7 @@ func (app Service) UpdateInternship(ctx context.Context, internship models.Inter
 		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
-	err = app.IsCompanysInternship(ctx, internship.Id)
+	err = app.IsCompanysInternship(ctx, internship.ID)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (app Service) RespondInternship(ctx context.Context, internshipID int) erro
 	if !ok {
 		return apierrors.ErrInternalServer
 	}
-	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
+	internID, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 	if err != nil {
 		return err
 	}

@@ -23,7 +23,7 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	internship.CompanyId = claims.UserID
+	internship.CompanyID = claims.UserID
 	internshipID, err := h.service.NewInternship(ctx, internship, claims.UserID)
 	if err != nil {
 		return err
@@ -33,14 +33,14 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
-func (h *ServiceHandler) GetInternshipByIdHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIdURL(ps)
 	if err != nil {
 		return err
 	}
 
-	internshipResp, err := h.service.GetInternshipById(ctx, id)
+	internshipResp, err := h.service.GetInternshipByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.
 		return err
 	}
 	internship, err := decodeJSON[models.InternshipUpdate](r)
-	internship.Id = id
+	internship.ID = id
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 	if err != nil {
 		return err
 	}
-	err = h.service.AddInternshipSkills(ctx, skillIDs.Id, id)
+	err = h.service.AddInternshipSkills(ctx, skillIDs.ID, id)
 	w.WriteHeader(http.StatusCreated)
 	return err
 }
@@ -116,7 +116,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 	if err != nil {
 		return err
 	}
-	err = h.service.DeleteInternshipSkills(ctx, id, skillIDs.Id)
+	err = h.service.DeleteInternshipSkills(ctx, id, skillIDs.ID)
 	return err
 }
 

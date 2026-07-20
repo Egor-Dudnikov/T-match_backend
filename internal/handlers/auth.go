@@ -25,18 +25,18 @@ func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *Servic
 }
 
 func (h *ServiceHandler) CheckHealth(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	w.Write([]byte("OK"))
-	return nil
+	_, err := w.Write([]byte("OK"))
+	return err
 }
 
 func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	userReg, err := decodeJSON[models.UserAuth](r)
+	userReg, err := decodeJSON[models.InternAuth](r)
 	if err != nil {
 		return err
 	}
 
-	sessionID, err := h.service.AuthUser(ctx, userReg)
+	sessionID, err := h.service.AuthIntern(ctx, userReg)
 	if err != nil {
 		return err
 	}
@@ -80,11 +80,11 @@ func (h *ServiceHandler) NewVerifyCode(w http.ResponseWriter, r *http.Request, _
 
 func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	userLog, err := decodeJSON[models.UserAuth](r)
+	userLog, err := decodeJSON[models.LoginUser](r)
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.service.LoginUser(ctx, userLog)
+	accessToken, refreshToken, err := h.service.LoginUser(ctx, userLog, constants.Intern)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.service.VerifyCompany(ctx, sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest)
 	if err != nil {
 		return err
 	}
@@ -134,11 +134,11 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 
 func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
-	userLog, err := decodeJSON[models.UserAuth](r)
+	userLog, err := decodeJSON[models.LoginUser](r)
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.service.LoginCompany(ctx, userLog)
+	accessToken, refreshToken, err := h.service.LoginUser(ctx, userLog, constants.Company)
 	if err != nil {
 		return err
 	}

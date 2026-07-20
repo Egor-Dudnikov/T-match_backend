@@ -56,7 +56,7 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 	err := r.db.QueryRowContext(ctx, `SELECT id, company_name, description, website, inn, ogrn, kpp, legal_address, director_name, image
 	FROM companies 
 	WHERE id = $1`, id).Scan(
-		&profile.Id,
+		&profile.ID,
 		&profile.CompanyName,
 		&profile.Description,
 		&profile.Website,
@@ -145,7 +145,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	for rows.Next() {
 		company := models.CompanyProfile{}
 		rows.Scan(
-			&company.Id,
+			&company.ID,
 			&company.CompanyName,
 			&company.Description,
 			&company.Website,

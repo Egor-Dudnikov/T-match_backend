@@ -6,8 +6,8 @@ package models
 import "time"
 
 type Internship struct {
-	Id            int       `json:"id"`
-	CompanyId     int       `json:"company_id"`
+	ID            int       `json:"id"`
+	CompanyID     int       `json:"company_id"`
 	Title         string    `json:"title" validate:"required,max=200"`
 	Description   string    `json:"description" validate:"required,max=5000"`
 	Salary        int       `json:"salary" validate:"omitempty,min=0"`
@@ -18,7 +18,7 @@ type Internship struct {
 }
 
 type InternshipUpdate struct {
-	Id            int    `json:"id,omitempty"`
+	ID            int    `json:"id,omitempty"`
 	Title         string `json:"title,omitempty" validate:"omitempty,max=200"`
 	Description   string `json:"description,omitempty" validate:"omitempty,max=5000"`
 	Salary        *int   `json:"salary,omitempty" validate:"omitempty,min=0"`

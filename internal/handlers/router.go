@@ -122,7 +122,7 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 
 	router.GET("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(
-			app.GetInternshipByIdHandler)))
+			app.GetInternshipByIDHandler)))
 
 	router.PUT("/internships/:id", ErrorMiddleware(
 		app.CorsMiddleware(

@@ -53,8 +53,16 @@ func main() {
 		log.Fatalln(err)
 	}
 	validate := validator.New()
-	validate.RegisterValidation("strong_password", utils.ValidPassword)
-	validate.RegisterValidation("valid_role", utils.ValidRole)
+
+	err = validate.RegisterValidation("strong_password", utils.ValidPassword)
+	if err != nil {
+		log.Fatalf("failed to register validation: %v", err)
+	}
+	err = validate.RegisterValidation("valid_role", utils.ValidRole)
+	if err != nil {
+		log.Fatalf("failed to register validation: %v", err)
+	}
+
 	dadataClient := dadata.NewClient()
 
 	app := service.Newservice(repo, redis, email, validate, s3Storage, dadataClient)

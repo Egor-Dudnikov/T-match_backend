@@ -77,9 +77,9 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 	return nil
 }
 
-func (r *Repository) GetProfileIdByUserId(ctx context.Context, userId int) (int, error) {
+func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int, error) {
 	var id int
-	err := r.db.QueryRowContext(ctx, `SELECT id FROM interns WHERE user_id = $1`, userId).Scan(&id)
+	err := r.db.QueryRowContext(ctx, `SELECT id FROM interns WHERE user_id = $1`, userID).Scan(&id)
 	if err != nil {
 		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
@@ -91,7 +91,7 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 	err := r.db.QueryRowContext(ctx, `SELECT id, first_name, last_name, birth_date, location, university, degree, bio, experience, image 
 	FROM interns
 	WHERE id = $1`, id).Scan(
-		&profile.Id,
+		&profile.ID,
 		&profile.FirstName,
 		&profile.LastName,
 		&profile.BirthDate,
@@ -128,7 +128,7 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 		var id int
 		var name string
 		rows.Scan(&id, &name)
-		skills = append(skills, models.Skill{Id: id, Name: name})
+		skills = append(skills, models.Skill{ID: id, Name: name})
 	}
 
 	return skills, nil
@@ -197,7 +197,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	for rows.Next() {
 		intern := models.ShortProfile{}
 		rows.Scan(
-			&intern.Id,
+			&intern.ID,
 			&intern.FirstName,
 			&intern.LastName,
 			&intern.Location,
@@ -211,12 +211,12 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 }
 
 func (r *Repository) GetUserIdByProfileId(ctx context.Context, id int) (int, error) {
-	var userId int
-	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM interns WHERE id = $1`, id).Scan(&userId)
+	var userID int
+	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM interns WHERE id = $1`, id).Scan(&userID)
 	if err != nil {
-		return userId, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return userID, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
-	return userId, nil
+	return userID, nil
 }
 
 func (r *Repository) ExistStatus(ctx context.Context, companyId, internId int, status string) (bool, error) {

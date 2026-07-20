@@ -40,7 +40,7 @@ func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, er
 		return resp, apierrors.ErrInternalServer
 	}
 
-	id, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
+	id, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 	if err != nil {
 		return resp, err
 	}
@@ -97,7 +97,7 @@ func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.Compan
 
 	if ok && claims.Role == constants.Intern {
 
-		internId, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
+		internId, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 		if err != nil {
 			return resp, err
 		}
@@ -107,11 +107,11 @@ func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.Compan
 			return resp, err
 		}
 		if exist {
-			userId, err := app.db.GetUserIdByCompanyId(ctx, id)
+			userID, err := app.db.GetUserIdByCompanyId(ctx, id)
 			if err != nil {
 				return resp, err
 			}
-			email, err = app.db.GetEmailByUserId(ctx, userId)
+			email, err = app.db.GetEmailByUserId(ctx, userID)
 			if err != nil {
 				return resp, err
 			}
@@ -196,7 +196,7 @@ func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error
 		return responses, apierrors.ErrInternalServer
 	}
 
-	internID, err := app.db.GetProfileIdByUserId(ctx, claims.UserID)
+	internID, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 	if err != nil {
 		return responses, err
 	}
@@ -219,7 +219,7 @@ func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileRespon
 	resp := models.ProfileResponse{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 
-	userId, err := app.db.GetUserIdByProfileId(ctx, id)
+	userID, err := app.db.GetUserIdByProfileId(ctx, id)
 	if err != nil {
 		return resp, err
 	}
@@ -236,28 +236,28 @@ func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileRespon
 			return resp, err
 		}
 		if exist {
-			email, err = app.db.GetEmailByUserId(ctx, userId)
+			email, err = app.db.GetEmailByUserId(ctx, userID)
 			if err != nil {
 				return resp, err
 			}
 		}
 	}
 
-	resp, err = app.profileResponse(ctx, id, userId, email)
+	resp, err = app.profileResponse(ctx, id, userID, email)
 	if err != nil {
 		return resp, err
 	}
 	return resp, nil
 }
 
-func (app Service) profileResponse(ctx context.Context, internId int, userId int, email string) (models.ProfileResponse, error) {
+func (app Service) profileResponse(ctx context.Context, internId int, userID int, email string) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{Email: email}
 	profile, err := app.db.GetProfile(ctx, internId)
 	resp.Profile = profile
 	if err != nil {
 		return resp, err
 	}
-	resp.Skills, err = app.db.GetInternSkills(ctx, userId)
+	resp.Skills, err = app.db.GetInternSkills(ctx, userID)
 	if err != nil {
 		return resp, err
 	}

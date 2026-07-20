@@ -6,7 +6,7 @@ package models
 import "time"
 
 type Profile struct {
-	Id         *int       `json:"id,omitempty" validate:"omitempty"`
+	ID         *int       `json:"id,omitempty" validate:"omitempty"`
 	FirstName  *string    `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string    `json:"last_name,omitempty" validate:"omitempty,max=100"`
 	BirthDate  *time.Time `json:"birth_date,omitempty" validate:"omitempty"`
@@ -19,7 +19,7 @@ type Profile struct {
 }
 
 type CompanyProfile struct {
-	Id           *int    `json:"id,omitempty" validate:"omitempty"`
+	ID           *int    `json:"id,omitempty" validate:"omitempty"`
 	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
 	Description  *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
@@ -43,12 +43,12 @@ type CompanyProfileResponse struct {
 }
 
 type Skill struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
 type SkillID struct {
-	Id []int `json:"skill_id"`
+	ID []int `json:"skill_id"`
 }
 
 type SearchCompany struct {
@@ -67,7 +67,7 @@ type SearchIntern struct {
 }
 
 type ShortProfile struct {
-	Id         *int    `json:"id,omitempty" validate:"omitempty"`
+	ID         *int    `json:"id,omitempty" validate:"omitempty"`
 	FirstName  *string `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string `json:"last_name,omitempty" validate:"omitempty,max=100"`
 	Location   *string `json:"location,omitempty" validate:"omitempty,max=200"`

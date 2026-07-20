@@ -75,10 +75,10 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	file, info, err := r.FormFile("avatar")
-	defer file.Close()
 	if err != nil {
 		return apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
+	defer file.Close()
 	url, err := h.service.SetMyAvatar(ctx, info, file, claims)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	err = h.service.AddInternSkills(r.Context(), skillIDs.Id)
+	err = h.service.AddInternSkills(r.Context(), skillIDs.ID)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (h ServiceHandler) DeleteInternSkillsHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		return err
 	}
-	err = h.service.DeleteInternSkills(r.Context(), skillIDs.Id)
+	err = h.service.DeleteInternSkills(r.Context(), skillIDs.ID)
 	return err
 }
 

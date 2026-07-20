@@ -10,24 +10,17 @@ import (
 )
 
 type User struct {
-	Id           int
+	ID           int
 	Email        string
 	Role         string
 	PasswordHash string
 }
 
-type UserAuth struct {
+type InternAuth struct {
 	Email     string    `json:"email" validate:"required,email,max=255"`
 	Password  string    `json:"password" validate:"required,min=8,max=72,strong_password"`
 	DeviceID  string    `json:"device_id" validate:"required,min=5,max=100"`
 	BirthDate time.Time `json:"birth_date"`
-}
-
-type UserVerify struct {
-	Email        string
-	PasswordHash string
-	DeviceID     string
-	BirthDate    time.Time
 }
 
 type CompanyAuth struct {
@@ -35,13 +28,6 @@ type CompanyAuth struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
-}
-
-type CompanyVerify struct {
-	CompanyData  CompanyData
-	Email        string
-	PasswordHash string
-	DeviceID     string
 }
 
 type CompanyData struct {
@@ -55,6 +41,20 @@ type CompanyData struct {
 	Director     string
 	DirectorPost string
 	Address      string
+}
+
+type InternVerify struct {
+	Email        string
+	PasswordHash string
+	DeviceID     string
+	BirthDate    time.Time
+}
+
+type CompanyVerify struct {
+	CompanyData  CompanyData
+	Email        string
+	PasswordHash string
+	DeviceID     string
 }
 
 type VerifyRequest struct {
@@ -74,6 +74,12 @@ type UserInfo struct {
 	DeviceID string
 	Email    string
 	Role     string
+}
+
+type LoginUser struct {
+	Email        string
+	DeviceID     string
+	PasswordHash string
 }
 
 type FogetPasswordRequest struct {

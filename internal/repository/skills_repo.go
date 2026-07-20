@@ -14,7 +14,7 @@ import (
 )
 
 func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID int) error {
-	id, err := r.GetProfileIdByUserId(ctx, userID)
+	id, err := r.GetProfileIDByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,6 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 		values = append(values, value)
 	}
 
-	skills = append(skills)
 	_, err = r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
 		return apierrors.Warp(apierrors.ErrDatabaseError, err)
@@ -50,7 +49,7 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 }
 
 func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.Skill, error) {
-	id, err := r.GetProfileIdByUserId(ctx, userID)
+	id, err := r.GetProfileIDByUserID(ctx, userID)
 	res := []models.Skill{}
 	skillIDs := []int{}
 	if err != nil {
@@ -83,7 +82,7 @@ func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userI
 		return nil
 	}
 
-	id, err := r.GetProfileIdByUserId(ctx, userID)
+	id, err := r.GetProfileIDByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -212,7 +211,7 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 	values := []interface{}{}
 	for i, value := range skillsID {
 		values = append(values, value)
-		res = append(res, models.Skill{Id: value})
+		res = append(res, models.Skill{ID: value})
 		if delimiter {
 			query.WriteString(", ")
 		}

@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -44,7 +45,71 @@ func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClien
 	}
 }
 
-func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (string, error) {
+type UserVerify interface {
+	QueryNewUser(ctx context.Context, db *repository.Repository) (int, error)
+	GeneratingJWT(id int, timeLife time.Duration) (string, error)
+	GetUserKey(id int) string
+}
+
+type InternVerify struct {
+	Email        string
+	PasswordHash string
+	DeviceID     string
+	BirthDate    time.Time
+}
+
+func (iv InternVerify) QueryNewUser(ctx context.Context, db *repository.Repository) (int, error) {
+	id, err := db.QueryNewUser(ctx, models.InternVerify{
+		Email:        iv.Email,
+		PasswordHash: iv.PasswordHash,
+		DeviceID:     iv.DeviceID,
+		BirthDate:    iv.BirthDate,
+	})
+	return id, err
+}
+
+func (iv InternVerify) GeneratingJWT(id int, timeLife time.Duration) (string, error) {
+	token, err := utils.GeneratingJWT(id, iv.DeviceID, iv.Email, constants.Intern, timeLife)
+	return token, err
+}
+
+func (iv InternVerify) GetUserKey(id int) string {
+	return fmt.Sprintf("%d.%s", id, iv.DeviceID)
+}
+
+type CompanyVerify struct {
+	CompanyData  models.CompanyData
+	Email        string
+	PasswordHash string
+	DeviceID     string
+}
+
+func GetCompanyVerify(ctx context.Context, userJSON string) (UserVerify, error) {
+	userVerify := CompanyVerify{}
+	err := json.Unmarshal([]byte(userJSON), &userVerify)
+	return userVerify, err
+}
+
+func (cv CompanyVerify) QueryNewUser(ctx context.Context, db *repository.Repository) (int, error) {
+	id, err := db.QueryNewCompany(ctx, models.CompanyVerify{
+		Email:        cv.Email,
+		PasswordHash: cv.PasswordHash,
+		DeviceID:     cv.DeviceID,
+		CompanyData:  cv.CompanyData,
+	})
+	return id, err
+}
+
+func (cv CompanyVerify) GeneratingJWT(id int, timeLife time.Duration) (string, error) {
+	token, err := utils.GeneratingJWT(id, cv.DeviceID, cv.Email, constants.Company, timeLife)
+	return token, err
+}
+
+func (cv CompanyVerify) GetUserKey(id int) string {
+	return fmt.Sprintf("%d.%s", id, cv.DeviceID)
+}
+
+func (app *Service) AuthIntern(ctx context.Context, userReg models.InternAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
 		return "", apierrors.Warp(apierrors.ErrBadRequest, err)
@@ -54,17 +119,55 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 		return "", apierrors.ErrUserMustBe16
 	}
 
-	exist, err := app.db.CheckUserEmail(ctx, userReg.Email, constants.Intern)
+	userJSON, err := encodeVerifyJSON(userReg.Email, userReg.DeviceID, userReg.Password, &userReg.BirthDate, nil)
+
+	sessionID, err := app.authUser(ctx, userJSON, userReg.Email, constants.Intern)
+
+	return sessionID, err
+}
+
+func encodeVerifyJSON(email, deviceID, password string, birthDate *time.Time, companyData *models.CompanyData) ([]byte, error) {
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return []byte{}, apierrors.Warp(apierrors.ErrInternalServer, err)
+	}
+
+	var user interface{}
+
+	if birthDate != nil {
+		user = InternVerify{
+			Email:        email,
+			PasswordHash: string(hashPassword),
+			DeviceID:     deviceID,
+			BirthDate:    *birthDate,
+		}
+	} else if companyData != nil {
+		user = CompanyVerify{
+			Email:        email,
+			PasswordHash: string(hashPassword),
+			DeviceID:     deviceID,
+			CompanyData:  *companyData,
+		}
+	} else {
+		return []byte{}, apierrors.ErrInternalServer
+	}
+
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		return userJSON, apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
+	}
+
+	return userJSON, nil
+}
+
+func (app *Service) authUser(ctx context.Context, userJSON []byte, email string, role string) (string, error) {
+
+	exist, err := app.db.CheckUserEmail(ctx, email, role)
 	if err != nil {
 		return "", err
 	}
 	if exist {
 		return "", apierrors.ErrUserAlreadyExists
-	}
-
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(userReg.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", apierrors.Warp(apierrors.ErrInternalServer, err)
 	}
 
 	sessionID := uuid.New().String()
@@ -74,24 +177,12 @@ func (app *Service) AuthUser(ctx context.Context, userReg models.UserAuth) (stri
 		return "", apierrors.Warp(apierrors.ErrInternalServer, err)
 	}
 
-	err = app.email.SendVerifyCode(userReg.Email, code)
+	err = app.email.SendVerifyCode(email, code)
 	if err != nil {
 		return "", err
 	}
 
-	user := models.UserVerify{
-		Email:        userReg.Email,
-		PasswordHash: string(hashPassword),
-		DeviceID:     userReg.DeviceID,
-		BirthDate:    userReg.BirthDate,
-	}
-
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		return "", apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
-	}
-
-	err = app.cache.Set(ctx, sessionID, userJson, constants.VerifyCodeTimeLife)
+	err = app.cache.Set(ctx, sessionID, userJSON, constants.VerifyCodeTimeLife)
 	if err != nil {
 		return "", err
 	}
@@ -118,6 +209,7 @@ func (app *Service) verify(ctx context.Context, key string, code string) error {
 	return nil
 }
 
+/*
 func (app *Service) resetCode(ctx context.Context, key, newCode string) error {
 	err := app.cache.ResetCode(ctx, key, newCode)
 	if err != nil {
@@ -128,6 +220,7 @@ func (app *Service) resetCode(ctx context.Context, key, newCode string) error {
 	}
 	return nil
 }
+*/
 
 func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
@@ -135,8 +228,7 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
-	userVerify := models.UserVerify{}
-	res, err := app.cache.Get(ctx, sessionID)
+	userJSON, err := app.cache.Get(ctx, sessionID)
 
 	if err != nil {
 		if errors.Is(err, apierrors.ErrKeyNotFound) {
@@ -145,7 +237,10 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", err
 	}
 
-	err = json.Unmarshal([]byte(res), &userVerify)
+	var userVerify UserVerify
+
+	err = json.Unmarshal([]byte(userJSON), &userVerify)
+
 	if err != nil {
 		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
@@ -155,35 +250,28 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", err
 	}
 
-	user := models.User{
-		Email:        userVerify.Email,
-		Role:         constants.Intern,
-		PasswordHash: userVerify.PasswordHash,
-	}
-
-	id, err := app.db.QueryNewUser(ctx, user, userVerify.BirthDate)
-	user.Id = id
+	id, err := userVerify.QueryNewUser(ctx, app.db)
 	if err != nil {
 		return "", "", err
 	}
 
-	accessToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, constants.AccessTokenTimeLife)
+	accessToken, err := userVerify.GeneratingJWT(id, constants.AccessTokenTimeLife)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := utils.GeneratingJWT(id, userVerify.DeviceID, user.Email, constants.Intern, constants.RefreshTokenTimeLife)
+	refreshToken, err := userVerify.GeneratingJWT(id, constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", err
 	}
 
-	key := fmt.Sprintf("%d.%s", id, userVerify.DeviceID)
+	key := userVerify.GetUserKey(id)
 	err = app.cache.Set(ctx, key, []byte(refreshToken), constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", err
 	}
-	app.cache.Del(ctx, sessionID)
-	return accessToken, refreshToken, nil
+	err = app.cache.Del(ctx, sessionID)
+	return accessToken, refreshToken, err
 }
 
 func (app *Service) NewCode(ctx context.Context, sessionID string) error {
@@ -200,7 +288,7 @@ func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 		return err
 	}
 
-	user := models.UserVerify{}
+	user := InternVerify{}
 	err = json.Unmarshal([]byte(res), &user)
 	if err != nil {
 		return apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
@@ -219,13 +307,13 @@ func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 	return nil
 }
 
-func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (string, string, error) {
+func (app *Service) LoginUser(ctx context.Context, userLog models.LoginUser, role string) (string, string, error) {
 	err := app.validate.Struct(userLog)
 	if err != nil {
 		return "", "", apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
-	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, constants.Intern)
+	ok, err := app.db.CheckUserEmail(ctx, userLog.Email, role)
 	if err != nil {
 		return "", "", err
 	}
@@ -233,28 +321,27 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.UserAuth) (str
 		return "", "", apierrors.ErrUserNotExists
 	}
 
-	user := models.User{}
-	user, err = app.db.GetUser(ctx, userLog.Email, constants.Intern)
+	user, err := app.db.GetUser(ctx, userLog.Email, role)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userLog.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(userLog.PasswordHash))
 	if err != nil {
 		return "", "", apierrors.ErrInvalidPassword
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, constants.AccessTokenTimeLife)
+	accessToken, err := utils.GeneratingJWT(user.ID, userLog.DeviceID, user.Email, role, constants.AccessTokenTimeLife)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := utils.GeneratingJWT(user.Id, userLog.DeviceID, user.Email, constants.Intern, constants.RefreshTokenTimeLife)
+	refreshToken, err := utils.GeneratingJWT(user.ID, userLog.DeviceID, user.Email, role, constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", err
 	}
 
-	key := fmt.Sprintf("%d.%s", user.Id, userLog.DeviceID)
+	key := fmt.Sprintf("%d.%s", user.ID, userLog.DeviceID)
 	err = app.cache.Set(ctx, key, []byte(refreshToken), constants.RefreshTokenTimeLife)
 	if err != nil {
 		return "", "", err
@@ -299,12 +386,12 @@ func (app Service) FogotPassword(ctx context.Context, user models.FogetPasswordR
 		DeviceID: user.DeviceID,
 	}
 
-	userJson, err := json.Marshal(userInfo)
+	userJSON, err := json.Marshal(userInfo)
 	if err != nil {
 		return "", apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
 	}
 
-	err = app.cache.Set(ctx, sessionID, userJson, constants.VerifyCodeTimeLife)
+	err = app.cache.Set(ctx, sessionID, userJSON, constants.VerifyCodeTimeLife)
 	if err != nil {
 		return "", err
 	}
@@ -325,7 +412,7 @@ func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, ver
 		return "", "", apierrors.Warp(apierrors.ErrBadRequest, err)
 	}
 
-	userVerify := models.UserVerify{}
+	userVerify := InternVerify{}
 	res, err := app.cache.Get(ctx, sessionID)
 
 	if err != nil {
@@ -345,14 +432,14 @@ func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, ver
 		return "", "", err
 	}
 
-	userJson, err := app.cache.Get(ctx, sessionID)
+	userJSON, err := app.cache.Get(ctx, sessionID)
 	if err != nil {
 		return "", "", err
 	}
 
 	userInfo := models.UserInfo{}
 
-	err = json.Unmarshal([]byte(userJson), &userInfo)
+	err = json.Unmarshal([]byte(userJSON), &userInfo)
 	if err != nil {
 		return "", "", apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
 	}
@@ -372,8 +459,8 @@ func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, ver
 	if err != nil {
 		return "", "", err
 	}
-	app.cache.Del(ctx, sessionID)
-	return accessToken, refreshToken, nil
+	err = app.cache.Del(ctx, sessionID)
+	return accessToken, refreshToken, err
 }
 
 func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.ChangePasswordRequest) error {
@@ -423,6 +510,6 @@ func (app *Service) DeleteRefreshToken(ctx context.Context) error {
 	if !ok {
 		return apierrors.ErrInternalServer
 	}
-	app.cache.Del(ctx, fmt.Sprintf("%d.%s", claims.UserID, claims.DeviceID))
-	return nil
+	err := app.cache.Del(ctx, fmt.Sprintf("%d.%s", claims.UserID, claims.DeviceID))
+	return err
 }

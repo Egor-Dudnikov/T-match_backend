@@ -29,13 +29,13 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 	return internshipID, nil
 }
 
-func (r *Repository) GetInternshipById(ctx context.Context, id int) (models.Internship, error) {
+func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
 	err := r.db.QueryRowContext(ctx, `SELECT id, company_id, title, description, 
            salary, duration_months, location, 
            created_at, is_archived FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(
-		&internship.Id,
-		&internship.CompanyId,
+		&internship.ID,
+		&internship.CompanyID,
 		&internship.Title,
 		&internship.Description,
 		&internship.Salary,
@@ -58,7 +58,7 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 	var query strings.Builder
 	cnt := 1
 	delimiter := false
-	values := []interface{}{internship.Id}
+	values := []interface{}{internship.ID}
 	query.WriteString("UPDATE internships SET ")
 
 	addFilled := func(filled string, value any) {
@@ -230,8 +230,8 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	for rows.Next() {
 		internship := models.Internship{}
 		rows.Scan(
-			&internship.Id,
-			&internship.CompanyId,
+			&internship.ID,
+			&internship.CompanyID,
 			&internship.Title,
 			&internship.Salary,
 			&internship.DurationMonth,

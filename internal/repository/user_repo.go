@@ -5,12 +5,12 @@ package repository
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
 	"fmt"
 	"os"
-	"time"
 )
 
 func PingDatabase(config models.DbConfig) (*sql.DB, error) {
@@ -39,7 +39,7 @@ func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
-func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birthDate time.Time) (int, error) {
+func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
@@ -49,13 +49,13 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birthDa
 	var id int
 	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
-		RETURNING id`, user.Email, user.PasswordHash, user.Role,
+		RETURNING id`, user.Email, user.PasswordHash, constants.Intern,
 	).Scan(&id)
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
 	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id, birth_date)
-		VALUES ($1, $2)`, id, birthDate).Err()
+		VALUES ($1, $2)`, id, user.BirthDate).Err()
 
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
@@ -69,7 +69,7 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.User, birthDa
 	return id, nil
 }
 
-func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, companyData models.CompanyData) (int, error) {
+func (r *Repository) QueryNewCompany(ctx context.Context, company models.CompanyVerify) (int, error) {
 	var id int
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -78,13 +78,20 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.User, c
 	defer tx.Rollback()
 	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
-		RETURNING id`, company.Email, company.PasswordHash, company.Role,
+		RETURNING id`, company.Email, company.PasswordHash, constants.Company,
 	).Scan(&id)
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
+
 	err = tx.QueryRowContext(ctx, `INSERT INTO companies (user_id, company_name, inn, kpp, ogrn, legal_address, director_name)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`, id, companyData.ShortName, companyData.Inn, companyData.Kpp, companyData.Ogrn, companyData.Address, companyData.Director).Err()
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`, id, company.CompanyData.ShortName,
+		company.CompanyData.Inn,
+		company.CompanyData.Kpp,
+		company.CompanyData.Ogrn,
+		company.CompanyData.Address,
+		company.CompanyData.Director).Err()
+
 	if err != nil {
 		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
@@ -109,7 +116,7 @@ func (r *Repository) CheckUserEmail(ctx context.Context, email string, role stri
 func (r *Repository) GetUser(ctx context.Context, email string, role string) (models.User, error) {
 	user := models.User{}
 	err := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, role FROM users WHERE email = $1 AND role = $2`, email, role).Scan(
-		&user.Id,
+		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
 		&user.Role)
@@ -138,12 +145,12 @@ func (r *Repository) GetEmailByUserId(ctx context.Context, id int) (string, erro
 }
 
 func (r *Repository) GetUserIdByCompanyId(ctx context.Context, id int) (int, error) {
-	var userId int
-	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM companies WHERE id = $1`, id).Scan(&userId)
+	var userID int
+	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM companies WHERE id = $1`, id).Scan(&userID)
 	if err != nil {
-		return userId, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return userID, apierrors.Warp(apierrors.ErrDatabaseError, err)
 	}
-	return userId, err
+	return userID, err
 }
 
 func (r *Repository) GetUserIdByEmail(ctx context.Context, email string) (int, error) {

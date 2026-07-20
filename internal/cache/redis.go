@@ -57,8 +57,12 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 	return value, nil
 }
 
-func (r *Redis) Del(ctx context.Context, key string) {
-	r.cache.Del(ctx, key).Result()
+func (r *Redis) Del(ctx context.Context, key string) error {
+	_, err := r.cache.Del(ctx, key).Result()
+	if err != nil {
+		return apierrors.Warp(apierrors.ErrCacheError, err)
+	}
+	return nil
 }
 
 func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
