@@ -72,7 +72,7 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 	}
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int,
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM interns WHERE user_id = $1`, userID).Scan(&id)
 	if err != nil {
-		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return id, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return id, err
 }
@@ -102,7 +102,7 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 		&profile.Experience,
 		&profile.Image)
 	if err != nil {
-		return profile, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return profile, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return profile, nil
 }
@@ -112,7 +112,7 @@ func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error 
 	image = $2
 	WHERE user_id = $1`, id, url)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -121,13 +121,16 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills := []models.Skill{}
 	rows, err := r.db.QueryContext(ctx, `SELECT * FROM skills;`)
 	if err != nil {
-		return skills, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return skills, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var id int
 		var name string
-		rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		skills = append(skills, models.Skill{ID: id, Name: name})
 	}
 
@@ -183,20 +186,19 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 		query.WriteString(" OFFSET $")
 		query.WriteString(strconv.Itoa(index))
 		values = append(values, *filters.Offset)
-		index++
 	}
 
 	query.WriteString(";")
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		intern := models.ShortProfile{}
-		rows.Scan(
+		err = rows.Scan(
 			&intern.ID,
 			&intern.FirstName,
 			&intern.LastName,
@@ -205,30 +207,33 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 			&intern.Degree,
 			&intern.Image,
 		)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		res = append(res, intern)
 	}
 	return res, nil
 }
 
-func (r *Repository) GetUserIdByProfileId(ctx context.Context, id int) (int, error) {
+func (r *Repository) GetUserIDByProfileID(ctx context.Context, id int) (int, error) {
 	var userID int
 	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM interns WHERE id = $1`, id).Scan(&userID)
 	if err != nil {
-		return userID, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return userID, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return userID, nil
 }
 
-func (r *Repository) ExistStatus(ctx context.Context, companyId, internId int, status string) (bool, error) {
+func (r *Repository) ExistStatus(ctx context.Context, companyID, internID int, status string) (bool, error) {
 	exist := false
 	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(
 		SELECT 1 FROM applications 
 		WHERE intern_id = $1 AND EXISTS(
 			SELECT 1 FROM internships
 			WHERE id = applications.internship_id AND company_id = $2) 
-		AND status = $3)`, internId, companyId, status).Scan(&exist)
+		AND status = $3)`, internID, companyID, status).Scan(&exist)
 	if err != nil {
-		return exist, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return exist, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return exist, nil
 }

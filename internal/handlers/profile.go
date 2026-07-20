@@ -51,7 +51,7 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 }
 
 func (h *ServiceHandler) GetCompanyProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -71,12 +71,12 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	}
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrBadRequest, err)
+		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
 
 	file, info, err := r.FormFile("avatar")
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrBadRequest, err)
+		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
 	defer file.Close()
 	url, err := h.service.SetMyAvatar(ctx, info, file, claims)
@@ -186,14 +186,14 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if len(skills) != 0 {
-		var skillIds []int
+		var skillIDs []int
 		for _, s := range skills {
 			if id, err := strconv.Atoi(s); err == nil {
-				skillIds = append(skillIds, id)
+				skillIDs = append(skillIDs, id)
 			}
 		}
-		if len(skillIds) > 0 {
-			filters.Skills = &skillIds
+		if len(skillIDs) > 0 {
+			filters.Skills = &skillIDs
 		}
 	}
 
@@ -219,7 +219,7 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 
 func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}

@@ -128,6 +128,6 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	}
 }
 
-func Warp(apierror error, err error) error {
+func Wrap(apierror error, err error) error {
 	return fmt.Errorf("%w: %w", apierror, err)
 }

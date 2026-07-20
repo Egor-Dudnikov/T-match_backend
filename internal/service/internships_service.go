@@ -13,7 +13,7 @@ import (
 func (app Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
 	err := app.validate.Struct(internship)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrBadRequest, err)
+		return 0, apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
 	internshipID, err := app.db.NewInternship(ctx, internship, id)
 	if err != nil {
@@ -41,7 +41,7 @@ func (app Service) GetInternshipByID(ctx context.Context, id int) (models.Intern
 func (app Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
 	err := app.validate.Struct(internship)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrBadRequest, err)
+		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
 
 	err = app.IsCompanysInternship(ctx, internship.ID)
@@ -66,13 +66,13 @@ func (app Service) ArchivedInternship(ctx context.Context, id int) error {
 }
 
 func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
-	companyId, err := app.db.GetCompanyIdByInternshipId(ctx, id)
+	companyID, err := app.db.GetCompanyIDByInternshipID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	companyIdUser, err := app.db.GetCompanyIdByUserId(ctx, ctx.Value(constants.ClaimsKey).(models.Claims).UserID)
-	if companyId != companyIdUser {
+	companyIDUser, err := app.db.GetCompanyIDByUserID(ctx, ctx.Value(constants.ClaimsKey).(models.Claims).UserID)
+	if companyID != companyIDUser {
 		return apierrors.ErrForbidden
 	}
 	return nil
@@ -138,7 +138,7 @@ func (app Service) SetResponseStatus(ctx context.Context, responseID int, status
 	if !ok {
 		return apierrors.ErrBadRequest
 	}
-	internshipID, err := app.db.GetInternshipIdByResponseId(ctx, responseID)
+	internshipID, err := app.db.GetInternshipIDByResponseID(ctx, responseID)
 	if err != nil {
 		return err
 	}

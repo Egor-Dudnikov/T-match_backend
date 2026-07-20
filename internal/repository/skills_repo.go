@@ -43,7 +43,7 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 
 	_, err = r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -58,9 +58,9 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 	rows, err := r.db.QueryContext(ctx, `SELECT skill_id FROM intern_skills WHERE intern_id = $1`, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return res, apierrors.Warp(apierrors.ErrSkillsNotFound, err)
+			return res, apierrors.Wrap(apierrors.ErrSkillsNotFound, err)
 		}
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 
@@ -72,7 +72,7 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 
 	res, err = r.GetNameSkills(ctx, skillIDs)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return res, nil
 }
@@ -109,7 +109,7 @@ func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userI
 
 	_, err = r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -140,7 +140,7 @@ func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, inte
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -194,7 +194,7 @@ func (r *Repository) DeleteInternshipSkills(ctx context.Context, skills []int, i
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -223,7 +223,7 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 

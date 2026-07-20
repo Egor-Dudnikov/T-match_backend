@@ -30,7 +30,7 @@ func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Durat
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(secretKey)
 	if err != nil {
-		return tokenStr, apierrors.Warp(apierrors.ErrJWTGenerationFailed, err)
+		return tokenStr, apierrors.Wrap(apierrors.ErrJWTGenerationFailed, err)
 	}
 	return tokenStr, nil
 
@@ -40,7 +40,7 @@ func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
 	claims := models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
 	if err != nil {
-		return token, claims, apierrors.Warp(apierrors.ErrJWTDecodingFailed, err)
+		return token, claims, apierrors.Wrap(apierrors.ErrJWTDecodingFailed, err)
 	}
 	return token, claims, nil
 }

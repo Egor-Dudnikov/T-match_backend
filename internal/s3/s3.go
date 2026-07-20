@@ -23,12 +23,12 @@ func LoadS3(cfg models.S3Config) (*minio.Client, error) {
 	return minioClient, err
 }
 
-type S3Storage struct {
+type Storage struct {
 	client *minio.Client
 	cfg    models.S3Config
 }
 
-func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storage, error) {
+func NewS3(s3client *minio.Client, cfg models.S3Config) (*Storage, error) {
 	policy := `{
         "Version": "2012-10-17",
         "Statement": [
@@ -55,21 +55,21 @@ func NewS3(s3client *minio.Client, cfg models.S3Config) (*S3Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &S3Storage{client: s3client, cfg: cfg}, nil
+	return &Storage{client: s3client, cfg: cfg}, nil
 }
 
-func (s3 S3Storage) SetFile(ctx context.Context, objectName string, file io.Reader, contentType string, fileHandler *multipart.FileHeader) (string, error) {
+func (s3 Storage) SetFile(ctx context.Context, objectName string, file io.Reader, contentType string, fileHandler *multipart.FileHeader) (string, error) {
 	info, err := s3.client.PutObject(ctx, constants.BucketName, objectName, file, fileHandler.Size, minio.PutObjectOptions{ContentType: contentType})
 	url := s3.GetURL(info)
 	return url, err
 }
 
-func (s3 S3Storage) Delete(ctx context.Context, objectName string) error {
+func (s3 Storage) Delete(ctx context.Context, objectName string) error {
 	err := s3.client.RemoveObject(ctx, constants.BucketName, objectName, minio.RemoveObjectOptions{})
 	return err
 }
 
-func (s3 S3Storage) GetURL(info minio.UploadInfo) string {
+func (s3 Storage) GetURL(info minio.UploadInfo) string {
 	url := "http"
 	if s3.cfg.UseSSL {
 		url = "https"

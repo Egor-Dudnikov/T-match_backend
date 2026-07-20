@@ -10,10 +10,10 @@ import (
 
 func NewCode() (string, error) {
 	code := make([]byte, 6)
-	max := big.NewInt(10)
+	maxInt := big.NewInt(10)
 
 	for i := range 6 {
-		digit, err := rand.Int(rand.Reader, max)
+		digit, err := rand.Int(rand.Reader, maxInt)
 		if err != nil {
 			return "", err
 		}

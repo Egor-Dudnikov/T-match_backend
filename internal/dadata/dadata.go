@@ -33,12 +33,12 @@ func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 		"query": TIN,
 	})
 	if err != nil {
-		return company, apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
+		return company, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	req, err := http.NewRequest("POST", "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return company, apierrors.Warp(apierrors.ErrInternalServer, err)
+		return company, apierrors.Wrap(apierrors.ErrInternalServer, err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -47,20 +47,20 @@ func (c *DadataClient) ValidTIN(TIN string) (models.CompanyData, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return company, apierrors.Warp(apierrors.ErrBadGateway, err)
+		return company, apierrors.Wrap(apierrors.ErrBadGateway, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return company, apierrors.Warp(apierrors.ErrInternalServer, err)
+		return company, apierrors.Wrap(apierrors.ErrInternalServer, err)
 	}
 
 	if resp.StatusCode == http.StatusOK {
 		var res map[string]interface{}
 		err := json.Unmarshal(body, &res)
 		if err != nil {
-			return company, apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
+			return company, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
 		}
 
 		suggestionsRaw, ok := res["suggestions"]

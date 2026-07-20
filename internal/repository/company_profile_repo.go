@@ -46,7 +46,7 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile m
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 		&profile.DirectorName,
 		&profile.Image)
 	if err != nil {
-		return profile, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return profile, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return profile, nil
 }
@@ -77,7 +77,7 @@ func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int)
 	image = $2
 	WHERE user_id = $1`, id, url)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -131,20 +131,19 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 		query.WriteString(" OFFSET $")
 		query.WriteString(strconv.Itoa(index))
 		values = append(values, *filters.Offset)
-		index++
 	}
 
 	query.WriteString(";")
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		company := models.CompanyProfile{}
-		rows.Scan(
+		err = rows.Scan(
 			&company.ID,
 			&company.CompanyName,
 			&company.Description,
@@ -154,6 +153,10 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 			&company.LegalAddress,
 			&company.Image,
 		)
+		if err != nil {
+			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
+
 		res = append(res, company)
 	}
 	return res, nil

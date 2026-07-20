@@ -41,7 +41,7 @@ func NewRedis(r *redis.Client) *Redis {
 func (r *Redis) Set(ctx context.Context, key string, value []byte, time time.Duration) error {
 	err := r.cache.Set(ctx, key, value, time).Err()
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrCacheError, err)
+		return apierrors.Wrap(apierrors.ErrCacheError, err)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 		if errors.Is(err, redis.Nil) {
 			return value, apierrors.ErrKeyNotFound
 		}
-		return value, apierrors.Warp(apierrors.ErrCacheError, err)
+		return value, apierrors.Wrap(apierrors.ErrCacheError, err)
 	}
 	return value, nil
 }
@@ -60,7 +60,7 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 func (r *Redis) Del(ctx context.Context, key string) error {
 	_, err := r.cache.Del(ctx, key).Result()
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrCacheError, err)
+		return apierrors.Wrap(apierrors.ErrCacheError, err)
 	}
 	return nil
 }
@@ -68,7 +68,7 @@ func (r *Redis) Del(ctx context.Context, key string) error {
 func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
 	now := time.Now().Unix()
 
-	rate_script := `local key = KEYS[1]
+	rateScript := `local key = KEYS[1]
 					local rate = tonumber(ARGV[1])
 					local time_now = tonumber(ARGV[2])
 
@@ -105,10 +105,10 @@ func (r *Redis) RateLimitCheck(ctx context.Context, key string, rate int) (bool,
 						return 1
 					end`
 
-	cmd := r.cache.Eval(ctx, rate_script, []string{key}, rate, now)
+	cmd := r.cache.Eval(ctx, rateScript, []string{key}, rate, now)
 	res, err := cmd.Int64()
 	if err != nil {
-		return false, apierrors.Warp(apierrors.ErrCacheError, err)
+		return false, apierrors.Wrap(apierrors.ErrCacheError, err)
 	}
 	if res == 1 {
 		return true, nil
@@ -132,7 +132,7 @@ func (r *Redis) ResetCode(ctx context.Context, key, newValue string) error {
 	cmd := r.cache.Eval(ctx, script, []string{key}, newValue)
 	ok, err := cmd.Int64()
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrCacheError, err)
+		return apierrors.Wrap(apierrors.ErrCacheError, err)
 	}
 	if ok == 0 {
 		return redis.Nil

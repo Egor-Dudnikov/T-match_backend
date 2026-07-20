@@ -52,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	validate := validator.New()
 
 	err = validate.RegisterValidation("strong_password", utils.ValidPassword)

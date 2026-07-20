@@ -35,7 +35,7 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 
 func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http
 
 func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -67,18 +67,18 @@ func (h *ServiceHandler) UpdateInternshipHandler(w http.ResponseWriter, r *http.
 
 }
 
-func getIdURL(ps httprouter.Params) (int, error) {
+func getIDURL(ps httprouter.Params) (int, error) {
 	idStr := ps.ByName("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return id, apierrors.Warp(apierrors.ErrBadRequest, err)
+		return id, apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
 	return id, nil
 }
 
 func (h *ServiceHandler) ArchivedInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (h *ServiceHandler) ArchivedInternshipHandler(w http.ResponseWriter, r *htt
 
 func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 
 func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(w http.ResponseWriter, r 
 
 func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (h *ServiceHandler) RespondInternshipHandler(w http.ResponseWriter, r *http
 
 func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 func (h *ServiceHandler) SetResponseStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 
-	id, err := getIdURL(ps)
+	id, err := getIDURL(ps)
 	if err != nil {
 		return err
 	}
@@ -210,14 +210,14 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 	}
 
 	if len(skills) != 0 {
-		var skillIds []int
+		var skillIDs []int
 		for _, s := range skills {
 			if id, err := strconv.Atoi(s); err == nil {
-				skillIds = append(skillIds, id)
+				skillIDs = append(skillIDs, id)
 			}
 		}
-		if len(skillIds) > 0 {
-			filters.Skills = &skillIds
+		if len(skillIDs) > 0 {
+			filters.Skills = &skillIDs
 		}
 	}
 

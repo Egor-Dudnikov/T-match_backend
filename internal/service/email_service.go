@@ -37,7 +37,7 @@ func (r *EmailClient) SendVerifyCode(to string, code string) error {
 	}
 
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrEmailSendFailed, err)
+		return apierrors.Wrap(apierrors.ErrEmailSendFailed, err)
 	}
 	return nil
 }

@@ -42,9 +42,18 @@ func NewRepository(r *sql.DB) *Repository {
 func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			if err != nil {
+				err = fmt.Errorf("original error: %w, rollback error: %w", err, rbErr)
+			} else {
+				err = apierrors.Wrap(apierrors.ErrDatabaseError, rbErr)
+			}
+		}
+	}()
 
 	var id int
 	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
@@ -52,18 +61,18 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify)
 		RETURNING id`, user.Email, user.PasswordHash, constants.Intern,
 	).Scan(&id)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	err = tx.QueryRowContext(ctx, `INSERT INTO interns (user_id, birth_date)
 		VALUES ($1, $2)`, id, user.BirthDate).Err()
 
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	return id, nil
@@ -73,15 +82,25 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.Company
 	var id int
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer tx.Rollback()
+
+	defer func() {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			if err != nil {
+				err = fmt.Errorf("original error: %w, rollback error: %w", err, rbErr)
+			} else {
+				err = apierrors.Wrap(apierrors.ErrDatabaseError, rbErr)
+			}
+		}
+	}()
+
 	err = tx.QueryRowContext(ctx, `INSERT INTO users (email, password_hash, role, created_at)
         VALUES ($1, $2, $3, NOW())
 		RETURNING id`, company.Email, company.PasswordHash, constants.Company,
 	).Scan(&id)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	err = tx.QueryRowContext(ctx, `INSERT INTO companies (user_id, company_name, inn, kpp, ogrn, legal_address, director_name)
@@ -93,12 +112,12 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.Company
 		company.CompanyData.Director).Err()
 
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	return id, nil
@@ -108,7 +127,7 @@ func (r *Repository) CheckUserEmail(ctx context.Context, email string, role stri
 	var exist bool
 	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND role = $2)`, email, role).Scan(&exist)
 	if err != nil {
-		return exist, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return exist, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return exist, nil
 }
@@ -121,43 +140,43 @@ func (r *Repository) GetUser(ctx context.Context, email string, role string) (mo
 		&user.PasswordHash,
 		&user.Role)
 	if err != nil {
-		return user, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return user, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return user, nil
 }
 
-func (r *Repository) GetCompanyIdByUserId(ctx context.Context, userID int) (int, error) {
+func (r *Repository) GetCompanyIDByUserID(ctx context.Context, userID int) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
 	if err != nil {
-		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return id, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return id, nil
 }
 
-func (r *Repository) GetEmailByUserId(ctx context.Context, id int) (string, error) {
+func (r *Repository) GetEmailByUserID(ctx context.Context, id int) (string, error) {
 	var email string
 	err := r.db.QueryRowContext(ctx, `SELECT email FROM users WHERE id = $1`, id).Scan(&email)
 	if err != nil {
-		return email, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return email, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return email, err
 }
 
-func (r *Repository) GetUserIdByCompanyId(ctx context.Context, id int) (int, error) {
+func (r *Repository) GetUserIDByCompanyID(ctx context.Context, id int) (int, error) {
 	var userID int
 	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM companies WHERE id = $1`, id).Scan(&userID)
 	if err != nil {
-		return userID, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return userID, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return userID, err
 }
 
-func (r *Repository) GetUserIdByEmail(ctx context.Context, email string) (int, error) {
+func (r *Repository) GetUserIDByEmail(ctx context.Context, email string) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&id)
 	if err != nil {
-		return id, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return id, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return id, err
 }
@@ -165,7 +184,7 @@ func (r *Repository) GetUserIdByEmail(ctx context.Context, email string) (int, e
 func (r *Repository) UpdatePasswordHash(ctx context.Context, newPasswordHash string, id int) error {
 	err := r.db.QueryRowContext(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, newPasswordHash, id).Err()
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }

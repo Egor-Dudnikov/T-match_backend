@@ -15,7 +15,7 @@ import (
 )
 
 func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
-	id, err := r.GetCompanyIdByUserId(ctx, userID)
+	id, err := r.GetCompanyIDByUserID(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
@@ -24,7 +24,7 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 	err = r.db.QueryRowContext(ctx, `INSERT INTO internships (company_id, title, description, salary, duration_months, location, created_at)
 	VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.Location).Scan(&internshipID)
 	if err != nil {
-		return 0, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return internshipID, nil
 }
@@ -48,7 +48,7 @@ func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Inte
 		if errors.Is(err, sql.ErrNoRows) {
 			return internship, apierrors.ErrInternshipNotFound
 		}
-		return internship, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return internship, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	return internship, nil
@@ -96,28 +96,28 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 		if errors.Is(err, sql.ErrNoRows) {
 			return apierrors.ErrInternshipNotFound
 		}
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 
 	return err
 }
 
-func (r *Repository) GetCompanyIdByInternshipId(ctx context.Context, id int) (int, error) {
-	var companyId int
-	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(&companyId)
+func (r *Repository) GetCompanyIDByInternshipID(ctx context.Context, id int) (int, error) {
+	var companyID int
+	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(&companyID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return companyId, apierrors.Warp(apierrors.ErrInternshipNotFound, err)
+			return companyID, apierrors.Wrap(apierrors.ErrInternshipNotFound, err)
 		}
-		return companyId, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return companyID, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	return companyId, nil
+	return companyID, nil
 }
 
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE WHERE id = $1`, id)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
 }
@@ -216,20 +216,19 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 		query.WriteString(" OFFSET $")
 		query.WriteString(strconv.Itoa(index))
 		values = append(values, *filters.Offset)
-		index++
 	}
 
 	query.WriteString(";")
 
 	rows, err := r.db.QueryContext(ctx, query.String(), values...)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrDatabaseError, err)
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		internship := models.Internship{}
-		rows.Scan(
+		err = rows.Scan(
 			&internship.ID,
 			&internship.CompanyID,
 			&internship.Title,
@@ -239,6 +238,9 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 			&internship.CreatedAt,
 			&internship.IsArchived,
 		)
+		if err != nil {
+			apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
 		res = append(res, internship)
 	}
 

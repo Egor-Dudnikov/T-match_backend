@@ -210,20 +210,20 @@ func decodeJSON[T any](r *http.Request) (T, error) {
 
 	err := decoder.Decode(&res)
 	if err != nil {
-		return res, apierrors.Warp(apierrors.ErrJSONDecodeFailed, err)
+		return res, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
 	}
 	return res, nil
 }
 
 func encodeJSON[T any](w http.ResponseWriter, resp T) error {
-	respJson, err := json.Marshal(resp)
+	respJSON, err := json.Marshal(resp)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
+		return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, err)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(respJson)
+	_, err = w.Write(respJSON)
 	if err != nil {
-		return apierrors.Warp(apierrors.ErrJSONEncodeFailed, err)
+		return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, err)
 	}
 	return nil
 }
