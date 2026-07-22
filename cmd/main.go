@@ -5,14 +5,9 @@ package main
 
 import (
 	"T-match_backend/configs"
-	"T-match_backend/internal/cache"
 	"T-match_backend/internal/constants"
-	"T-match_backend/internal/dadata"
 	"T-match_backend/internal/handlers"
-	"T-match_backend/internal/repository"
-	"T-match_backend/internal/s3"
 	"T-match_backend/internal/service"
-	"T-match_backend/internal/utils"
 	"context"
 	"log"
 	"net/http"
@@ -21,7 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
 )
 
@@ -29,44 +23,13 @@ func main() {
 	if os.Getenv("JWT_SECRET") == "" {
 		log.Fatalln("not JWT_SECRET in env")
 	}
+
 	config := configs.LoadConfig()
-
-	db, err := repository.PingDatabase(config.DbConfig)
+	app, err := service.RegService(config)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	dbr, err := cache.PingRedis(config.RedisConfig)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	s3Client, err := s3.LoadS3(config.S3Config)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	repo := repository.NewRepository(db)
-	redis := cache.NewRedis(dbr)
-	email := service.NewEmailClient(config.EmailConfig)
-	s3Storage, err := s3.NewS3(s3Client, config.S3Config)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	validate := validator.New()
-
-	err = validate.RegisterValidation("strong_password", utils.ValidPassword)
-	if err != nil {
-		log.Fatalf("failed to register validation: %v", err)
-	}
-	err = validate.RegisterValidation("valid_role", utils.ValidRole)
-	if err != nil {
-		log.Fatalf("failed to register validation: %v", err)
-	}
-
-	dadataClient := dadata.NewClient()
-
-	app := service.Newservice(repo, redis, email, validate, s3Storage, dadataClient)
 	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
 
 	router := handlers.NewRouter(authHandler)
@@ -100,11 +63,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if err := db.Close(); err != nil {
+	if err := app.CloseDB(); err != nil {
 		log.Println("DB close error:", err)
 	}
 
-	if err := dbr.Close(); err != nil {
+	if err := app.CloseRedis(); err != nil {
 		log.Println("Redis close error:", err)
 	}
 

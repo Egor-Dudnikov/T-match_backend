@@ -5,6 +5,7 @@ package utils
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"os"
 	"time"
@@ -34,6 +35,19 @@ func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Durat
 	}
 	return tokenStr, nil
 
+}
+
+func GeneratingTokenPair(userID int, deviceID, email, role string) (string, string, error) {
+	accessToken, err := GeneratingJWT(userID, deviceID, email, role, constants.AccessTokenTimeLife)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := GeneratingJWT(userID, deviceID, email, role, constants.RefreshTokenTimeLife)
+	if err != nil {
+		return "", "", err
+	}
+	return accessToken, refreshToken, nil
 }
 
 func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {

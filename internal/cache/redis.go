@@ -38,6 +38,10 @@ func NewRedis(r *redis.Client) *Redis {
 	return &Redis{cache: r}
 }
 
+func (r *Redis) Close() error {
+	return r.cache.Close()
+}
+
 func (r *Redis) Set(ctx context.Context, key string, value []byte, time time.Duration) error {
 	err := r.cache.Set(ctx, key, value, time).Err()
 	if err != nil {

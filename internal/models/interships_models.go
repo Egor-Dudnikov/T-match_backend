@@ -18,12 +18,12 @@ type Internship struct {
 }
 
 type InternshipUpdate struct {
-	ID            int    `json:"id,omitempty"`
-	Title         string `json:"title,omitempty" validate:"omitempty,max=200"`
-	Description   string `json:"description,omitempty" validate:"omitempty,max=5000"`
-	Salary        *int   `json:"salary,omitempty" validate:"omitempty,min=0"`
-	Location      string `json:"location,omitempty" validate:"omitempty,max=200"`
-	DurationMonth int    `json:"duration_month,omitempty" validate:"omitempty,min=1"`
+	ID            int     `json:"id,omitempty"`
+	Title         *string `json:"title,omitempty" validate:"omitempty,max=200"`
+	Description   *string `json:"description,omitempty" validate:"omitempty,max=5000"`
+	Salary        *int    `json:"salary,omitempty" validate:"omitempty,min=0"`
+	Location      *string `json:"location,omitempty" validate:"omitempty,max=200"`
+	DurationMonth *int    `json:"duration_month,omitempty" validate:"omitempty,min=1"`
 }
 
 type InternshipResponse struct {

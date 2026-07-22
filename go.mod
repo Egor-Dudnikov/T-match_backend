@@ -10,6 +10,7 @@ require (
 	github.com/lib/pq v1.11.2
 	github.com/minio/minio-go/v7 v7.1.0
 	github.com/redis/go-redis/v9 v9.18.0
+	github.com/tidwall/gjson v1.19.0
 	golang.org/x/crypto v0.49.0
 )
 
@@ -29,6 +30,8 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tinylib/msgp v1.6.1 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

@@ -177,37 +177,13 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 
 	filters := models.SearchInternship{}
 
-	if len(query) != 0 {
-		filters.Query = &query
-	}
+	h.parseAndSetString(query, filters.Query)
+	h.parseAndSetString(location, filters.Location)
 
-	if len(location) != 0 {
-		filters.Location = &location
-	}
-
-	if len(salaryMax) != 0 {
-		if val, err := strconv.Atoi(salaryMax); err == nil {
-			filters.SalaryMax = &val
-		}
-	}
-
-	if len(salaryMin) != 0 {
-		if val, err := strconv.Atoi(salaryMin); err == nil {
-			filters.SalaryMin = &val
-		}
-	}
-
-	if len(durationMin) != 0 {
-		if val, err := strconv.Atoi(durationMin); err == nil {
-			filters.DurationMin = &val
-		}
-	}
-
-	if len(durationMax) != 0 {
-		if val, err := strconv.Atoi(durationMax); err == nil {
-			filters.DurationMax = &val
-		}
-	}
+	h.parseAndSetInt(salaryMax, filters.SalaryMax)
+	h.parseAndSetInt(salaryMin, filters.SalaryMin)
+	h.parseAndSetInt(durationMin, filters.DurationMin)
+	h.parseAndSetInt(durationMax, filters.DurationMax)
 
 	if len(skills) != 0 {
 		var skillIDs []int
@@ -221,27 +197,11 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 		}
 	}
 
-	if len(sort) != 0 {
-		filters.Sort = &sort
-	}
+	h.parseAndSetString(sort, filters.Sort)
 
-	if len(order) != 0 {
-		if val, err := strconv.Atoi(order); err == nil {
-			filters.Order = &val
-		}
-	}
-
-	if len(offset) != 0 {
-		if val, err := strconv.Atoi(offset); err == nil {
-			filters.Offset = &val
-		}
-	}
-
-	if len(limit) != 0 {
-		if val, err := strconv.Atoi(limit); err == nil {
-			filters.Limit = &val
-		}
-	}
+	h.parseAndSetInt(order, filters.Order)
+	h.parseAndSetInt(offset, filters.Offset)
+	h.parseAndSetInt(limit, filters.Limit)
 
 	res, err := h.service.SearchInternship(r.Context(), filters)
 	if err != nil {
@@ -250,4 +210,18 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 
 	err = encodeJSON[[]models.Internship](w, res)
 	return err
+}
+
+func (h *ServiceHandler) parseAndSetInt(value string, filter *int) {
+	if len(value) != 0 {
+		if val, err := strconv.Atoi(value); err == nil {
+			*filter = val
+		}
+	}
+}
+
+func (h *ServiceHandler) parseAndSetString(val string, filter *string) {
+	if len(val) != 0 {
+		*filter = val
+	}
 }

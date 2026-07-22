@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -45,9 +44,52 @@ func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClien
 	}
 }
 
+func RegService(config models.Config) (*Service, error) {
+	db, err := repository.PingDatabase(config.DbConfig)
+	if err != nil {
+		return &Service{}, err
+	}
+
+	dbr, err := cache.PingRedis(config.RedisConfig)
+	if err != nil {
+		return &Service{}, err
+	}
+	s3Client, err := s3.LoadS3(config.S3Config)
+	if err != nil {
+		return &Service{}, err
+	}
+
+	repo := repository.NewRepository(db)
+	redis := cache.NewRedis(dbr)
+	email := NewEmailClient(config.EmailConfig)
+
+	s3Storage, err := s3.NewS3(s3Client, config.S3Config)
+	if err != nil {
+		return &Service{}, err
+	}
+
+	validate, err := utils.NewValidator()
+	if err != nil {
+		return &Service{}, err
+	}
+
+	dadataClient := dadata.NewClient()
+
+	app := Newservice(repo, redis, email, validate, s3Storage, dadataClient)
+	return app, err
+}
+
+func (app *Service) CloseDB() error {
+	return app.db.Close()
+}
+
+func (app *Service) CloseRedis() error {
+	return app.cache.Close()
+}
+
 type UserVerify interface {
 	QueryNewUser(ctx context.Context, db *repository.Repository) (int, error)
-	GeneratingJWT(id int, timeLife time.Duration) (string, error)
+	GeneratingTokenPair(id int) (string, string, error)
 	GetUserKey(id int) string
 }
 
@@ -68,9 +110,9 @@ func (iv InternVerify) QueryNewUser(ctx context.Context, db *repository.Reposito
 	return id, err
 }
 
-func (iv InternVerify) GeneratingJWT(id int, timeLife time.Duration) (string, error) {
-	token, err := utils.GeneratingJWT(id, iv.DeviceID, iv.Email, constants.Intern, timeLife)
-	return token, err
+func (iv InternVerify) GeneratingTokenPair(id int) (string, string, error) {
+	accessToken, refreshToken, err := utils.GeneratingTokenPair(id, iv.DeviceID, iv.Email, constants.Intern)
+	return accessToken, refreshToken, err
 }
 
 func (iv InternVerify) GetUserKey(id int) string {
@@ -226,12 +268,7 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", err
 	}
 
-	accessToken, err := userVerify.GeneratingJWT(id, constants.AccessTokenTimeLife)
-	if err != nil {
-		return "", "", err
-	}
-
-	refreshToken, err := userVerify.GeneratingJWT(id, constants.RefreshTokenTimeLife)
+	accessToken, refreshToken, err := userVerify.GeneratingTokenPair(id)
 	if err != nil {
 		return "", "", err
 	}
@@ -367,11 +404,6 @@ func (app Service) FogotPassword(ctx context.Context, user models.FogetPasswordR
 		return "", err
 	}
 
-	err = app.cache.Set(ctx, sessionID, []byte(strconv.Itoa(id)), constants.VerifyCodeTimeLife)
-	if err != nil {
-		return "", err
-	}
-
 	err = app.email.SendVerifyCode(user.Email, code)
 
 	return sessionID, err
@@ -415,12 +447,7 @@ func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, ver
 		return "", "", apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
 	}
 
-	accessToken, err := utils.GeneratingJWT(userInfo.UserID, userInfo.DeviceID, userInfo.Email, userInfo.Role, constants.AccessTokenTimeLife)
-	if err != nil {
-		return "", "", err
-	}
-
-	refreshToken, err := utils.GeneratingJWT(userInfo.UserID, userInfo.DeviceID, userInfo.Email, userInfo.Role, constants.RefreshTokenTimeLife)
+	accessToken, refreshToken, err := utils.GeneratingTokenPair(userInfo.UserID, userInfo.DeviceID, userInfo.Email, userInfo.Role)
 	if err != nil {
 		return "", "", err
 	}
@@ -456,8 +483,13 @@ func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.Ch
 	return err
 }
 
-func (app *Service) GetRefreshToken(ctx context.Context, id int, deviceID string) (string, error) {
-	key := fmt.Sprintf("%d.%s", id, deviceID)
+func (app *Service) GetRefreshToken(ctx context.Context) (string, error) {
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return "", apierrors.ErrInternalServer
+	}
+
+	key := fmt.Sprintf("%s.%s", claims.ID, claims.DeviceID)
 	token, err := app.cache.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, apierrors.ErrKeyNotFound) {

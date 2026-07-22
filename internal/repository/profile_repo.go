@@ -13,64 +13,20 @@ import (
 )
 
 func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
-	var query strings.Builder
-	query.WriteString("UPDATE interns SET ")
-	delimiter := false
-	cnt := 1
-	values := []interface{}{id}
+	query := newUpdateQuery("UPDATE interns SET ", id)
 
-	addFilled := func(name string, value any) {
-		if delimiter {
-			query.WriteString(", ")
-		}
-		cnt++
+	query.addFilled("first_name", profile.FirstName)
+	query.addFilled("last_name", profile.LastName)
+	query.addFilled("birth_date", profile.BirthDate)
+	query.addFilled("bio", profile.Bio)
+	query.addFilled("degree", profile.Degree)
+	query.addFilled("experience", profile.Experience)
+	query.addFilled("location", profile.Location)
+	query.addFilled("university", profile.University)
 
-		query.WriteString(name)
-		query.WriteString(" = $")
-		query.WriteString(strconv.Itoa(cnt))
+	queryStr, values := query.parseBuilder(" WHERE user_id = $1")
 
-		values = append(values, value)
-		delimiter = true
-	}
-
-	if profile.FirstName != nil {
-		addFilled("first_name", &profile.FirstName)
-	}
-
-	if profile.LastName != nil {
-		addFilled("last_name", &profile.LastName)
-	}
-
-	if profile.BirthDate != nil {
-		addFilled("birth_date", &profile.BirthDate)
-	}
-
-	if profile.Bio != nil {
-		addFilled("bio", &profile.Bio)
-	}
-
-	if profile.Degree != nil {
-		addFilled("degree", &profile.Degree)
-	}
-
-	if profile.Experience != nil {
-		addFilled("experience", &profile.Experience)
-	}
-
-	if profile.Location != nil {
-		addFilled("location", &profile.Location)
-	}
-
-	if profile.University != nil {
-		addFilled("university", &profile.University)
-	}
-
-	query.WriteString(" WHERE user_id = $1")
-
-	if cnt == 1 {
-		return nil
-	}
-	_, err := r.db.ExecContext(ctx, query.String(), values...)
+	_, err := r.db.ExecContext(ctx, queryStr, values...)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}

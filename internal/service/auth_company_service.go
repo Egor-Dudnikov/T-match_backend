@@ -10,7 +10,6 @@ import (
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/utils"
 	"fmt"
-	"time"
 
 	"context"
 )
@@ -32,9 +31,9 @@ func (cv CompanyVerify) QueryNewUser(ctx context.Context, db *repository.Reposit
 	return id, err
 }
 
-func (cv CompanyVerify) GeneratingJWT(id int, timeLife time.Duration) (string, error) {
-	token, err := utils.GeneratingJWT(id, cv.DeviceID, cv.Email, constants.Company, timeLife)
-	return token, err
+func (cv CompanyVerify) GeneratingTokenPair(id int) (string, string, error) {
+	accessToken, refreshToken, err := utils.GeneratingTokenPair(id, cv.DeviceID, cv.Email, constants.Company)
+	return accessToken, refreshToken, err
 }
 
 func (cv CompanyVerify) GetUserKey(id int) string {

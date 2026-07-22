@@ -140,25 +140,12 @@ func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 	filters := models.SearchCompany{}
 
-	if len(query) != 0 {
-		filters.Query = &query
-	}
+	h.parseAndSetString(query, filters.Query)
+	h.parseAndSetString(location, filters.Location)
 
-	if len(location) != 0 {
-		filters.Location = &location
-	}
+	h.parseAndSetInt(offset, filters.Offset)
+	h.parseAndSetInt(limit, filters.Limit)
 
-	if len(offset) != 0 {
-		if val, err := strconv.Atoi(offset); err == nil {
-			filters.Offset = &val
-		}
-	}
-
-	if len(limit) != 0 {
-		if val, err := strconv.Atoi(limit); err == nil {
-			filters.Limit = &val
-		}
-	}
 	res, err := h.service.SearchCompany(r.Context(), filters)
 	if err != nil {
 		return err
@@ -168,7 +155,7 @@ func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Requ
 	return err
 }
 
-func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	university := r.URL.Query().Get("university")
 	skills := r.URL.Query()["skills"]
@@ -177,13 +164,8 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 
 	filters := models.SearchIntern{}
 
-	if len(query) != 0 {
-		filters.Query = &query
-	}
-
-	if len(university) != 0 {
-		filters.University = &university
-	}
+	h.parseAndSetString(query, filters.Query)
+	h.parseAndSetString(university, filters.University)
 
 	if len(skills) != 0 {
 		var skillIDs []int
@@ -197,17 +179,9 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	if len(offset) != 0 {
-		if val, err := strconv.Atoi(offset); err == nil {
-			filters.Offset = &val
-		}
-	}
+	h.parseAndSetInt(offset, filters.Offset)
+	h.parseAndSetInt(limit, filters.Limit)
 
-	if len(limit) != 0 {
-		if val, err := strconv.Atoi(limit); err == nil {
-			filters.Limit = &val
-		}
-	}
 	res, err := h.service.SearchIntern(r.Context(), filters)
 	if err != nil {
 		return err

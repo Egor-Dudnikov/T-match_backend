@@ -50,3 +50,19 @@ func ValidAge(birthDate time.Time) bool {
 	}
 	return true
 }
+
+func NewValidator() (*validator.Validate, error) {
+	validate := validator.New()
+
+	err := validate.RegisterValidation("strong_password", ValidPassword)
+	if err != nil {
+		return validate, err
+	}
+
+	err = validate.RegisterValidation("valid_role", ValidRole)
+	if err != nil {
+		return validate, err
+	}
+
+	return validate, nil
+}

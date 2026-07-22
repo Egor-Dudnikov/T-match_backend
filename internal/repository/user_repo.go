@@ -39,6 +39,10 @@ func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
+func (r *Repository) Close() error {
+	return r.db.Close()
+}
+
 func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {

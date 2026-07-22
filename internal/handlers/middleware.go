@@ -49,53 +49,77 @@ func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 
 func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
-		authHeader := r.Header.Get("Authorization")
 
-		if authHeader == "" {
-			return apierrors.ErrUnauthorized
+		tokenStr, err := h.getAuthTokenFromHeader(r)
+		if err != nil {
+			return err
 		}
 
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return apierrors.ErrUnauthorized
-		}
-
-		tokenStr := parts[1]
 		token, claims, err := utils.DecodeJWT(tokenStr)
 		if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
 			return apierrors.Wrap(apierrors.ErrUnauthorized, err)
 		}
-		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
-		if !token.Valid {
-			refreshTokenCookie, err := r.Cookie("refresh_token")
-			if err != nil {
-				return apierrors.Wrap(apierrors.ErrBadRequest, err)
-			}
-			refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
-			if err != nil {
-				return apierrors.Wrap(apierrors.ErrUnauthorized, err)
-			}
 
-			refreshTokenCache, err := h.service.GetRefreshToken(ctx, claims.UserID, claims.DeviceID)
+		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
+
+		err = h.refreshTokenValid(ctx, r)
+		if err != nil {
+			return err
+		}
+
+		if !token.Valid {
+
+			newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, constants.AccessTokenTimeLife)
 			if err != nil {
 				return err
 			}
-			if refreshTokenCookie.Value != refreshTokenCache {
-				return apierrors.ErrUnauthorized
-			}
-			if refreshToken.Valid {
-				newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, constants.AccessTokenTimeLife)
-				if err != nil {
-					return err
-				}
-				w.Header().Set("X-New-Access-Token", newToken)
-				return next(w, r.WithContext(ctx), ps)
-			}
-			return apierrors.ErrUnauthorized
+			w.Header().Set("X-New-Access-Token", newToken)
+			return next(w, r.WithContext(ctx), ps)
+
 		}
 
 		return next(w, r.WithContext(ctx), ps)
 	}
+}
+
+func (h ServiceHandler) getAuthTokenFromHeader(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+
+	if authHeader == "" {
+		return "", apierrors.ErrUnauthorized
+	}
+
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", apierrors.ErrUnauthorized
+	}
+
+	tokenStr := parts[1]
+	return tokenStr, nil
+}
+
+func (h ServiceHandler) refreshTokenValid(ctx context.Context, r *http.Request) error {
+	refreshTokenCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrBadRequest, err)
+	}
+	refreshToken, _, err := utils.DecodeJWT(refreshTokenCookie.Value)
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrUnauthorized, err)
+	}
+
+	refreshTokenCache, err := h.service.GetRefreshToken(ctx)
+	if err != nil {
+		return err
+	}
+	if refreshTokenCookie.Value != refreshTokenCache {
+		return apierrors.ErrUnauthorized
+	}
+
+	if !refreshToken.Valid {
+		return apierrors.ErrUnauthorized
+	}
+	return nil
 }
 
 func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {

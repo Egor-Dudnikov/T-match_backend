@@ -97,7 +97,12 @@ const (
 )
 
 // Claims key
-
 type contextKey string
 
 const ClaimsKey contextKey = "claims"
+
+// Postgress const
+const (
+	ASC  = " ASC "
+	DESC = " DESC "
+)

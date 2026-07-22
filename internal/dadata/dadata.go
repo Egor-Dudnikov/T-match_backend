@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/tidwall/gjson"
 )
 
 type Client struct {
@@ -26,19 +28,17 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
-	company := models.CompanyData{}
-
+func (c *Client) MakeRequest(TIN string) ([]byte, int, error) {
 	requestBody, err := json.Marshal(map[string]string{
 		"query": TIN,
 	})
 	if err != nil {
-		return company, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
+		return []byte{}, 500, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
 	}
 
 	req, err := http.NewRequest("POST", "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return company, apierrors.Wrap(apierrors.ErrInternalServer, err)
+		return []byte{}, 500, apierrors.Wrap(apierrors.ErrInternalServer, err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -47,107 +47,54 @@ func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return company, apierrors.Wrap(apierrors.ErrBadGateway, err)
+		return []byte{}, resp.StatusCode, apierrors.Wrap(apierrors.ErrBadGateway, err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	respJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return company, apierrors.Wrap(apierrors.ErrInternalServer, err)
+		return []byte{}, resp.StatusCode, apierrors.Wrap(apierrors.ErrInternalServer, err)
+	}
+	return respJSON, resp.StatusCode, nil
+}
+
+func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
+	company := models.CompanyData{}
+
+	body, statusCode, err := c.MakeRequest(TIN)
+	if err != nil {
+		return company, err
 	}
 
-	if resp.StatusCode == http.StatusOK {
-		var res map[string]interface{}
-		err := json.Unmarshal(body, &res)
-		if err != nil {
-			return company, apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
-		}
-
-		suggestionsRaw, ok := res["suggestions"]
-		if !ok || suggestionsRaw == nil {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		suggestions, ok := suggestionsRaw.([]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		first, ok := suggestions[0].(map[string]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		data, ok := first["data"].(map[string]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		inn, ok := data["inn"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		kpp, ok := data["kpp"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		ogrn, ok := data["ogrn"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		okved, ok := data["okved"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		branchType, ok := data["branch_type"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		name, ok := data["name"].(map[string]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		shortName, ok := name["short_with_opf"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		state, ok := data["state"].(map[string]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		status, ok := state["status"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		address, ok := data["address"].(map[string]interface{})
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-		addrValue, ok := address["value"].(string)
-		if !ok {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		company = models.CompanyData{
-			Inn:        inn,
-			Kpp:        kpp,
-			Ogrn:       ogrn,
-			Okved:      okved,
-			BranchType: branchType,
-			ShortName:  shortName,
-			Status:     status,
-			Address:    addrValue,
-		}
-
-		if company.Status != "ACTIVE" {
-			return company, apierrors.ErrCompanyNotExists
-		}
-
-		return company, nil
-
+	if statusCode != http.StatusOK {
+		return company, apierrors.ErrCompanyNotExists
 	}
-	return company, apierrors.ErrCompanyNotExists
+
+	suggestions := gjson.GetBytes(body, "suggestions")
+	if !suggestions.Exists() || len(suggestions.Array()) != 0 {
+		return company, apierrors.ErrCompanyNotExists
+	}
+
+	data := gjson.GetBytes(body, "suggestions.0.data")
+	status := data.Get("state.status").String()
+	if status != "ACTIVE" {
+		return models.CompanyData{}, apierrors.ErrCompanyNotExists
+	}
+
+	company = models.CompanyData{
+		Inn:        data.Get("inn").String(),
+		Kpp:        data.Get("kpp").String(),
+		Ogrn:       data.Get("ogrn").String(),
+		Okved:      data.Get("okved").String(),
+		BranchType: data.Get("branch_type").String(),
+		ShortName:  data.Get("name.short_with_opf").String(),
+		Status:     status,
+		Address:    data.Get("address.value").String(),
+	}
+
+	if company.Inn != TIN {
+		return models.CompanyData{}, apierrors.ErrCompanyNotExists
+	}
+
+	return company, nil
 }
