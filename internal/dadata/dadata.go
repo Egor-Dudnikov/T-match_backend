@@ -71,7 +71,7 @@ func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
 	}
 
 	suggestions := gjson.GetBytes(body, "suggestions")
-	if !suggestions.Exists() || len(suggestions.Array()) != 0 {
+	if !suggestions.Exists() || len(suggestions.Array()) == 0 {
 		return company, apierrors.ErrCompanyNotExists
 	}
 

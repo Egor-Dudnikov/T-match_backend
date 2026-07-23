@@ -57,7 +57,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest, constants.Intern)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest)
+	accessToken, refreshToken, err := h.service.VerifyUser(ctx, sessionID, verifyRequest, constants.Company)
 	if err != nil {
 		return err
 	}

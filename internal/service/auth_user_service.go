@@ -235,7 +235,25 @@ func (app *Service) resetCode(ctx context.Context, key, newCode string) error {
 }
 */
 
-func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+func unmarshalUserVerify(userJSON string, role string) (UserVerify, error) {
+
+	var err error
+	switch role {
+	case constants.Intern:
+		var userVerify = InternVerify{}
+		err = json.Unmarshal([]byte(userJSON), &userVerify)
+		return userVerify, err
+	case constants.Company:
+		var userVerify = CompanyVerify{}
+		err = json.Unmarshal([]byte(userJSON), &userVerify)
+		return userVerify, err
+	default:
+		err = apierrors.ErrInternalServer
+	}
+	return nil, err
+}
+
+func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest, role string) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", apierrors.Wrap(apierrors.ErrBadRequest, err)
@@ -250,12 +268,9 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 		return "", "", err
 	}
 
-	var userVerify UserVerify
-
-	err = json.Unmarshal([]byte(userJSON), &userVerify)
-
+	userVerify, err := unmarshalUserVerify(userJSON, role)
 	if err != nil {
-		return "", "", apierrors.Wrap(apierrors.ErrJSONDecodeFailed, err)
+		return "", "", err
 	}
 
 	err = app.verify(ctx, sessionID+".code", verifyRequest.Code)
@@ -489,7 +504,7 @@ func (app *Service) GetRefreshToken(ctx context.Context) (string, error) {
 		return "", apierrors.ErrInternalServer
 	}
 
-	key := fmt.Sprintf("%s.%s", claims.ID, claims.DeviceID)
+	key := fmt.Sprintf("%d.%s", claims.UserID, claims.DeviceID)
 	token, err := app.cache.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, apierrors.ErrKeyNotFound) {
@@ -497,6 +512,7 @@ func (app *Service) GetRefreshToken(ctx context.Context) (string, error) {
 		}
 		return token, err
 	}
+
 	return token, nil
 }
 

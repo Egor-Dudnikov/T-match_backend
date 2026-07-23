@@ -62,17 +62,18 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 
 		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
 
-		err = h.refreshTokenValid(ctx, r)
-		if err != nil {
-			return err
-		}
-
 		if !token.Valid {
+
+			err = h.refreshTokenValid(ctx, r)
+			if err != nil {
+				return err
+			}
 
 			newToken, err := utils.GeneratingJWT(claims.UserID, claims.DeviceID, claims.Email, claims.Role, constants.AccessTokenTimeLife)
 			if err != nil {
 				return err
 			}
+
 			w.Header().Set("X-New-Access-Token", newToken)
 			return next(w, r.WithContext(ctx), ps)
 
@@ -153,14 +154,18 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 		ctx := r.Context()
 		var id string
 		claimsContext := ctx.Value(constants.ClaimsKey)
+		sessionID := r.Header.Get("X-Verify-Session")
 		if claimsContext != nil {
 			claims, ok := claimsContext.(models.Claims)
 			if !ok {
 				return apierrors.ErrInternalServer
 			}
 			id = strconv.Itoa(claims.UserID)
+		} else if sessionID != "" {
+			id = sessionID
 		} else {
-			id = r.RemoteAddr
+			ip := strings.SplitN(r.RemoteAddr, ":", 2)
+			id = ip[0]
 		}
 		key := id + "." + endpoint
 		ok, err := h.service.RateLimitCheck(ctx, key, rate)

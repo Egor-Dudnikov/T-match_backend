@@ -77,9 +77,9 @@ type UserInfo struct {
 }
 
 type LoginUser struct {
-	Email        string
-	DeviceID     string
-	PasswordHash string
+	Email        string `json:"email"`
+	PasswordHash string `json:"password"`
+	DeviceID     string `json:"device_id"`
 }
 
 type FogetPasswordRequest struct {

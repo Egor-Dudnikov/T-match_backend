@@ -5,30 +5,41 @@ package utils
 
 import (
 	"T-match_backend/internal/constants"
-	"regexp"
 	"time"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
-)
-
-var (
-	hasUpper = regexp.MustCompile(`[A-Z]`)
-	hasDigit = regexp.MustCompile(`[0-9]`)
-	hasLower = regexp.MustCompile(`[a-z]`)
 )
 
 func ValidPassword(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 
-	if len(password) < 8 {
-		return false
+	var hasDigit bool
+	var hasUpperLetter bool
+	var hasLowerLetter bool
+
+	for _, r := range password {
+		if unicode.Is(unicode.Latin, r) && unicode.IsUpper(r) {
+			hasUpperLetter = true
+		} else if unicode.Is(unicode.Latin, r) && unicode.IsLower(r) {
+			hasLowerLetter = true
+		} else if unicode.IsDigit(r) {
+			hasDigit = true
+		} else if !isAllowSpecial(r) {
+			return false
+		}
 	}
 
-	has1 := hasUpper.MatchString(password)
-	has2 := hasDigit.MatchString(password)
-	has3 := hasLower.MatchString(password)
+	return hasDigit && hasLowerLetter && hasUpperLetter
+}
 
-	return has1 && has2 && has3
+func isAllowSpecial(c rune) bool {
+	for _, r := range constants.AllowSpecialPassword {
+		if c == r {
+			return true
+		}
+	}
+	return false
 }
 
 func ValidRole(fl validator.FieldLevel) bool {

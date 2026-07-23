@@ -19,7 +19,7 @@ const (
 	// Auth endpoints
 	RateLimitAuthStudent       = 20 // /auth/students
 	RateLimitAuthStudentVerify = 60 // /auth/students/verify
-	RateLimitNewVerifyCode     = 7  // /auth/newverify
+	RateLimitNewVerifyCode     = 4  // /auth/newverify
 	RateLimitAuthStudentLogin  = 30 // /auth/students/login
 	RateLimitAuthCompany       = 20 // /auth/company
 	RateLimitAuthCompanyVerify = 60 // /auth/company/verify
@@ -105,4 +105,8 @@ const ClaimsKey contextKey = "claims"
 const (
 	ASC  = " ASC "
 	DESC = " DESC "
+)
+
+const (
+	AllowSpecialPassword = "!@#$%^&*()_-+=[]{}|;:',.<>?/~`"
 )
