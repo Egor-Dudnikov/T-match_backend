@@ -5,24 +5,28 @@ package repository
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
+	"time"
 )
 
 func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
 	query := newUpdateQuery("UPDATE interns SET ", id)
 
-	query.addFilled("first_name", profile.FirstName)
-	query.addFilled("last_name", profile.LastName)
-	query.addFilled("birth_date", profile.BirthDate)
-	query.addFilled("bio", profile.Bio)
-	query.addFilled("degree", profile.Degree)
-	query.addFilled("experience", profile.Experience)
-	query.addFilled("location", profile.Location)
-	query.addFilled("university", profile.University)
+	addFilled[string](query, "first_name", profile.FirstName)
+	addFilled[string](query, "last_name", profile.LastName)
+	addFilled[time.Time](query, "birth_date", profile.BirthDate)
+	addFilled[string](query, "bio", profile.Bio)
+	addFilled[string](query, "degree", profile.Degree)
+	addFilled[string](query, "experience", profile.Experience)
+	addFilled[string](query, "location", profile.Location)
+	addFilled[string](query, "university", profile.University)
+
+	if query.empty() {
+		return nil
+	}
 
 	queryStr, values := query.parseBuilder(" WHERE user_id = $1")
 
@@ -96,57 +100,24 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res := []models.ShortProfile{}
 
-	var query strings.Builder
-	query.WriteString("SELECT id, first_name, last_name, location, university, degree, image FROM interns")
+	query := newQuerySelectBuilder("SELECT id, first_name, last_name, location, university, degree, image FROM interns")
 
-	correctFl := false
-	correct := func() {
-		if !correctFl {
-			query.WriteString(" WHERE ")
-			correctFl = true
-		} else {
-			query.WriteString(" AND ")
-		}
-	}
-	index := 1
-	values := []interface{}{}
-	if filters.Query != nil {
-		correct()
-		query.WriteString("tsv_content @@ to_tsquery('russian', $")
-		query.WriteString(strconv.Itoa(index))
-		query.WriteString(")")
-		values = append(values, *filters.Query)
-		index++
-	}
+	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 
 	if filters.University != nil {
-		correct()
-		query.WriteString("university ILIKE $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, (fmt.Sprintf("%c%s%c", '%', *filters.University, '%')))
-		index++
+		university := fmt.Sprintf("%c%s%c", '%', *filters.University, '%')
+		addWhereWithIndex[string](query, "university ILIKE $", "", &university)
 	}
 
 	if filters.Query != nil {
-		query.WriteString(" ORDER BY ts_rank(tsv_content, to_tsquery('russian', $1)) DESC")
+		query.addOrderBy(" ts_rank(tsv_content, to_tsquery('russian', $1)) ", constants.DESC)
 	}
+	query.addLimit(filters.Limit)
+	query.addOffset(filters.Offset)
 
-	if filters.Limit != nil {
-		query.WriteString(" LIMIT $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, *filters.Limit)
-		index++
-	}
+	queryStr, values := query.parseBuilder()
 
-	if filters.Offset != nil {
-		query.WriteString(" OFFSET $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, *filters.Offset)
-	}
-
-	query.WriteString(";")
-
-	rows, err := r.db.QueryContext(ctx, query.String(), values...)
+	rows, err := r.db.QueryContext(ctx, queryStr, values...)
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}

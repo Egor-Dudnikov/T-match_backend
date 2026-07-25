@@ -2,49 +2,26 @@ package repository
 
 import (
 	"T-match_backend/internal/apierrors"
+	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 )
 
 func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile models.CompanyProfile) error {
-	var query strings.Builder
-	query.WriteString("UPDATE companies SET ")
-	values := []interface{}{id}
-	cnt := 1
-	delimiter := false
-	addfilled := func(filled string, value any) {
-		cnt++
-		if delimiter {
-			query.WriteString(" ,")
-		}
-		query.WriteString(filled)
-		query.WriteString(" = $")
-		query.WriteString(strconv.Itoa(cnt))
+	query := newUpdateQuery("UPDATE companies SET ", id)
 
-		values = append(values, value)
-		delimiter = true
-	}
+	addFilled[string](query, "company_name", profile.CompanyName)
+	addFilled[string](query, "description", profile.Description)
+	addFilled[string](query, "website", profile.Website)
 
-	if profile.CompanyName != nil {
-		addfilled("company_name", *profile.CompanyName)
-	}
-	if profile.Description != nil {
-		addfilled("description", *profile.Description)
-	}
-	if profile.Website != nil {
-		addfilled("website", *profile.Website)
-	}
-
-	if cnt == 1 {
+	if query.empty() {
 		return nil
 	}
 
-	query.WriteString(" WHERE user_id = $1")
+	queryStr, values := query.parseBuilder(" WHERE user_id = $1")
 
-	_, err := r.db.ExecContext(ctx, query.String(), values...)
+	_, err := r.db.ExecContext(ctx, queryStr, values...)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
@@ -85,57 +62,24 @@ func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int)
 func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res := []models.CompanyProfile{}
 
-	var query strings.Builder
-	query.WriteString("SELECT id, company_name, description, website, inn, ogrn, legal_address, image FROM companies ")
+	query := newQuerySelectBuilder("SELECT id, company_name, description, website, inn, ogrn, legal_address, image FROM companies ")
 
-	correctFl := false
-	correct := func() {
-		if !correctFl {
-			query.WriteString("WHERE ")
-			correctFl = true
-		} else {
-			query.WriteString(" AND ")
-		}
-	}
-	index := 1
-	values := []interface{}{}
-	if filters.Query != nil {
-		correct()
-		query.WriteString("tsv_content @@ to_tsquery('russian', $")
-		query.WriteString(strconv.Itoa(index))
-		query.WriteString(")")
-		values = append(values, *filters.Query)
-		index++
-	}
+	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 
 	if filters.Location != nil {
-		correct()
-		query.WriteString("legal_address ILIKE $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, (fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')))
-		index++
+		location := fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')
+		addWhereWithIndex[string](query, "legal_address ILIKE $", "", &location)
 	}
 
 	if filters.Query != nil {
-		query.WriteString(" ORDER BY ts_rank(tsv_content, to_tsquery('russian', $1)) DESC")
+		query.addOrderBy(" ts_rank(tsv_content, to_tsquery('russian', $1)) ", constants.DESC)
 	}
+	query.addLimit(filters.Limit)
+	query.addOffset(filters.Offset)
 
-	if filters.Limit != nil {
-		query.WriteString(" LIMIT $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, *filters.Limit)
-		index++
-	}
+	queryStr, values := query.parseBuilder()
 
-	if filters.Offset != nil {
-		query.WriteString(" OFFSET $")
-		query.WriteString(strconv.Itoa(index))
-		values = append(values, *filters.Offset)
-	}
-
-	query.WriteString(";")
-
-	rows, err := r.db.QueryContext(ctx, query.String(), values...)
+	rows, err := r.db.QueryContext(ctx, queryStr, values...)
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}

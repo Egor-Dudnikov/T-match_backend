@@ -57,11 +57,15 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 
 	query := newUpdateQuery("UPDATE internships SET ", internship.ID)
 
-	query.addFilled("title", internship.Title)
-	query.addFilled("description", internship.Description)
-	query.addFilled("location", internship.Location)
-	query.addFilled("salary", internship.Salary)
-	query.addFilled("duration_month", internship.DurationMonth)
+	addFilled[string](query, "title", internship.Title)
+	addFilled[string](query, "description", internship.Description)
+	addFilled[string](query, "location", internship.Location)
+	addFilled[int](query, "salary", internship.Salary)
+	addFilled[int](query, "duration_months", internship.DurationMonth)
+
+	if query.empty() {
+		return nil
+	}
 
 	queryStr, values := query.parseBuilder(" WHERE id = $1 AND is_archived = FALSE")
 
@@ -101,13 +105,15 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	query := newQuerySelectBuilder("SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships")
 
 	query.addWhere("is_archived = FALSE")
-	query.addWhereWithIndex("tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
-	query.addWhereWithIndex("salary <= $", "", filters.SalaryMax)
-	query.addWhereWithIndex("salary >= $", "", filters.SalaryMin)
-	query.addWhereWithIndex("duration_months >= $", "", filters.DurationMin)
-	query.addWhereWithIndex("duration_months <= $", "", filters.DurationMax)
+	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
+	addWhereWithIndex[int](query, "salary <= $", "", filters.SalaryMax)
+	addWhereWithIndex[int](query, "salary >= $", "", filters.SalaryMin)
+	addWhereWithIndex[int](query, "duration_months >= $", "", filters.DurationMin)
+	addWhereWithIndex[int](query, "duration_months <= $", "", filters.DurationMax)
+
 	if filters.Location != nil {
-		query.addWhereWithIndex("location ILIKE $", "", fmt.Sprintf("%c%s%c", '%', *filters.Location, '%'))
+		location := fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')
+		addWhereWithIndex[string](query, "location ILIKE $", "", &location)
 	}
 
 	if filters.Offset != nil && filters.Sort != nil && sortValid(*filters.Sort) {
@@ -159,7 +165,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 func sortValid(sort string) bool {
 	if sort == "salary" {
 		return true
-	} else if sort == "duration_month" {
+	} else if sort == "duration_months" {
 		return true
 	}
 	return false

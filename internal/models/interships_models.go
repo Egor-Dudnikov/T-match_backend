@@ -13,17 +13,17 @@ type Internship struct {
 	Salary        int       `json:"salary" validate:"omitempty,min=0"`
 	Location      string    `json:"location" validate:"required,max=200"`
 	IsArchived    bool      `json:"is_archived"`
-	DurationMonth int       `json:"duration_month" validate:"required,min=1"`
+	DurationMonth int       `json:"duration_months" validate:"required,min=1"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
 type InternshipUpdate struct {
 	ID            int     `json:"id,omitempty"`
-	Title         *string `json:"title,omitempty" validate:"omitempty,max=200"`
-	Description   *string `json:"description,omitempty" validate:"omitempty,max=5000"`
+	Title         *string `json:"title,omitempty" validate:"omitempty,min=1,max=200"`
+	Description   *string `json:"description,omitempty" validate:"omitempty,min=1,max=5000"`
 	Salary        *int    `json:"salary,omitempty" validate:"omitempty,min=0"`
-	Location      *string `json:"location,omitempty" validate:"omitempty,max=200"`
-	DurationMonth *int    `json:"duration_month,omitempty" validate:"omitempty,min=1"`
+	Location      *string `json:"location,omitempty" validate:"omitempty,min=1,max=200"`
+	DurationMonth *int    `json:"duration_months,omitempty" validate:"omitempty,min=1"`
 }
 
 type InternshipResponse struct {

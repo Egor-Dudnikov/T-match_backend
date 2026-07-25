@@ -439,7 +439,7 @@ POST /internships
   "description": "Ищем мотивированного стажёра для работы над микросервисами на Go. Опыт работы с PostgreSQL приветствуется.",
   "salary": 50000,
   "location": "Москва",
-  "duration_month": 3
+  "duration_months": 3
 }
 ```
 
@@ -449,7 +449,7 @@ POST /internships
 | `description` | `string` | ✅ | Описание (макс. 5000 символов) |
 | `salary` | `int` | | Зарплата (≥ 0) |
 | `location` | `string` | ✅ | Город (макс. 200 символов) |
-| `duration_month` | `int` | ✅ | Длительность в месяцах (≥ 1) |
+| `duration_months` | `int` | ✅ | Длительность в месяцах (≥ 1) |
 
 **Успешный ответ (201 Created):**
 ```json
@@ -478,7 +478,7 @@ GET /internships/:id
     "salary": 50000,
     "location": "Москва",
     "is_archived": false,
-    "duration_month": 3,
+    "duration_months": 3,
     "created_at": "2025-05-09T10:30:00Z"
   },
   "skills": [
@@ -504,7 +504,7 @@ PUT /internships/:id
   "description": "Обновлённое описание",
   "salary": 60000,
   "location": "Санкт-Петербург",
-  "duration_month": 6
+  "duration_months": 6
 }
 ```
 
@@ -543,7 +543,7 @@ GET /internships
 | `duration_min` | `int` | - | Минимальная длительность (месяцы) |
 | `duration_max` | `int` | - | Максимальная длительность (месяцы) |
 | `skills` | `[]int` | - | ID навыков (AND-логика). Передавать несколько раз: `?skills=1&skills=2` |
-| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_month`, `created_at` |
+| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_months`, `created_at` |
 | `order` | `string` | `desc` | Направление: `asc` или `desc` |
 | `limit` | `int` | 20 | Записей на странице |
 | `offset` | `int` | 0 | Сдвиг для пагинации |
@@ -574,7 +574,7 @@ GET /internships?query=backend&sort=salary&order=desc&limit=20&offset=0
     "salary": 80000,
     "location": "Москва",
     "is_archived": false,
-    "duration_month": 6,
+    "duration_months": 6,
     "created_at": "2026-05-15T10:30:00Z"
   },
   {
@@ -584,7 +584,7 @@ GET /internships?query=backend&sort=salary&order=desc&limit=20&offset=0
     "salary": 70000,
     "location": "Санкт-Петербург",
     "is_archived": false,
-    "duration_month": 3,
+    "duration_months": 3,
     "created_at": "2026-05-20T14:00:00Z"
   }
 ]

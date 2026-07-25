@@ -14,16 +14,14 @@ type querySelectBuilder struct {
 }
 
 func newQuerySelectBuilder(selectQuery string) *querySelectBuilder {
-	var selectBuilder strings.Builder
-	selectBuilder.WriteString(selectQuery)
 	qb := &querySelectBuilder{
-		query: selectBuilder,
 		index: 1,
 	}
+	qb.query.WriteString(selectQuery)
 	return qb
 }
 
-func (qb *querySelectBuilder) addWhereWithIndex(preIndex string, postIndex string, value any) {
+func addWhereWithIndex[T any](qb *querySelectBuilder, preIndex string, postIndex string, value *T) {
 	if value == nil {
 		return
 	}
@@ -39,7 +37,7 @@ func (qb *querySelectBuilder) addWhereWithIndex(preIndex string, postIndex strin
 	qb.query.WriteString(strconv.Itoa(qb.index))
 	qb.index++
 	qb.query.WriteString(postIndex)
-	qb.values = append(qb.values, value)
+	qb.values = append(qb.values, *value)
 }
 
 func (qb *querySelectBuilder) addWhere(where string) {
@@ -94,17 +92,15 @@ type queryUpdateBuilder struct {
 }
 
 func newUpdateQuery(updateQuery string, id int) *queryUpdateBuilder {
-	var selectBuilder strings.Builder
-	selectBuilder.WriteString(updateQuery)
 	qb := &queryUpdateBuilder{
-		query: selectBuilder,
 		index: 2,
 	}
 	qb.values = append(qb.values, id)
+	qb.query.WriteString(updateQuery)
 	return qb
 }
 
-func (qb *queryUpdateBuilder) addFilled(name string, value any) {
+func addFilled[T any](qb *queryUpdateBuilder, name string, value *T) {
 	if value == nil {
 		return
 	}
@@ -118,11 +114,15 @@ func (qb *queryUpdateBuilder) addFilled(name string, value any) {
 	qb.query.WriteString(" = $")
 	qb.query.WriteString(strconv.Itoa(qb.index))
 
-	qb.values = append(qb.values, value)
+	qb.values = append(qb.values, *value)
 	qb.index++
 }
 
 func (qb *queryUpdateBuilder) parseBuilder(where string) (string, []interface{}) {
 	qb.query.WriteString(" " + where)
 	return qb.query.String(), qb.values
+}
+
+func (qb *queryUpdateBuilder) empty() bool {
+	return qb.index == 2
 }

@@ -140,11 +140,11 @@ func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 	filters := models.SearchCompany{}
 
-	h.parseAndSetString(query, filters.Query)
-	h.parseAndSetString(location, filters.Location)
+	filters.Query = h.parseAndSetString(query)
+	filters.Location = h.parseAndSetString(location)
 
-	h.parseAndSetInt(offset, filters.Offset)
-	h.parseAndSetInt(limit, filters.Limit)
+	filters.Offset = h.parseAndSetInt(offset)
+	filters.Limit = h.parseAndSetInt(limit)
 
 	res, err := h.service.SearchCompany(r.Context(), filters)
 	if err != nil {
@@ -164,8 +164,8 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 
 	filters := models.SearchIntern{}
 
-	h.parseAndSetString(query, filters.Query)
-	h.parseAndSetString(university, filters.University)
+	filters.Query = h.parseAndSetString(query)
+	filters.University = h.parseAndSetString(university)
 
 	if len(skills) != 0 {
 		var skillIDs []int
@@ -179,8 +179,8 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	h.parseAndSetInt(offset, filters.Offset)
-	h.parseAndSetInt(limit, filters.Limit)
+	filters.Offset = h.parseAndSetInt(offset)
+	filters.Limit = h.parseAndSetInt(limit)
 
 	res, err := h.service.SearchIntern(r.Context(), filters)
 	if err != nil {

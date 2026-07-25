@@ -177,13 +177,13 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 
 	filters := models.SearchInternship{}
 
-	h.parseAndSetString(query, filters.Query)
-	h.parseAndSetString(location, filters.Location)
+	filters.Query = h.parseAndSetString(query)
+	filters.Location = h.parseAndSetString(location)
 
-	h.parseAndSetInt(salaryMax, filters.SalaryMax)
-	h.parseAndSetInt(salaryMin, filters.SalaryMin)
-	h.parseAndSetInt(durationMin, filters.DurationMin)
-	h.parseAndSetInt(durationMax, filters.DurationMax)
+	filters.SalaryMax = h.parseAndSetInt(salaryMax)
+	filters.SalaryMin = h.parseAndSetInt(salaryMin)
+	filters.DurationMin = h.parseAndSetInt(durationMin)
+	filters.DurationMax = h.parseAndSetInt(durationMax)
 
 	if len(skills) != 0 {
 		var skillIDs []int
@@ -197,11 +197,11 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 		}
 	}
 
-	h.parseAndSetString(sort, filters.Sort)
+	filters.Sort = h.parseAndSetString(sort)
 
-	h.parseAndSetInt(order, filters.Order)
-	h.parseAndSetInt(offset, filters.Offset)
-	h.parseAndSetInt(limit, filters.Limit)
+	filters.Order = h.parseAndSetInt(order)
+	filters.Offset = h.parseAndSetInt(offset)
+	filters.Limit = h.parseAndSetInt(limit)
 
 	res, err := h.service.SearchInternship(r.Context(), filters)
 	if err != nil {
@@ -212,16 +212,18 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 	return err
 }
 
-func (h *ServiceHandler) parseAndSetInt(value string, filter *int) {
+func (h *ServiceHandler) parseAndSetInt(value string) *int {
 	if len(value) != 0 {
 		if val, err := strconv.Atoi(value); err == nil {
-			*filter = val
+			return &val
 		}
 	}
+	return nil
 }
 
-func (h *ServiceHandler) parseAndSetString(val string, filter *string) {
+func (h *ServiceHandler) parseAndSetString(val string) *string {
 	if len(val) != 0 {
-		*filter = val
+		return &val
 	}
+	return nil
 }
