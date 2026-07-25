@@ -41,6 +41,8 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 		values = append(values, value)
 	}
 
+	query.WriteString("ON CONFLICT (intern_id, skill_id) DO NOTHING;")
+
 	_, err = r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
@@ -140,6 +142,8 @@ func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, inte
 		delimiter = true
 		values = append(values, value)
 	}
+
+	query.WriteString("ON CONFLICT (internship_id, skill_id) DO NOTHING;")
 
 	_, err := r.db.ExecContext(ctx, query.String(), values...)
 	if err != nil {

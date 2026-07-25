@@ -9,6 +9,7 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -100,13 +101,18 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res := []models.ShortProfile{}
 
-	query := newQuerySelectBuilder("SELECT id, first_name, last_name, location, university, degree, image FROM interns")
+	query := newQuerySelectBuilder("SELECT i.id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image FROM interns i")
 
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 
 	if filters.University != nil {
 		university := fmt.Sprintf("%c%s%c", '%', *filters.University, '%')
 		addWhereWithIndex[string](query, "university ILIKE $", "", &university)
+	}
+
+	if filters.Skills != nil {
+		addWhereWithIndexes(query, "(SELECT COUNT(DISTINCT skill_id) FROM intern_skills WHERE intern_id = i.id AND skill_id ",
+			") = "+strconv.Itoa(len(*filters.Skills)), filters.Skills)
 	}
 
 	if filters.Query != nil {

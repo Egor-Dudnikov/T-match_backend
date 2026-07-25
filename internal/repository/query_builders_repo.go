@@ -40,6 +40,36 @@ func addWhereWithIndex[T any](qb *querySelectBuilder, preIndex string, postIndex
 	qb.values = append(qb.values, *value)
 }
 
+func addWhereWithIndexes(qb *querySelectBuilder, preIndex string, postIndex string, values *[]int) {
+	if values == nil {
+		return
+	}
+
+	if qb.existWhere {
+		qb.query.WriteString(" AND ")
+	} else {
+		qb.query.WriteString(" WHERE ")
+		qb.existWhere = true
+	}
+
+	qb.query.WriteString(preIndex)
+
+	qb.query.WriteString(" IN (")
+	for i, j := range *values {
+
+		qb.query.WriteString("$" + strconv.Itoa(qb.index))
+		qb.index++
+		qb.values = append(qb.values, j)
+		if i != len(*values)-1 {
+			qb.query.WriteString(", ")
+		}
+	}
+	qb.query.WriteString(")")
+
+	qb.query.WriteString(postIndex)
+
+}
+
 func (qb *querySelectBuilder) addWhere(where string) {
 	if qb.existWhere {
 		qb.query.WriteString(" AND ")

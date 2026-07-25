@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
@@ -102,7 +103,7 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 
 func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res := []models.Internship{}
-	query := newQuerySelectBuilder("SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships")
+	query := newQuerySelectBuilder("SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.location, i.created_at, i.is_archived FROM internships i")
 
 	query.addWhere("is_archived = FALSE")
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
@@ -110,6 +111,11 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	addWhereWithIndex[int](query, "salary >= $", "", filters.SalaryMin)
 	addWhereWithIndex[int](query, "duration_months >= $", "", filters.DurationMin)
 	addWhereWithIndex[int](query, "duration_months <= $", "", filters.DurationMax)
+
+	if filters.Skills != nil {
+		addWhereWithIndexes(query, "(SELECT COUNT(DISTINCT skill_id) FROM internship_skills WHERE internship_id = i.id AND skill_id ",
+			") = "+strconv.Itoa(len(*filters.Skills)), filters.Skills)
+	}
 
 	if filters.Location != nil {
 		location := fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')
