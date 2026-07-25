@@ -131,6 +131,17 @@ func (h *ServiceHandler) RespondInternshipHandler(_ http.ResponseWriter, r *http
 	return err
 }
 
+func (h *ServiceHandler) DeleteRespondInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIDURL(ps)
+	if err != nil {
+		return err
+	}
+
+	err = h.service.DeleteRespondInternship(ctx, id)
+	return err
+}
+
 func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)

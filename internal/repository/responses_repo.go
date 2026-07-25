@@ -70,6 +70,11 @@ func (r *Repository) InternshipsResponse(ctx context.Context, internshipID int) 
 	return res, err
 }
 
+func (r *Repository) DeleteRespondInternship(ctx context.Context, internID int, internshipID int) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM applications WHERE internship_id = $1 AND intern_id = $2 AND status = 'pending'", internshipID, internID)
+	return err
+}
+
 func (r *Repository) SetReviewStatus(ctx context.Context, internshipID int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE applications SET status = 'reviewing' WHERE status = 'pending' AND internship_id = $1`, internshipID)
 	if err != nil {

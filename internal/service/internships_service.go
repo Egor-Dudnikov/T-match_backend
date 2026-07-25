@@ -120,10 +120,20 @@ func (app Service) RespondInternship(ctx context.Context, internshipID int) erro
 		return err
 	}
 	err = app.db.RespondInternship(ctx, internID, internshipID)
+	return err
+}
+
+func (app Service) DeleteRespondInternship(ctx context.Context, internshipID int) error {
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
+	internID, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 	if err != nil {
 		return err
 	}
-	return nil
+	err = app.db.DeleteRespondInternship(ctx, internID, internshipID)
+	return err
 }
 
 func (app Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
