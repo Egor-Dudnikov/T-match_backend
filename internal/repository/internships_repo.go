@@ -93,6 +93,39 @@ func (r *Repository) GetCompanyIDByInternshipID(ctx context.Context, id int) (in
 	return companyID, nil
 }
 
+func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArchiveInternships bool) ([]models.Internship, error) {
+	res := []models.Internship{}
+	query := `SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships WHERE company_id = $1`
+	if hintArchiveInternships {
+		query += " AND is_archived = FALSE"
+	}
+	rows, err := r.db.QueryContext(ctx, query, id)
+	if err != nil {
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		internship := models.Internship{}
+		err = rows.Scan(
+			&internship.ID,
+			&internship.CompanyID,
+			&internship.Title,
+			&internship.Salary,
+			&internship.DurationMonth,
+			&internship.Location,
+			&internship.CreatedAt,
+			&internship.IsArchived,
+		)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
+		res = append(res, internship)
+	}
+
+	return res, nil
+}
+
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE WHERE id = $1`, id)
 	if err != nil {

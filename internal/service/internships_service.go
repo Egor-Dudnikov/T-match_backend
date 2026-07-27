@@ -86,6 +86,23 @@ func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 	return nil
 }
 
+func (app Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID int) ([]models.Internship, error) {
+	res := []models.Internship{}
+
+	id, err := app.db.GetCompanyIDByUserID(ctx, userID)
+	if err != nil {
+		return res, err
+	}
+
+	res, err = app.db.GetCompanyInternships(ctx, id, false)
+	return res, err
+}
+
+func (app Service) GetCompanyesInternships(ctx context.Context, companyID int) ([]models.Internship, error) {
+	res, err := app.db.GetCompanyInternships(ctx, companyID, true)
+	return res, err
+}
+
 func (app Service) AddInternshipSkills(ctx context.Context, skills []int, id int) error {
 	err := app.IsCompanysInternship(ctx, id)
 	if err != nil {

@@ -108,6 +108,12 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 			app.AuthMiddleware(
 				app.RateLimitMiddleware(app.SetMyAvatarHandler, constants.RateLimitSetAvatar, "/my/avatar")))))
 
+	router.GET("/my/company/internships", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.GetMyInternshipsHandler, constants.RateLimitCompanyInternship, "/companies/internships"))))))
+
 	// Internship routes
 
 	router.GET("/internships", ErrorMiddleware(
@@ -138,6 +144,10 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 
 	router.GET("/skills", ErrorMiddleware(
 		app.CorsMiddleware(app.GetAllSkills)))
+
+	router.GET("/companies/:id/internships", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.GetCompanyInternshipsHandler, constants.RateLimitCompanyInternship, "/companies/internships"))))
 
 	router.POST("/internships/:id/skill", ErrorMiddleware(
 		app.CorsMiddleware(

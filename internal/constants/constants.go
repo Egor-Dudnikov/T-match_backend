@@ -26,13 +26,14 @@ const (
 	RateLimitAuthCompanyLogin  = 30 // /auth/company/login
 
 	// Profile endpoints
-	RateLimitUpdateProfile = 100 // /my/profile/put
-	RateLimitGetProfile    = 120 // /my/profile
-	RateLimitAddSkills     = 5   // /my/profile/skills/add
-	RateLimitDeleteSkills  = 5   // /my/profile/skills/delete
-	RateLimitUpdateCompany = 100 // /my/company/profile/put
-	RateLimitGetCompany    = 120 // /my/company/profile
-	RateLimitSetAvatar     = 100 // /my/avatar/put
+	RateLimitUpdateProfile     = 100 // /my/profile/put
+	RateLimitGetProfile        = 120 // /my/profile
+	RateLimitAddSkills         = 5   // /my/profile/skills/add
+	RateLimitDeleteSkills      = 5   // /my/profile/skills/delete
+	RateLimitUpdateCompany     = 100 // /my/company/profile/put
+	RateLimitGetCompany        = 120 // /my/company/profile
+	RateLimitSetAvatar         = 100 // /my/avatar/put
+	RateLimitCompanyInternship = 100 // company/internship
 
 	// Internship endpoints
 	RateLimitCreateInternship      = 12 // /internships (POST)

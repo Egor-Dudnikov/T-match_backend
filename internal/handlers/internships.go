@@ -89,6 +89,36 @@ func (h *ServiceHandler) ArchivedInternshipHandler(_ http.ResponseWriter, r *htt
 	return nil
 }
 
+func (h *ServiceHandler) GetMyInternshipsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
+
+	internships, err := h.service.GetCompanyesInternshipsByUserID(ctx, claims.UserID)
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[[]models.Internship](w, internships)
+	return err
+}
+
+func (h *ServiceHandler) GetCompanyInternshipsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	id, err := getIDURL(ps)
+	if err != nil {
+		return err
+	}
+
+	internships, err := h.service.GetCompanyesInternships(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[[]models.Internship](w, internships)
+	return err
+}
+
 func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
