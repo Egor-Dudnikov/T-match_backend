@@ -49,10 +49,11 @@ func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int,
 
 func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
-	err := r.db.QueryRowContext(ctx, `SELECT id, first_name, last_name, birth_date, location, university, degree, bio, experience, image 
+	err := r.db.QueryRowContext(ctx, `SELECT id, user_id, first_name, last_name, birth_date, location, university, degree, bio, experience, image 
 	FROM interns
 	WHERE id = $1`, id).Scan(
 		&profile.ID,
+		&profile.UserID,
 		&profile.FirstName,
 		&profile.LastName,
 		&profile.BirthDate,

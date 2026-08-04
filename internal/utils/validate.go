@@ -62,6 +62,19 @@ func ValidAge(birthDate time.Time) bool {
 	return true
 }
 
+func ValidResponseStatus(fl validator.FieldLevel) bool {
+	statuses := [4]string{constants.Pending, constants.Reviewing, constants.Accepted, constants.Rejected}
+	status := fl.Field().String()
+	ok := false
+	for _, st := range statuses {
+		if status == st {
+			ok = true
+			break
+		}
+	}
+	return ok
+}
+
 func NewValidator() (*validator.Validate, error) {
 	validate := validator.New()
 
@@ -71,6 +84,11 @@ func NewValidator() (*validator.Validate, error) {
 	}
 
 	err = validate.RegisterValidation("valid_role", ValidRole)
+	if err != nil {
+		return validate, err
+	}
+
+	err = validate.RegisterValidation("valid_response_status", ValidResponseStatus)
 	if err != nil {
 		return validate, err
 	}

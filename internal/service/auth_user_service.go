@@ -30,16 +30,18 @@ type Service struct {
 	email    *EmailClient
 	s3       *s3.Storage
 	dadata   *dadata.Client
+	Hub      *Hub
 	validate *validator.Validate
 }
 
-func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client) *Service {
+func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client, hub *Hub) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,
 		email:    email,
 		validate: validate,
 		s3:       s3,
+		Hub:      hub,
 		dadata:   dadataclient,
 	}
 }
@@ -75,7 +77,9 @@ func RegService(config models.Config) (*Service, error) {
 
 	dadataClient := dadata.NewClient()
 
-	app := Newservice(repo, redis, email, validate, s3Storage, dadataClient)
+	hub := newHub()
+
+	app := Newservice(repo, redis, email, validate, s3Storage, dadataClient, hub)
 	return app, err
 }
 
@@ -373,7 +377,7 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.LoginUser, rol
 	return accessToken, refreshToken, nil
 }
 
-func (app Service) FogotPassword(ctx context.Context, user models.FogetPasswordRequest) (string, error) {
+func (app *Service) FogotPassword(ctx context.Context, user models.FogetPasswordRequest) (string, error) {
 	err := app.validate.Struct(user)
 	if err != nil {
 		return "", apierrors.Wrap(apierrors.ErrBadRequest, err)
@@ -424,7 +428,7 @@ func (app Service) FogotPassword(ctx context.Context, user models.FogetPasswordR
 	return sessionID, err
 }
 
-func (app Service) VerifyFogottenUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
+func (app *Service) VerifyFogottenUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
 		return "", "", apierrors.Wrap(apierrors.ErrBadRequest, err)

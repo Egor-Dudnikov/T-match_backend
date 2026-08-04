@@ -8,8 +8,8 @@ import (
 	"fmt"
 )
 
-func (r *Repository) UpdateCompanyProfile(ctx context.Context, id int, profile models.CompanyProfile) error {
-	query := newUpdateQuery("UPDATE companies SET ", id)
+func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profile models.CompanyProfile) error {
+	query := newUpdateQuery("UPDATE companies SET ", userID)
 
 	addFilled[string](query, "company_name", profile.CompanyName)
 	addFilled[string](query, "description", profile.Description)

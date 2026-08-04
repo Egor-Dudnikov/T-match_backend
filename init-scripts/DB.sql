@@ -11,6 +11,12 @@ CREATE TYPE "user_role" AS ENUM (
   'admin'
 );
 
+CREATE TYPE "notification_type" AS ENUM (
+  'invate',
+  'change_status'
+);
+
+
 CREATE TABLE "users" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "email" VARCHAR UNIQUE NOT NULL,
@@ -86,6 +92,30 @@ CREATE TABLE "internship_skills" (
   "internship_id" INTEGER NOT NULL,
   "skill_id" INTEGER NOT NULL,
   PRIMARY KEY ("internship_id", "skill_id")
+);
+
+CREATE TABLE "notifications" (
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "user_id" INTEGER NOT NULL,
+  "type"   NOTIFICATION_TYPE,
+  "is_read"  BOOLEAN NOT NULL DEFAULT FALSE,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+);
+
+CREATE TABLE "change_status_data" (
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "notification_id" INTEGER NOT NULL,
+  "internship_id" INTEGER NOT NULL,
+  "company_id" INTEGER NOT NULL,
+  "new_status" VARCHAR NOT NULL,
+);
+
+CREATE TABLE "invate_data" (
+  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "notification_id" INTEGER NOT NULL,
+  "internship_id" INTEGER NOT NULL,
+  "company_id" INTEGER NOT NULL,
+  "message"  VARCHAR,
 );
 
 CREATE UNIQUE INDEX ON "applications" ("intern_id", "internship_id");

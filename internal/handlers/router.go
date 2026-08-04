@@ -114,6 +114,21 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.GetMyInternshipsHandler, constants.RateLimitCompanyInternship, "/companies/internships"))))))
 
+	router.GET("/my/notifications", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.RateLimitMiddleware(app.MyNotificationsHandler, constants.RateLimitMyNotifications, "/my/notifications")))))
+
+	router.PUT("/my/notifications", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.RateLimitMiddleware(app.SetReadStatusOfNotificationHandler, constants.RateLimitMyNotifications, "/my/notifications")))))
+
+	router.GET("/ws/notifications", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.RateLimitMiddleware(app.WSNotificationHandler, constants.RateLimitMyNotifications, "/my/notifications")))))
+
 	// Internship routes
 
 	router.GET("/internships", ErrorMiddleware(
@@ -190,6 +205,12 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 			app.AuthMiddleware(
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.SetResponseStatus, constants.RateLimitSetResponseStatus, "/responses/:id/status"))))))
+
+	router.POST("/internships/:id/invite", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.CompanyMiddleware(
+					app.RateLimitMiddleware(app.InternshipInviteHandler, constants.RateLimitInternshipInvite, "/responses/:id/status"))))))
 
 	// Search routes
 

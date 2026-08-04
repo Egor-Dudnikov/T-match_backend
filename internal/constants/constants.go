@@ -34,6 +34,7 @@ const (
 	RateLimitGetCompany        = 120 // /my/company/profile
 	RateLimitSetAvatar         = 100 // /my/avatar/put
 	RateLimitCompanyInternship = 100 // company/internship
+	RateLimitMyNotifications   = 100 // /my/ notifications
 
 	// Internship endpoints
 	RateLimitCreateInternship      = 12 // /internships (POST)
@@ -41,6 +42,7 @@ const (
 	RateLimitArchiveInternship     = 5  // /internships/delete/:id
 	RateLimitAddInternshipSkill    = 5  // /internship/:id/skill/add
 	RateLimitDeleteInternshipSkill = 5  // /internship/:id/skill/delete
+	RateLimitInternshipInvite      = 40
 
 	// Response endpoints
 	RateLimitRespondToInternship    = 10 // /internships/:id/respond
@@ -110,4 +112,15 @@ const (
 
 const (
 	AllowSpecialPassword = "!@#$%^&*()_-+=[]{}|;:',.<>?/~`"
+)
+
+const (
+	WSReadBufferSize  = 1024
+	WSWriteBufferSize = 1024
+)
+
+const (
+	ChangeStatusType        = "change_status"
+	InvateType              = "invate"
+	MaxBufferNotificationWS = 100
 )

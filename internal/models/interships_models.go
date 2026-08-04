@@ -40,7 +40,7 @@ type Response struct {
 }
 
 type ResponseRequest struct {
-	Status string `json:"status"`
+	Status string `json:"status" validate:"required,valid_response_status"`
 }
 
 type SearchInternship struct {
@@ -55,4 +55,9 @@ type SearchInternship struct {
 	Order       *int
 	Offset      *int
 	Limit       *int
+}
+
+type InvateIntern struct {
+	UserID  int     `json:"user_id" validate:"required,numeric"`
+	Message *string `json:"message" validate:"omitempty"`
 }

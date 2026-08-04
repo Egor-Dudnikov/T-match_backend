@@ -8,9 +8,10 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
+	"encoding/json"
 )
 
-func (app Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
+func (app *Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
 	err := app.validate.Struct(internship)
 	if err != nil {
 		return 0, apierrors.Wrap(apierrors.ErrBadRequest, err)
@@ -22,7 +23,7 @@ func (app Service) NewInternship(ctx context.Context, internship models.Internsh
 	return internshipID, nil
 }
 
-func (app Service) GetInternshipByID(ctx context.Context, id int) (models.InternshipResponse, error) {
+func (app *Service) GetInternshipByID(ctx context.Context, id int) (models.InternshipResponse, error) {
 	res := models.InternshipResponse{}
 	internship, err := app.db.GetInternshipByID(ctx, id)
 	if err != nil {
@@ -38,7 +39,7 @@ func (app Service) GetInternshipByID(ctx context.Context, id int) (models.Intern
 	return res, nil
 }
 
-func (app Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
+func (app *Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
 	err := app.validate.Struct(internship)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrBadRequest, err)
@@ -53,7 +54,7 @@ func (app Service) UpdateInternship(ctx context.Context, internship models.Inter
 	return err
 }
 
-func (app Service) ArchivedInternship(ctx context.Context, id int) error {
+func (app *Service) ArchivedInternship(ctx context.Context, id int) error {
 	err := app.IsCompanysInternship(ctx, id)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (app Service) ArchivedInternship(ctx context.Context, id int) error {
 	return nil
 }
 
-func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
+func (app *Service) IsCompanysInternship(ctx context.Context, id int) error {
 	companyID, err := app.db.GetCompanyIDByInternshipID(ctx, id)
 	if err != nil {
 		return err
@@ -86,7 +87,7 @@ func (app Service) IsCompanysInternship(ctx context.Context, id int) error {
 	return nil
 }
 
-func (app Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID int) ([]models.Internship, error) {
+func (app *Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID int) ([]models.Internship, error) {
 	res := []models.Internship{}
 
 	id, err := app.db.GetCompanyIDByUserID(ctx, userID)
@@ -98,12 +99,12 @@ func (app Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID i
 	return res, err
 }
 
-func (app Service) GetCompanyesInternships(ctx context.Context, companyID int) ([]models.Internship, error) {
+func (app *Service) GetCompanyesInternships(ctx context.Context, companyID int) ([]models.Internship, error) {
 	res, err := app.db.GetCompanyInternships(ctx, companyID, true)
 	return res, err
 }
 
-func (app Service) AddInternshipSkills(ctx context.Context, skills []int, id int) error {
+func (app *Service) AddInternshipSkills(ctx context.Context, skills []int, id int) error {
 	err := app.IsCompanysInternship(ctx, id)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (app Service) AddInternshipSkills(ctx context.Context, skills []int, id int
 	return nil
 }
 
-func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int, skillIDs []int) error {
+func (app *Service) DeleteInternshipSkills(ctx context.Context, internshipID int, skillIDs []int) error {
 	err := app.IsCompanysInternship(ctx, internshipID)
 	if err != nil {
 		return err
@@ -127,7 +128,7 @@ func (app Service) DeleteInternshipSkills(ctx context.Context, internshipID int,
 	return nil
 }
 
-func (app Service) RespondInternship(ctx context.Context, internshipID int) error {
+func (app *Service) RespondInternship(ctx context.Context, internshipID int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer
@@ -140,7 +141,7 @@ func (app Service) RespondInternship(ctx context.Context, internshipID int) erro
 	return err
 }
 
-func (app Service) DeleteRespondInternship(ctx context.Context, internshipID int) error {
+func (app *Service) DeleteRespondInternship(ctx context.Context, internshipID int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer
@@ -153,7 +154,7 @@ func (app Service) DeleteRespondInternship(ctx context.Context, internshipID int
 	return err
 }
 
-func (app Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
+func (app *Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
 	err := app.IsCompanysInternship(ctx, internshipID)
 	if err != nil {
 		return []models.Response{}, err
@@ -162,17 +163,12 @@ func (app Service) GetInternshipResponses(ctx context.Context, internshipID int)
 	return responses, err
 }
 
-func (app Service) SetResponseStatus(ctx context.Context, responseID int, status string) error {
-	statuses := [4]string{constants.Pending, constants.Reviewing, constants.Accepted, constants.Rejected}
-	ok := false
-	for _, st := range statuses {
-		if status == st {
-			ok = true
-		}
+func (app *Service) SetResponseStatus(ctx context.Context, responseID int, respReq models.ResponseRequest) error {
+	err := app.validate.Struct(respReq)
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
-	if !ok {
-		return apierrors.ErrBadRequest
-	}
+
 	internshipID, err := app.db.GetInternshipIDByResponseID(ctx, responseID)
 	if err != nil {
 		return err
@@ -183,11 +179,27 @@ func (app Service) SetResponseStatus(ctx context.Context, responseID int, status
 		return err
 	}
 
-	err = app.db.SetResponseStatus(ctx, responseID, status)
-	return err
+	err = app.db.SetResponseStatus(ctx, responseID, respReq.Status)
+	if err != nil {
+		return err
+	}
+
+	notification, err := app.db.NewChangeStatusNotification(ctx, responseID, internshipID, respReq.Status)
+	if err != nil {
+		return err
+	}
+
+	notificationJSON, err := json.Marshal(notification)
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, err)
+	}
+
+	app.Hub.Send(notification.UserID, string(notificationJSON))
+
+	return nil
 }
 
-func (app Service) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
+func (app *Service) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res, err := app.db.SearchInternship(ctx, filters)
 	return res, err
 }

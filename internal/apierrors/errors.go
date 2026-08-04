@@ -46,8 +46,9 @@ var (
 	ErrInternshipNotFound   = errors.New("internship not found")
 	ErrAlreadyResponded     = errors.New("already responded to this internship")
 
-	ErrSkillsNotFound = errors.New("skills not found")
-	ErrKeyNotFound    = errors.New("redis key not found")
+	ErrSkillsNotFound     = errors.New("skills not found")
+	ErrKeyNotFound        = errors.New("redis key not found")
+	ErrCompanyNameMissing = errors.New("company have not name")
 )
 
 type ErrorMapping struct {
@@ -56,12 +57,13 @@ type ErrorMapping struct {
 }
 
 var errorStatusMap = map[error]ErrorMapping{
-	ErrInvalidCode:      {http.StatusBadRequest, "Invalid verification code format"},
-	ErrCodeExpired:      {http.StatusBadRequest, "Verification code expired"},
-	ErrSessionExpired:   {http.StatusBadRequest, "Verification session expired"},
-	ErrJSONDecodeFailed: {http.StatusBadRequest, "Invalid JSON format"},
-	ErrJSONEncodeFailed: {http.StatusBadRequest, "Failed to process data"},
-	ErrBadRequest:       {http.StatusBadRequest, "Bad request"},
+	ErrInvalidCode:        {http.StatusBadRequest, "Invalid verification code format"},
+	ErrCodeExpired:        {http.StatusBadRequest, "Verification code expired"},
+	ErrSessionExpired:     {http.StatusBadRequest, "Verification session expired"},
+	ErrJSONDecodeFailed:   {http.StatusBadRequest, "Invalid JSON format"},
+	ErrJSONEncodeFailed:   {http.StatusBadRequest, "Failed to process data"},
+	ErrBadRequest:         {http.StatusBadRequest, "Bad request"},
+	ErrCompanyNameMissing: {http.StatusBadRequest, "company have not name"},
 
 	ErrInvalidPassword: {http.StatusUnauthorized, "Invalid password"},
 	ErrUnauthorized:    {http.StatusUnauthorized, "User Unauthorized"},

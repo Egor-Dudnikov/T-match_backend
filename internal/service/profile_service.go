@@ -15,7 +15,7 @@ import (
 	"strconv"
 )
 
-func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Profile) error {
+func (app *Service) UpdateStudentProfile(ctx context.Context, profile models.Profile) error {
 	err := app.validate.Struct(profile)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrBadRequest, err)
@@ -38,7 +38,7 @@ func (app Service) UpdateStudentProfile(ctx context.Context, profile models.Prof
 	return nil
 }
 
-func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
+func (app *Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -56,7 +56,7 @@ func (app Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, er
 	return resp, nil
 }
 
-func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.CompanyProfile) error {
+func (app *Service) UpdateCompanyProfile(ctx context.Context, profile models.CompanyProfile) error {
 	err := app.validate.Struct(profile)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (app Service) UpdateCompanyProfile(ctx context.Context, profile models.Comp
 	return nil
 }
 
-func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
+func (app *Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -94,7 +94,7 @@ func (app Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfi
 	return resp, nil
 }
 
-func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
+func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -131,7 +131,7 @@ func (app Service) GetCompanyProfile(ctx context.Context, id int) (models.Compan
 	return resp, nil
 }
 
-func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
+func (app *Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
 	if info.Size > constants.MaxSizeImage {
 		return "", apierrors.ErrBadRequest
 	}
@@ -163,7 +163,7 @@ func (app Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, 
 	return url, err
 }
 
-func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
+func (app *Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills, err := app.db.GetAllSkills(ctx)
 	if err != nil {
 		return skills, err
@@ -171,7 +171,7 @@ func (app Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	return skills, nil
 }
 
-func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
+func (app *Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer
@@ -184,7 +184,7 @@ func (app Service) AddInternSkills(ctx context.Context, skills []int) error {
 	return nil
 }
 
-func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
+func (app *Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer
@@ -197,7 +197,7 @@ func (app Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error
 	return nil
 }
 
-func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
+func (app *Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
 	responses := []models.Response{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -213,21 +213,21 @@ func (app Service) GetMyResponses(ctx context.Context) ([]models.Response, error
 	return responses, err
 }
 
-func (app Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
+func (app *Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res, err := app.db.SearchCompany(ctx, filters)
 	return res, err
 }
 
-func (app Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
+func (app *Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res, err := app.db.SearchIntern(ctx, filters)
 	return res, err
 }
 
-func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileResponse, error) {
+func (app *Service) GetProfile(ctx context.Context, internID int) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 
-	userID, err := app.db.GetUserIDByProfileID(ctx, id)
+	userID, err := app.db.GetUserIDByProfileID(ctx, internID)
 	if err != nil {
 		return resp, err
 	}
@@ -239,7 +239,7 @@ func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileRespon
 		if err != nil {
 			return resp, err
 		}
-		exist, err := app.existCompanyMatch(ctx, companyID, id)
+		exist, err := app.existCompanyMatch(ctx, companyID, internID)
 		if err != nil {
 			return resp, err
 		}
@@ -251,14 +251,14 @@ func (app Service) GetProfile(ctx context.Context, id int) (models.ProfileRespon
 		}
 	}
 
-	resp, err = app.profileResponse(ctx, id, userID, email)
+	resp, err = app.profileResponse(ctx, internID, userID, email)
 	if err != nil {
 		return resp, err
 	}
 	return resp, nil
 }
 
-func (app Service) profileResponse(ctx context.Context, internID int, userID int, email string) (models.ProfileResponse, error) {
+func (app *Service) profileResponse(ctx context.Context, internID int, userID int, email string) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{Email: email}
 	profile, err := app.db.GetProfile(ctx, internID)
 	resp.Profile = profile
@@ -272,7 +272,7 @@ func (app Service) profileResponse(ctx context.Context, internID int, userID int
 	return resp, nil
 }
 
-func (app Service) existStudentMatch(ctx context.Context, companyID, internID int) (bool, error) {
+func (app *Service) existStudentMatch(ctx context.Context, companyID, internID int) (bool, error) {
 	exist, err := app.db.ExistStatus(ctx, companyID, internID, constants.Accepted)
 	if err != nil {
 		return exist, err
@@ -280,7 +280,7 @@ func (app Service) existStudentMatch(ctx context.Context, companyID, internID in
 	return exist, nil
 }
 
-func (app Service) existCompanyMatch(ctx context.Context, companyID, internID int) (bool, error) {
+func (app *Service) existCompanyMatch(ctx context.Context, companyID, internID int) (bool, error) {
 	exist1, err := app.db.ExistStatus(ctx, companyID, internID, constants.Reviewing)
 	if err != nil {
 		return exist1, err

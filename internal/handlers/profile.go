@@ -7,9 +7,11 @@ import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
+	"T-match_backend/internal/service"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -203,4 +205,52 @@ func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Reques
 	}
 	err = encodeJSON[models.ProfileResponse](w, resp)
 	return err
+}
+
+func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	notifications, err := h.service.GetMyNotifications(ctx)
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[[]models.Notification](w, notifications)
+	return err
+}
+
+func (h *ServiceHandler) SetReadStatusOfNotificationHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	ctx := r.Context()
+	err := h.service.SetReadStatusOfNotification(ctx)
+	return err
+}
+
+func (h *ServiceHandler) WSNotificationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  constants.WSReadBufferSize,
+		WriteBufferSize: constants.WSWriteBufferSize,
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return err
+	}
+
+	claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
+	if !ok {
+		return apierrors.ErrInternalServer
+	}
+
+	cli := service.Client{
+		UserID: claims.UserID,
+		Conn:   conn,
+		Send:   make(chan string, constants.MaxBufferNotificationWS),
+		Hub:    h.service.Hub,
+	}
+
+	h.service.Hub.Register(claims.UserID, &cli)
+
+	go cli.WritePump()
+	go cli.ReadPump()
+
+	return nil
 }

@@ -199,7 +199,7 @@ func (h *ServiceHandler) SetResponseStatus(_ http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return err
 	}
-	err = h.service.SetResponseStatus(ctx, id, resp.Status)
+	err = h.service.SetResponseStatus(ctx, id, resp)
 	return err
 }
 
@@ -267,4 +267,21 @@ func (h *ServiceHandler) parseAndSetString(val string) *string {
 		return &val
 	}
 	return nil
+}
+
+func (h *ServiceHandler) InternshipInviteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	internshipID, err := getIDURL(ps)
+	if err != nil {
+		return err
+	}
+
+	invateIntern, err := decodeJSON[models.InvateIntern](r)
+	if err != nil {
+		return err
+	}
+
+	ctx := r.Context()
+
+	err = h.service.InvateIntern(ctx, internshipID, invateIntern)
+	return err
 }

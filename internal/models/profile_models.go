@@ -7,6 +7,7 @@ import "time"
 
 type Profile struct {
 	ID         *int       `json:"id,omitempty" validate:"omitempty"`
+	UserID     *int       `json:"user_id,omitempty" validate:"omitempty"`
 	FirstName  *string    `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string    `json:"last_name,omitempty" validate:"omitempty,max=100"`
 	BirthDate  *time.Time `json:"birth_date,omitempty" validate:"omitempty"`
@@ -74,4 +75,29 @@ type ShortProfile struct {
 	University *string `json:"university,omitempty" validate:"omitempty,max=200"`
 	Degree     *string `json:"degree,omitempty" validate:"omitempty,max=100"`
 	Image      *string `json:"image,omitempty" validate:"omitempty"`
+}
+
+type Notification struct {
+	ID        int         `json:"id"`
+	UserID    int         `json:"user_id"`
+	Type      string      `json:"type"`
+	IsRead    bool        `json:"is_read"`
+	CreatedAt time.Time   `json:"created_at"`
+	Data      interface{} `json:"data,omitempty"`
+}
+
+type InvateData struct {
+	ID             int     `json:"id"`
+	NotificationID int     `json:"notification_id"`
+	InternshipID   int     `json:"internship_id"`
+	CompanyID      int     `json:"company_id"`
+	Message        *string `json:"message,omitempty"`
+}
+
+type ChangeStatusData struct {
+	ID             int    `json:"id"`
+	NotificationID int    `json:"notification_id"`
+	InternshipID   int    `json:"internship_id"`
+	CompanyID      int    `json:"company_id"`
+	NewStatus      string `json:"new_status"`
 }
