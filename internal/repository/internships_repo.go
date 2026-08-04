@@ -155,7 +155,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 		addWhereWithIndex[string](query, "location ILIKE $", "", &location)
 	}
 
-	if filters.Offset != nil && filters.Sort != nil && sortValid(*filters.Sort) {
+	if sortValid(filters.Order, filters.Sort) {
 		if *filters.Order == 1 {
 			query.addOrderBy(*filters.Sort, constants.ASC)
 		} else {
@@ -201,10 +201,13 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	return res, nil
 }
 
-func sortValid(sort string) bool {
-	if sort == "salary" {
+func sortValid(order *int, sort *string) bool {
+	if order == nil || sort == nil {
+		return false
+	}
+	if *sort == "salary" {
 		return true
-	} else if sort == "duration_months" {
+	} else if *sort == "duration_months" {
 		return true
 	}
 	return false

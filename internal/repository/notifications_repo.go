@@ -6,6 +6,7 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -112,7 +113,15 @@ func (r *Repository) NewChangeStatusNotification(ctx context.Context, responseID
 	if err != nil {
 		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			if err != nil {
+				err = fmt.Errorf("original error: %w, rollback error: %w", err, rbErr)
+			} else {
+				err = apierrors.Wrap(apierrors.ErrDatabaseError, rbErr)
+			}
+		}
+	}()
 
 	var notificationID int
 	var createdAt time.Time
@@ -187,7 +196,15 @@ func (r *Repository) NewInviteNotification(ctx context.Context, userID int, inte
 	if err != nil {
 		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			if err != nil {
+				err = fmt.Errorf("original error: %w, rollback error: %w", err, rbErr)
+			} else {
+				err = apierrors.Wrap(apierrors.ErrDatabaseError, rbErr)
+			}
+		}
+	}()
 
 	var notificationID int
 	var createdAt time.Time

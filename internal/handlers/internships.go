@@ -89,7 +89,7 @@ func (h *ServiceHandler) ArchivedInternshipHandler(_ http.ResponseWriter, r *htt
 	return nil
 }
 
-func (h *ServiceHandler) GetMyInternshipsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) GetMyInternshipsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -269,7 +269,7 @@ func (h *ServiceHandler) parseAndSetString(val string) *string {
 	return nil
 }
 
-func (h *ServiceHandler) InternshipInviteHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) InternshipInviteHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	internshipID, err := getIDURL(ps)
 	if err != nil {
 		return err

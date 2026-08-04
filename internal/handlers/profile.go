@@ -207,7 +207,7 @@ func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Reques
 	return err
 }
 
-func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	notifications, err := h.service.GetMyNotifications(ctx)
 	if err != nil {
@@ -217,7 +217,7 @@ func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.R
 	return err
 }
 
-func (h *ServiceHandler) SetReadStatusOfNotificationHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) SetReadStatusOfNotificationHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	err := h.service.SetReadStatusOfNotification(ctx)
 	return err

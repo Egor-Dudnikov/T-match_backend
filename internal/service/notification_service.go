@@ -50,6 +50,9 @@ func (app *Service) InvateIntern(ctx context.Context, internshipID int, invateIn
 	}
 
 	notification, err := app.db.NewInviteNotification(ctx, invateIntern.UserID, internshipID, companyID, invateIntern.Message)
+	if err != nil {
+		return err
+	}
 
 	notificationJSON, err := json.Marshal(notification)
 	if err != nil {
@@ -58,7 +61,7 @@ func (app *Service) InvateIntern(ctx context.Context, internshipID int, invateIn
 
 	app.Hub.Send(notification.UserID, string(notificationJSON))
 
-	return err
+	return nil
 }
 
 type Hub struct {
