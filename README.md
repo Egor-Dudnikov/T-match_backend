@@ -10,10 +10,11 @@
 6. [Поиск и фильтрация](#6-поиск-и-фильтрация)
 7. [Навыки (Skills)](#7-навыки-skills)
 8. [Отклики на стажировки](#8-отклики-на-стажировки)
-9. [Система токенов](#9-система-токенов)
-10. [Rate Limiting](#10-rate-limiting)
-11. [Обработка ошибок](#11-обработка-ошибок)
-12. [Запуск приложения](#12-запуск-приложения)
+9. [Уведомления](#9-уведомления)
+10. [Система токенов](#10-система-токенов)
+11. [Rate Limiting](#11-rate-limiting)
+12. [Обработка ошибок](#12-обработка-ошибок)
+13. [Запуск приложения](#13-запуск-приложения)
 
 ---
 
@@ -57,8 +58,8 @@ POST /auth/students
 | Параметр | Тип | Обязательный | Описание |
 | :--- | :--- | :---: | :--- |
 | `email` | `string` | ✅ | Email (макс. 255 символов) |
-| `password` | `string` | ✅ | Пароль (8-72 символа, минимум 1 заглавная, 1 строчная, 1 цифра) |
-| `device_id` | `string` | ✅ | Уникальный ID устройства (5-100 символов) |
+| `password` | `string` | ✅ | Пароль (8–72 символа, минимум 1 заглавная, 1 строчная, 1 цифра) |
+| `device_id` | `string` | ✅ | Уникальный ID устройства (5–100 символов) |
 | `birth_date` | `string` | ✅ | Дата рождения в ISO 8601, возраст ≥ 16 лет |
 
 **Успешный ответ (201 Created):**
@@ -203,6 +204,7 @@ POST /auth/company/login    # компания
 ---
 
 ### 2.6 Выход из системы
+
 ```
 POST /auth/logout
 ```
@@ -213,13 +215,84 @@ POST /auth/logout
 
 **Что происходит при выходе:**
 - Refresh Token удаляется из Redis
-- Кука `refresh_token` очищается (Max-Age=-1)
+- Кука `refresh_token` очищается (`Max-Age=-1`)
 - Клиент должен удалить Access Token из локального хранилища
 
 **Возможные ошибки:**
 | Статус | Описание |
 | :--- | :--- |
 | `401` | Неавторизован |
+
+---
+
+### 2.7 Восстановление пароля
+
+#### Запрос на восстановление
+
+```
+POST /auth/forgot-password
+```
+
+**Тело запроса:**
+```json
+{
+  "device_id": "web_chrome_abc123",
+  "email": "ivan@example.com",
+  "role": "intern"
+}
+```
+
+| Параметр | Тип | Обязательный | Описание |
+| :--- | :--- | :---: | :--- |
+| `device_id` | `string` | ✅ | ID устройства |
+| `email` | `string` | ✅ | Email |
+| `role` | `string` | ✅ | Роль: `intern` или `company` |
+
+**Успешный ответ (200 OK):**
+```
+Заголовок: X-Verify-Session: <session_id>
+```
+
+---
+
+#### Подтверждение восстановления
+
+```
+POST /auth/forgot-password/verify
+```
+
+**Заголовки:**
+```
+X-Verify-Session: <session_id>
+```
+
+**Тело запроса:**
+```json
+{
+  "code": "482915"
+}
+```
+
+**Успешный ответ (200 OK):** возвращает новую пару токенов (как при обычной верификации)
+
+---
+
+#### Смена пароля
+
+```
+PUT /auth/change-password
+```
+
+*Требуется авторизация*
+
+**Тело запроса:**
+```json
+{
+  "password": "NewSecurePass1"
+}
+```
+
+**Успешный ответ (200 OK):** пустое тело
 
 ---
 
@@ -250,7 +323,7 @@ GET /my/profile
     "degree": "Бакалавр",
     "bio": "Студент 4-го курса. Увлекаюсь backend-разработкой.",
     "experience": "Писал курсовые на Go, участвовал в хакатонах.",
-    "image": "http://localhost:9000/t-match-storage/user_17_avatar"
+    "image": "http://localhost:9000/t-match-storage/user:17:avatar"
   },
   "skills": [
     {"id": 1, "name": "Go"},
@@ -345,14 +418,14 @@ PUT /my/avatar
 
 **Успешный ответ (201 Created):**
 ```json
-"http://localhost:9000/t-match-storage/user_17_avatar"
+"http://localhost:9000/t-match-storage/user:17:avatar"
 ```
 
 ---
 
 ## 4. Публичные профили
 
-*Без авторизации (кроме `/my/avatar`)*
+*Без авторизации (кроме email — см. особенности)*
 
 ### 4.1 Публичный профиль студента
 
@@ -365,6 +438,7 @@ GET /profile/:id
 **Ответ (200 OK):**
 ```json
 {
+  "email": "",
   "profile": {
     "id": 17,
     "first_name": "Иван",
@@ -385,7 +459,7 @@ GET /profile/:id
 ```
 
 **Особенности:**
-- Поле `email` обычно отсутствует
+- Поле `email` обычно пустое
 - **Исключение:** если запрос делает авторизованная компания, и этот студент имеет статус `reviewing` или `accepted` хотя бы по одной стажировке этой компании — поле `email` будет заполнено
 
 ---
@@ -393,7 +467,7 @@ GET /profile/:id
 ### 4.2 Публичный профиль компании
 
 ```
-GET /profile/company/:id
+GET /company/profile/:id
 ```
 
 **Пример:** `GET /company/profile/5`
@@ -401,6 +475,7 @@ GET /profile/company/:id
 **Ответ (200 OK):**
 ```json
 {
+  "email": "",
   "profile": {
     "id": 5,
     "company_name": "Яндекс",
@@ -412,14 +487,13 @@ GET /profile/company/:id
     "legal_address": "Москва, ул. Льва Толстого, 16",
     "director_name": "Иванов Иван Иванович",
     "image": null
-  },
+  }
 }
 ```
 
 **Особенности:**
-- Поле `email` обычно отсутствует
+- Поле `email` обычно пустое
 - **Исключение:** если запрос делает авторизованный студент, который был **принят** (статус `accepted`) хотя бы на одну стажировку этой компании — поле `email` будет заполнено
-
 
 ---
 
@@ -510,6 +584,8 @@ PUT /internships/:id
 
 **Успешный ответ (200 OK):** пустое тело
 
+**Важно:** обновить можно только **неархивированную** стажировку. Попытка обновить архивированную вернёт `404`.
+
 ---
 
 ### 5.4 Архивирование стажировки
@@ -520,6 +596,30 @@ DELETE /internships/:id
 *Роль: `company` (только владелец)*
 
 **Успешный ответ (200 OK):** пустое тело
+
+**Примечание:** архивирование — это мягкое удаление (`is_archived = TRUE`). Стажировка перестаёт отображаться в поиске и публичном доступе.
+
+---
+
+### 5.5 Мои стажировки (для компании)
+
+```
+GET /my/company/internships
+```
+*Роль: `company`*
+
+**Ответ (200 OK):** массив стажировок (включая архивированные)
+
+---
+
+### 5.6 Стажировки компании (публично)
+
+```
+GET /companies/:id/internships
+```
+*Без авторизации*
+
+**Ответ (200 OK):** массив **неархивированных** стажировок данной компании
 
 ---
 
@@ -536,17 +636,17 @@ GET /internships
 
 | Параметр | Тип | По умолчанию | Описание |
 | :--- | :--- | :--- | :--- |
-| `query` | `string` | - | Текстовый поиск (слова через пробел, логика OR) |
-| `location` | `string` | - | Город (частичное совпадение, регистронезависимый) |
-| `salary_min` | `int` | - | Минимальная зарплата |
-| `salary_max` | `int` | - | Максимальная зарплата |
-| `duration_min` | `int` | - | Минимальная длительность (месяцы) |
-| `duration_max` | `int` | - | Максимальная длительность (месяцы) |
-| `skills` | `[]int` | - | ID навыков (AND-логика). Передавать несколько раз: `?skills=1&skills=2` |
-| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_months`, `created_at` |
-| `order` | `string` | `desc` | Направление: `asc` или `desc` |
-| `limit` | `int` | 20 | Записей на странице |
-| `offset` | `int` | 0 | Сдвиг для пагинации |
+| `query` | `string` | — | Текстовый поиск (слова через пробел, логика OR) |
+| `location` | `string` | — | Город (частичное совпадение, регистронезависимый) |
+| `salary_min` | `int` | — | Минимальная зарплата |
+| `salary_max` | `int` | — | Максимальная зарплата |
+| `duration_min` | `int` | — | Минимальная длительность (месяцы) |
+| `duration_max` | `int` | — | Максимальная длительность (месяцы) |
+| `skills` | `[]int` | — | ID навыков (AND-логика). Передавать несколько раз: `?skills=1&skills=2` |
+| `sort` | `string` | `created_at` | Поле сортировки: `salary`, `duration_months` |
+| `order` | `int` | `desc` | Направление: `1` = `ASC`, любое другое значение = `DESC` |
+| `limit` | `int` | — | Записей на странице |
+| `offset` | `int` | — | Сдвиг для пагинации |
 
 **Примеры запросов:**
 
@@ -561,7 +661,7 @@ GET /internships?query=Python&location=Москва&salary_min=50000&salary_max=
 GET /internships?skills=1&skills=3&skills=5
 
 # Сортировка и пагинация
-GET /internships?query=backend&sort=salary&order=desc&limit=20&offset=0
+GET /internships?query=backend&sort=salary&order=1&limit=20&offset=0
 ```
 
 **Пример ответа (200 OK):**
@@ -605,11 +705,11 @@ GET /students
 
 | Параметр | Тип | По умолчанию | Описание |
 | :--- | :--- | :--- | :--- |
-| `query` | `string` | - | Текстовый поиск по имени, фамилии, университету, степени |
-| `university` | `string` | - | Университет (частичное совпадение) |
-| `skills` | `[]int` | - | ID навыков (AND-логика). `?skills=1&skills=2` |
-| `limit` | `int` | 20 | Записей на странице |
-| `offset` | `int` | 0 | Сдвиг для пагинации |
+| `query` | `string` | — | Текстовый поиск по имени, фамилии, университету, степени |
+| `university` | `string` | — | Университет (частичное совпадение) |
+| `skills` | `[]int` | — | ID навыков (AND-логика). `?skills=1&skills=2` |
+| `limit` | `int` | — | Записей на странице |
+| `offset` | `int` | — | Сдвиг для пагинации |
 
 **Пример:** `GET /students?query=Иван&university=МГУ&skills=1&skills=2`
 
@@ -632,7 +732,7 @@ GET /students
     "location": "Санкт-Петербург",
     "university": "МГУ",
     "degree": "Бакалавр",
-    "image": "http://localhost:9000/t-match-storage/user_18_avatar"
+    "image": "http://localhost:9000/t-match-storage/user:18:avatar"
   }
 ]
 ```
@@ -652,10 +752,10 @@ GET /companies
 
 | Параметр | Тип | По умолчанию | Описание |
 | :--- | :--- | :--- | :--- |
-| `query` | `string` | - | Текстовый поиск по названию, описанию, адресу |
-| `location` | `string` | - | Юридический адрес (частичное совпадение) |
-| `limit` | `int` | 20 | Записей на странице |
-| `offset` | `int` | 0 | Сдвиг для пагинации |
+| `query` | `string` | — | Текстовый поиск по названию, описанию, адресу |
+| `location` | `string` | — | Юридический адрес (частичное совпадение) |
+| `limit` | `int` | — | Записей на странице |
+| `offset` | `int` | — | Сдвиг для пагинации |
 
 **Пример:** `GET /companies?query=IT&location=Москва&limit=10`
 
@@ -685,7 +785,7 @@ GET /companies
 ]
 ```
 
-**Важно:** Это **превью**. Полный профиль компании (с `kpp`, `director_name`) — через `GET /profile/company/:id`.
+**Важно:** Это **превью**. Полный профиль компании (с `kpp`, `director_name`) — через `GET /company/profile/:id`.
 
 ---
 
@@ -802,7 +902,20 @@ POST /internships/:id/respond
 
 ---
 
-### 8.2 Мои отклики (для стажёра)
+### 8.2 Отменить отклик
+
+```
+DELETE /internships/:id/respond
+```
+*Роль: `intern`*
+
+**Успешный ответ (200 OK):** пустое тело
+
+**Примечание:** удаляется только отклик со статусом `pending`.
+
+---
+
+### 8.3 Мои отклики (для стажёра)
 
 ```
 GET /my/responses
@@ -840,7 +953,7 @@ GET /my/responses
 
 ---
 
-### 8.3 Отклики на стажировку (для компании)
+### 8.4 Отклики на стажировку (для компании)
 
 ```
 GET /internships/:id/responses
@@ -864,7 +977,7 @@ GET /internships/:id/responses
 
 ---
 
-### 8.4 Изменение статуса отклика
+### 8.5 Изменение статуса отклика
 
 ```
 PUT /responses/:id/status
@@ -882,9 +995,109 @@ PUT /responses/:id/status
 
 **Успешный ответ (200 OK):** пустое тело
 
+**Событие:** при смене статуса студенту отправляется уведомление (через WebSocket и в список `/my/notifications`).
+
 ---
 
-## 9. Система токенов
+### 8.6 Приглашение стажера на стажировку
+
+```
+POST /internships/:id/invite
+```
+*Роль: `company` (владелец стажировки)*
+
+**Тело запроса:**
+```json
+{
+  "user_id": 17,
+  "message": "Приглашаем вас на собеседование!"
+}
+```
+
+| Параметр | Тип | Обязательный | Описание |
+| :--- | :--- | :---: | :--- |
+| `user_id` | `int` | ✅ | ID пользователя-стажёра |
+| `message` | `string` | | Сопроводительное сообщение |
+
+**Успешный ответ (200 OK):** пустое тело
+
+**Событие:** студенту отправляется уведомление типа `invate`.
+
+---
+
+## 9. Уведомления
+
+### 9.1 Получение уведомлений
+
+```
+GET /my/notifications
+```
+*Требуется авторизация*
+
+**Пример ответа (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "user_id": 17,
+    "type": "change_status",
+    "is_read": false,
+    "created_at": "2025-05-09T10:30:00Z",
+    "data": {
+      "id": 1,
+      "notification_id": 1,
+      "internship_id": 42,
+      "company_id": 5,
+      "new_status": "accepted"
+    }
+  },
+  {
+    "id": 2,
+    "user_id": 17,
+    "type": "invate",
+    "is_read": false,
+    "created_at": "2025-05-10T14:00:00Z",
+    "data": {
+      "id": 1,
+      "notification_id": 2,
+      "internship_id": 42,
+      "company_id": 5,
+      "message": "Приглашаем вас на собеседование!"
+    }
+  }
+]
+```
+
+---
+
+### 9.2 Отметить все уведомления прочитанными
+
+```
+PUT /my/notifications
+```
+*Требуется авторизация*
+
+**Успешный ответ (200 OK):** пустое тело
+
+---
+
+### 9.3 WebSocket-уведомления
+
+```
+GET /ws/notifications
+```
+*Требуется авторизация (через `Authorization: Bearer`)*
+
+**Протокол:**
+- Подключение устанавливает постоянное WebSocket-соединение
+- Сервер отправляет JSON-строку с уведомлением при каждом событии
+- Клиент должен отправлять `"ping"` — сервер ответит `"pong"` для поддержания соединения
+
+**Формат входящего сообщения:** строка с JSON уведомления (см. пример выше)
+
+---
+
+## 10. Система токенов
 
 | Токен | Передача | Время жизни | Назначение |
 | :--- | :--- | :--- | :--- |
@@ -911,7 +1124,7 @@ PUT /responses/:id/status
 
 ---
 
-## 10. Rate Limiting
+## 11. Rate Limiting
 
 Лимиты в запросах в минуту на IP/пользователя:
 
@@ -920,7 +1133,7 @@ PUT /responses/:id/status
 | :--- | :--- |
 | `POST /auth/students` | 20 |
 | `POST /auth/students/verify` | 60 |
-| `POST /auth/newverify` | 7 |
+| `POST /auth/newverify` | 4 |
 | `POST /auth/students/login` | 30 |
 | `POST /auth/company` | 20 |
 | `POST /auth/company/verify` | 60 |
@@ -945,11 +1158,13 @@ PUT /responses/:id/status
 | `DELETE /internships/:id` | 5 |
 | `POST /internships/:id/skill` | 5 |
 | `DELETE /internships/:id/skill` | 5 |
+| `POST /internships/:id/invite` | 40 |
 
 ### Отклики
 | Эндпоинт | Лимит |
 | :--- | :--- |
 | `POST /internships/:id/respond` | 10 |
+| `DELETE /internships/:id/respond` | 10 |
 | `GET /my/responses` | 20 |
 | `GET /internships/:id/responses` | 20 |
 | `PUT /responses/:id/status` | 20 |
@@ -966,13 +1181,17 @@ PUT /responses/:id/status
 | :--- |
 | `GET /internships/:id` |
 | `GET /profile/:id` |
-| `GET /profile/company/:id` |
+| `GET /company/profile/:id` |
 | `GET /skills` |
+| `GET /my/company/internships` |
+| `GET /my/notifications` |
+| `PUT /my/notifications` |
+| `GET /ws/notifications` |
 | `OPTIONS /*path` |
 
 ---
 
-## 11. Обработка ошибок
+## 12. Обработка ошибок
 
 Все ошибки возвращаются в формате plain text с соответствующим HTTP-статусом.
 
@@ -994,26 +1213,7 @@ PUT /responses/:id/status
 
 ---
 
-## Примечания по поиску
-
-**Полнотекстовый поиск:**
-- Поддерживает русскую морфологию (словоформы)
-- Слова в запросе соединяются через OR
-- Результаты сортируются по релевантности
-
-**Фильтрация по навыкам:**
-- AND-логика: должны быть ВСЕ указанные навыки
-- ID навыков получать через `GET /skills`
-
-**Пагинация:**
-- По умолчанию 20 записей
-- Для следующей страницы: `offset = предыдущий_offset + limit`
-
-**Разделение preview/полные данные:**
-- Поиск (`GET /internships`, `GET /students`, `GET /companies`) — только превью
-- Получение по ID (`GET /internships/:id`, `GET /profile/:id`, `GET /profile/company/:id`) — все данные
-
-## 12. Запуск приложения
+## 13. Запуск приложения
 
 ### Требования
 
@@ -1051,7 +1251,7 @@ JWT_SECRET=your_jwt_secret_32chars_minimum
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=t_match_database
-DB_USER=postgres
+DB_USER=realworld
 DB_PASSWORD=your_db_password
 DB_SSLMODE=disable
 
@@ -1064,10 +1264,10 @@ REDIS_ADDR=redis:6379
 REDIS_DB=0
 REDIS_PASSWORD=
 REDIS_MAX_RETRIES=3
-REDIS_DIAL_TIMEOUT=5000000000
-REDIS_TIMEOUT=3000000000
+REDIS_DIAL_TIMEOUT=5s
+REDIS_TIMEOUT=3s
 
-# Email 
+# Email
 # По умолчанию использует MailHog, для тестирования и разработки
 EMAIL_ADDR=mailhog:1025
 EMAIL_HOST=mailhog
@@ -1089,9 +1289,6 @@ S3_HOST=0.0.0.0
 
 # DaData (обязательно получите свой ключ)
 DA_DATA_API_KEY=your_dadata_api_key
-
-# Config
-CONFIG_PATH=./configs/configuration.json
 ```
 
 #### 3. Где взять ключи
@@ -1104,7 +1301,7 @@ CONFIG_PATH=./configs/configuration.json
 
 #### Примечания:
 
-Email: если EMAIL_PASSWORD не задан, автоматически используется MailHog — все письма перехватываются и отображаются в веб-интерфейсе http://localhost:8025, реальным пользователям ничего не отправляется.
+Email: если `EMAIL_PASSWORD` не задан, автоматически используется MailHog — все письма перехватываются и отображаются в веб-интерфейсе `http://localhost:8025`, реальным пользователям ничего не отправляется.
 
 ---
 
