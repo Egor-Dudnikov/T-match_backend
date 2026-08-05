@@ -228,6 +228,9 @@ func (h *ServiceHandler) WSNotificationHandler(w http.ResponseWriter, r *http.Re
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  constants.WSReadBufferSize,
 		WriteBufferSize: constants.WSWriteBufferSize,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)

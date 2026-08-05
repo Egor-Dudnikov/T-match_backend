@@ -141,14 +141,13 @@ func (c *Client) ReadPump() {
 	}()
 
 	for {
-		var msg string
-		err := c.Conn.ReadJSON(&msg)
+		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			break
 		}
 
-		if msg == "ping" {
+		if string(msg) == "ping" {
 			select {
 			case c.Send <- "pong":
 			default:
