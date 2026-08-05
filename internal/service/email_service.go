@@ -33,9 +33,9 @@ func (r *EmailClient) SendVerifyCode(to string, code string) error {
 			"MIME-Version: 1.0\r\n"+
 			"Content-Type: text/html; charset=UTF-8\r\n\r\n"+
 			"<div style='font-family: Arial; max-width: 500px;'>"+
-			"<h2 style='color:#1a73e8;'>T-match</h2>"+
+			"<h2 style='color:#000000;'>T-match</h2>"+
 			"<p>Ваш код подтверждения:</p>"+
-			"<div style='background:#f0f4ff;border:2px dashed #FFD700;border-radius:8px;padding:20px;text-align:center;font-size:32px;letter-spacing:8px;color:#1a73e8;font-weight:bold;'>%s</div>"+
+			"<div style='background:#f0f4ff;border:2px dashed #FFD700;border-radius:8px;padding:20px;text-align:center;font-size:32px;letter-spacing:8px;color:#000000;font-weight:bold;'>%s</div>"+
 			"<p style='color:#000;font-size:14px;'>Действителен %d минут</p>"+
 			"</div>",
 		to, code, constants.VerifyCodeTimeLife/time.Minute,

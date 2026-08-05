@@ -99,7 +99,7 @@ CREATE TABLE "notifications" (
   "user_id" INTEGER NOT NULL,
   "type"   NOTIFICATION_TYPE,
   "is_read"  BOOLEAN NOT NULL DEFAULT FALSE,
-  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "change_status_data" (
@@ -107,7 +107,7 @@ CREATE TABLE "change_status_data" (
   "notification_id" INTEGER NOT NULL,
   "internship_id" INTEGER NOT NULL,
   "company_id" INTEGER NOT NULL,
-  "new_status" VARCHAR NOT NULL,
+  "new_status" VARCHAR NOT NULL
 );
 
 CREATE TABLE "invate_data" (
@@ -115,7 +115,7 @@ CREATE TABLE "invate_data" (
   "notification_id" INTEGER NOT NULL,
   "internship_id" INTEGER NOT NULL,
   "company_id" INTEGER NOT NULL,
-  "message"  VARCHAR,
+  "message"  VARCHAR
 );
 
 CREATE UNIQUE INDEX ON "applications" ("intern_id", "internship_id");

@@ -11,7 +11,7 @@ import (
 )
 
 func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.Notification, error) {
-	var notifications []models.Notification
+	notifications := []models.Notification{}
 
 	query := `
         SELECT 
@@ -31,8 +31,8 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
             inv.company_id as inv_company_id,
             inv.message
         FROM notifications n
-        LEFT JOIN status_change_data sc ON n.id = sc.notification_id
-        LEFT JOIN invitation_data inv ON n.id = inv.notification_id
+        LEFT JOIN change_status_data sc ON n.id = sc.notification_id
+        LEFT JOIN invate_data inv ON n.id = inv.notification_id
         WHERE n.user_id = $1
         ORDER BY n.created_at DESC
     `
@@ -129,7 +129,7 @@ func (r *Repository) NewChangeStatusNotification(ctx context.Context, responseID
 
 	queryNotif := `
         INSERT INTO notifications (user_id, type, created_at)
-        VALUES ((SELECT user_id FROM applications WHERE id = $1), $2, NOW())
+        VALUES ((SELECT user_id FROM interns WHERE id = (SELECT intern_id FROM applications WHERE id = $1)), $2, NOW())
         RETURNING id, user_id, created_at
     `
 	err = tx.QueryRowContext(
@@ -212,7 +212,7 @@ func (r *Repository) NewInviteNotification(ctx context.Context, userID int, inte
 	queryNotif := `
         INSERT INTO notifications (user_id, type, created_at)
         VALUES ($1, $2, NOW())
-		RETURN id, created_at
+		RETURNING id, created_at
     `
 
 	err = tx.QueryRowContext(
@@ -229,13 +229,13 @@ func (r *Repository) NewInviteNotification(ctx context.Context, userID int, inte
 	var dataID int
 
 	queryData := `
-        INSERT INTO invitation_data (
+        INSERT INTO invate_data (
             notification_id,
             internship_id,
             company_id,
             message
         ) VALUES ($1, $2, $3, $4)
-		 RETURN id
+		 RETURNING id
     `
 	err = tx.QueryRowContext(
 		ctx,
