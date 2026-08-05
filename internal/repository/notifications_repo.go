@@ -29,10 +29,16 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
             inv.notification_id as inv_notification_id,
             inv.internship_id as inv_internship_id,
             inv.company_id as inv_company_id,
-            inv.message
+            inv.message,
+			na.id as na_id,
+			na.notification_id as na_notification_id,
+			na.internship_id as na_internship_id,
+			na.intern_id as na_intern_id,
+			na.response_id as na_response_id
         FROM notifications n
         LEFT JOIN change_status_data sc ON n.id = sc.notification_id
         LEFT JOIN invate_data inv ON n.id = inv.notification_id
+		LEFT JOIN new_application_data na ON n.id = na.notification_id
         WHERE n.user_id = $1
         ORDER BY n.created_at DESC
     `
@@ -47,6 +53,7 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
 		var scID, scNotificationID, scInternshipID, scCompanyID sql.NullInt64
 		var invID, invNotificationID, invInternshipID, invCompanyID sql.NullInt64
 		var newStatus, message sql.NullString
+		var appID, appNotificationID, appInternshipID, appInternID, appResponseID sql.NullInt64
 
 		err := rows.Scan(
 			&n.ID,
@@ -64,6 +71,11 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
 			&invInternshipID,
 			&invCompanyID,
 			&message,
+			&appID,
+			&appNotificationID,
+			&appInternshipID,
+			&appInternID,
+			&appResponseID,
 		)
 		if err != nil {
 			return nil, apierrors.Wrap(apierrors.ErrDatabaseError, err)
@@ -88,6 +100,14 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
 				InternshipID:   int(invInternshipID.Int64),
 				CompanyID:      int(invCompanyID.Int64),
 				Message:        msg,
+			}
+		} else if appID.Valid {
+			n.Data = models.NewApplicationData{
+				ID:             int(appID.Int64),
+				NotificationID: int(appNotificationID.Int64),
+				InternshipID:   int(appInternshipID.Int64),
+				InternID:       int(appInternID.Int64),
+				ResponseID:     int(appResponseID.Int64),
 			}
 		} else {
 			return notifications, apierrors.ErrInternalServer
@@ -266,6 +286,73 @@ func (r *Repository) NewInviteNotification(ctx context.Context, userID int, inte
 			InternshipID:   internshipID,
 			CompanyID:      companyID,
 			Message:        message,
+		},
+	}
+
+	return notification, nil
+}
+
+func (r *Repository) NewApplicationNotification(ctx context.Context, internID, internshipID, responseID int) (models.Notification, error) {
+
+	var notification models.Notification
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	defer func() {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			if err != nil {
+				err = fmt.Errorf("original error: %w, rollback error: %w", err, rbErr)
+			} else {
+				err = apierrors.Wrap(apierrors.ErrDatabaseError, rbErr)
+			}
+		}
+	}()
+
+	var notificationID int
+	var createdAt time.Time
+	var userID int
+
+	err = tx.QueryRowContext(ctx, `
+        INSERT INTO notifications (user_id, type, created_at)
+        VALUES ((SELECT user_id FROM companies WHERE id = (SELECT company_id FROM internships WHERE id = $1)), $2, NOW())
+        RETURNING id, user_id, created_at
+    `, internshipID, constants.NewApplicationType).Scan(&notificationID, &userID, &createdAt)
+	if err != nil {
+		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+
+	var dataID int
+	err = tx.QueryRowContext(ctx, `
+        INSERT INTO new_application_data (
+            notification_id,
+            internship_id,
+            intern_id,
+            response_id
+        ) VALUES ($1, $2, $3, $4)
+        RETURNING id
+    `, notificationID, internshipID, internID, responseID).Scan(&dataID)
+	if err != nil {
+		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return notification, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+
+	notification = models.Notification{
+		ID:        notificationID,
+		UserID:    userID,
+		Type:      constants.NewApplicationType,
+		IsRead:    false,
+		CreatedAt: createdAt,
+		Data: models.NewApplicationData{
+			ID:             dataID,
+			NotificationID: notificationID,
+			InternshipID:   internshipID,
+			InternID:       internID,
+			ResponseID:     responseID,
 		},
 	}
 

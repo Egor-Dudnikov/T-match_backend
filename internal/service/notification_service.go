@@ -100,6 +100,7 @@ func (h *Hub) Send(userID int, msg string) {
 	client, ok := h.hub[userID]
 	if !ok {
 		log.Println("Not user in hub.")
+		h.mu.RUnlock()
 		return
 	}
 	h.mu.RUnlock()

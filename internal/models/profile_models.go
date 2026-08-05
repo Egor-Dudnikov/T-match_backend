@@ -101,3 +101,11 @@ type ChangeStatusData struct {
 	CompanyID      int    `json:"company_id"`
 	NewStatus      string `json:"new_status"`
 }
+
+type NewApplicationData struct {
+	ID             int `json:"id"`
+	NotificationID int `json:"notification_id"`
+	InternshipID   int `json:"internship_id"`
+	InternID       int `json:"intern_id"`
+	ResponseID     int `json:"response_id"`
+}

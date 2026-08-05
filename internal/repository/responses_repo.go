@@ -35,15 +35,16 @@ func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models
 	return res, nil
 }
 
-func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) error {
-	_, err := r.db.ExecContext(ctx, `INSERT INTO applications (intern_id, internship_id, created_at) VALUES ($1, $2, NOW())`, internID, internshipID)
+func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) (int, error) {
+	var respondID int
+	err := r.db.QueryRowContext(ctx, `INSERT INTO applications (intern_id, internship_id, created_at) VALUES ($1, $2, NOW()) RETURNING id`, internID, internshipID).Scan(&respondID)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return apierrors.ErrAlreadyResponded
+			return respondID, apierrors.ErrAlreadyResponded
 		}
-		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		return respondID, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	return nil
+	return respondID, nil
 }
 
 func (r *Repository) InternshipsResponse(ctx context.Context, internshipID int) ([]models.Response, error) {

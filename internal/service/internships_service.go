@@ -121,10 +121,12 @@ func (app *Service) DeleteInternshipSkills(ctx context.Context, internshipID int
 	if err != nil {
 		return err
 	}
+
 	err = app.db.DeleteInternshipSkills(ctx, skillIDs, internshipID)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -133,11 +135,29 @@ func (app *Service) RespondInternship(ctx context.Context, internshipID int) err
 	if !ok {
 		return apierrors.ErrInternalServer
 	}
+
 	internID, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 	if err != nil {
 		return err
 	}
-	err = app.db.RespondInternship(ctx, internID, internshipID)
+
+	respondID, err := app.db.RespondInternship(ctx, internID, internshipID)
+	if err != nil {
+		return nil
+	}
+
+	notification, err := app.db.NewApplicationNotification(ctx, internID, internshipID, respondID)
+	if err != nil {
+		return err
+	}
+
+	notificationJSON, err := json.Marshal(notification)
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, err)
+	}
+
+	app.Hub.Send(notification.UserID, string(notificationJSON))
+
 	return err
 }
 

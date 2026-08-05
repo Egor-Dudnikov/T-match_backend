@@ -13,7 +13,8 @@ CREATE TYPE "user_role" AS ENUM (
 
 CREATE TYPE "notification_type" AS ENUM (
   'invate',
-  'change_status'
+  'change_status',
+  'new_application'
 );
 
 
@@ -116,6 +117,14 @@ CREATE TABLE "invate_data" (
   "internship_id" INTEGER NOT NULL,
   "company_id" INTEGER NOT NULL,
   "message"  VARCHAR
+);
+
+CREATE TABLE  "new_application_data" (
+    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    "notification_id" INTEGER NOT NULL,
+    "internship_id" INTEGER NOT NULL,
+    "intern_id" INTEGER NOT NULL,
+    "response_id" INTEGER NOT NULL
 );
 
 CREATE UNIQUE INDEX ON "applications" ("intern_id", "internship_id");

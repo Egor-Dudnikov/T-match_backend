@@ -122,5 +122,6 @@ const (
 const (
 	ChangeStatusType        = "change_status"
 	InvateType              = "invate"
+	NewApplicationType      = "new_application"
 	MaxBufferNotificationWS = 100
 )
