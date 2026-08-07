@@ -49,6 +49,12 @@ var (
 	ErrSkillsNotFound     = errors.New("skills not found")
 	ErrKeyNotFound        = errors.New("redis key not found")
 	ErrCompanyNameMissing = errors.New("company have not name")
+
+	ErrUserAlreadyBanned = errors.New("user already baned")
+	ErrUserNotBanned     = errors.New("user not baned")
+	ErrUserBanned        = errors.New("user baned")
+	ErrProfileNotFound   = errors.New("profile not found")
+	ErrCompanyNotFound   = errors.New("company not found")
 )
 
 type ErrorMapping struct {
@@ -93,6 +99,12 @@ var errorStatusMap = map[error]ErrorMapping{
 	ErrJWTGenerationFailed: {http.StatusInternalServerError, "Internal server error"},
 	ErrJWTDecodingFailed:   {http.StatusInternalServerError, "Internal server error"},
 	ErrInternalServer:      {http.StatusInternalServerError, "Internal server error"},
+
+	ErrUserAlreadyBanned: {http.StatusConflict, "User is already banned"},
+	ErrUserBanned:        {http.StatusConflict, "User is banned"},
+	ErrUserNotBanned:     {http.StatusConflict, "User not baned"},
+	ErrProfileNotFound:   {http.StatusNotFound, "Profile not found"},
+	ErrCompanyNotFound:   {http.StatusNotFound, "Company not found"},
 }
 
 func HTTPStatusMapping(err error) (status int, message string) {

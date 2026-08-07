@@ -358,12 +358,7 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.LoginUser, rol
 		return "", "", apierrors.ErrInvalidPassword
 	}
 
-	accessToken, err := utils.GeneratingJWT(user.ID, userLog.DeviceID, user.Email, role, constants.AccessTokenTimeLife)
-	if err != nil {
-		return "", "", err
-	}
-
-	refreshToken, err := utils.GeneratingJWT(user.ID, userLog.DeviceID, user.Email, role, constants.RefreshTokenTimeLife)
+	accessToken, refreshToken, err := utils.GeneratingTokenPair(user.ID, userLog.DeviceID, user.Email, role)
 	if err != nil {
 		return "", "", err
 	}

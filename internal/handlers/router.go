@@ -222,6 +222,35 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 		app.CorsMiddleware(
 			app.RateLimitMiddleware(app.SearchInternHandler, constants.RateLimitSearchStudent, "/students"))))
 
+	// Admin
+	router.POST("/admin/login", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.RateLimitMiddleware(app.LoginAdminHandler, constants.RateLimitAuthAdminLogin, "/admin/login"))))
+
+	router.GET("/admin/stats", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.AdminMiddleware(
+					app.RateLimitMiddleware(app.AdminGetStatsHandler, constants.RateLimitAdminStats, "/admin/stats"))))))
+
+	router.PATCH("/admin/users/:id/ban", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.AdminMiddleware(
+					app.RateLimitMiddleware(app.AdminBanUserHandler, constants.RateLimitAdmin, "/admin/users/ban"))))))
+
+	router.DELETE("/admin/users/:id/ban", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.AdminMiddleware(
+					app.RateLimitMiddleware(app.AdminUnbanUserHandler, constants.RateLimitAdmin, "/admin/users/ban"))))))
+
+	router.DELETE("/admin/internships/:id", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.AdminMiddleware(
+					app.RateLimitMiddleware(app.AdminDeleteInternshipHandler, constants.RateLimitAdmin, "/admin/internships"))))))
+
 	// CORS preflight
 	router.OPTIONS("/*path", ErrorMiddleware(app.CorsMiddleware(handleOptions)))
 

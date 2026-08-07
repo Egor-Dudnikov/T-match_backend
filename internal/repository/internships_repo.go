@@ -31,9 +31,19 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 
 func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
-	err := r.db.QueryRowContext(ctx, `SELECT id, company_id, title, description, 
-           salary, duration_months, location, 
-           created_at, is_archived FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `
+		SELECT i.id, i.company_id, i.title, i.description, 
+		       i.salary, i.duration_months, i.location, 
+		       i.created_at, i.is_archived 
+		FROM internships i
+		JOIN companies c ON i.company_id = c.id
+		WHERE i.id = $1 
+		  AND i.is_archived = FALSE
+		  AND NOT EXISTS(
+			  SELECT 1 FROM user_bans ub 
+			  WHERE ub.user_id = c.user_id
+		  )
+	`, id).Scan(
 		&internship.ID,
 		&internship.CompanyID,
 		&internship.Title,
@@ -138,7 +148,15 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	res := []models.Internship{}
 	query := newQuerySelectBuilder("SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.location, i.created_at, i.is_archived FROM internships i")
 
-	query.addWhere("is_archived = FALSE")
+	query.addWhere(`
+		i.is_archived = FALSE 
+		AND NOT EXISTS(
+			SELECT 1 FROM user_bans ub 
+			JOIN companies c ON ub.user_id = c.user_id 
+			WHERE c.id = i.company_id
+		)
+	`)
+
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 	addWhereWithIndex[int](query, "salary <= $", "", filters.SalaryMax)
 	addWhereWithIndex[int](query, "salary >= $", "", filters.SalaryMin)

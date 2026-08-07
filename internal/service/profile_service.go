@@ -98,7 +98,9 @@ func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.Compa
 	resp := models.CompanyProfileResponse{}
 
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
+
 	var email string
+	var existMatch bool
 
 	if ok && claims.Role == constants.Intern {
 
@@ -107,21 +109,23 @@ func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.Compa
 			return resp, err
 		}
 
-		exist, err := app.existStudentMatch(ctx, id, internID)
+		existMatch, err = app.existStudentMatch(ctx, id, internID)
 		if err != nil {
 			return resp, err
 		}
-		if exist {
-			userID, err := app.db.GetUserIDByCompanyID(ctx, id)
-			if err != nil {
-				return resp, err
-			}
-			email, err = app.db.GetEmailByUserID(ctx, userID)
-			if err != nil {
-				return resp, err
-			}
+	}
+
+	if ok && (existMatch || claims.Role == constants.Admin) {
+		userID, err := app.db.GetUserIDByCompanyID(ctx, id)
+		if err != nil {
+			return resp, err
+		}
+		email, err = app.db.GetEmailByUserID(ctx, userID)
+		if err != nil {
+			return resp, err
 		}
 	}
+
 	resp.Email = email
 	profile, err := app.db.GetCompanyProfile(ctx, id)
 	resp.Profile = profile
@@ -233,21 +237,24 @@ func (app *Service) GetProfile(ctx context.Context, internID int) (models.Profil
 	}
 
 	var email string
+	var existMatch bool
 
 	if ok && claims.Role == constants.Company {
 		companyID, err := app.db.GetCompanyIDByUserID(ctx, claims.UserID)
 		if err != nil {
 			return resp, err
 		}
-		exist, err := app.existCompanyMatch(ctx, companyID, internID)
+		existMatch, err = app.existCompanyMatch(ctx, companyID, internID)
 		if err != nil {
 			return resp, err
 		}
-		if exist {
-			email, err = app.db.GetEmailByUserID(ctx, userID)
-			if err != nil {
-				return resp, err
-			}
+
+	}
+
+	if ok && (existMatch || claims.Role == constants.Admin) {
+		email, err = app.db.GetEmailByUserID(ctx, userID)
+		if err != nil {
+			return resp, err
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"time"
@@ -49,9 +50,16 @@ func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int,
 
 func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
-	err := r.db.QueryRowContext(ctx, `SELECT id, user_id, first_name, last_name, birth_date, location, university, degree, bio, experience, image 
-	FROM interns
-	WHERE id = $1`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `
+		SELECT i.id, i.user_id, i.first_name, i.last_name, i.birth_date, i.location, 
+		       i.university, i.degree, i.bio, i.experience, i.image 
+		FROM interns i
+		WHERE i.id = $1 
+		  AND NOT EXISTS(
+			  SELECT 1 FROM user_bans ub 
+			  WHERE ub.user_id = i.user_id
+		  )
+	`, id).Scan(
 		&profile.ID,
 		&profile.UserID,
 		&profile.FirstName,
@@ -62,8 +70,12 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 		&profile.Degree,
 		&profile.Bio,
 		&profile.Experience,
-		&profile.Image)
+		&profile.Image,
+	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return profile, apierrors.ErrProfileNotFound
+		}
 		return profile, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return profile, nil
@@ -102,7 +114,17 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res := []models.ShortProfile{}
 
-	query := newQuerySelectBuilder("SELECT i.id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image FROM interns i")
+	query := newQuerySelectBuilder(`
+		SELECT i.id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image 
+		FROM interns i
+	`)
+
+	query.addWhere(`
+		NOT EXISTS(
+			SELECT 1 FROM user_bans ub 
+			WHERE ub.user_id = i.user_id
+		)
+	`)
 
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 

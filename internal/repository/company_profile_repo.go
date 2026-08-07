@@ -5,6 +5,7 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"context"
+	"database/sql"
 	"fmt"
 )
 
@@ -30,9 +31,16 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profi
 
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
 	profile := models.CompanyProfile{}
-	err := r.db.QueryRowContext(ctx, `SELECT id, company_name, description, website, inn, ogrn, kpp, legal_address, director_name, image
-	FROM companies 
-	WHERE id = $1`, id).Scan(
+	err := r.db.QueryRowContext(ctx, `
+		SELECT c.id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.kpp, 
+		       c.legal_address, c.director_name, c.image
+		FROM companies c
+		WHERE c.id = $1 
+		  AND NOT EXISTS(
+			  SELECT 1 FROM user_bans ub 
+			  WHERE ub.user_id = c.user_id
+		  )
+	`, id).Scan(
 		&profile.ID,
 		&profile.CompanyName,
 		&profile.Description,
@@ -42,8 +50,12 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 		&profile.Kpp,
 		&profile.LegalAddress,
 		&profile.DirectorName,
-		&profile.Image)
+		&profile.Image,
+	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return profile, apierrors.ErrCompanyNotFound
+		}
 		return profile, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return profile, nil
@@ -62,7 +74,17 @@ func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int)
 func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res := []models.CompanyProfile{}
 
-	query := newQuerySelectBuilder("SELECT id, company_name, description, website, inn, ogrn, legal_address, image FROM companies ")
+	query := newQuerySelectBuilder(`
+		SELECT c.id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.legal_address, c.image 
+		FROM companies c
+	`)
+
+	query.addWhere(`
+		NOT EXISTS(
+			SELECT 1 FROM user_bans ub 
+			WHERE ub.user_id = c.user_id
+		)
+	`)
 
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 

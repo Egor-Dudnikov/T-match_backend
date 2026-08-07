@@ -60,6 +60,15 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 			return apierrors.Wrap(apierrors.ErrUnauthorized, err)
 		}
 
+		reason, err := h.service.HandlingBannedUser(r.Context(), claims.UserID)
+		if err != nil {
+			encodeErr := encodeJSON(w, models.BanResponse{Reason: reason})
+			if encodeErr != nil {
+				return apierrors.Wrap(err, encodeErr)
+			}
+			return err
+		}
+
 		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
 
 		if !token.Valid {
@@ -130,6 +139,19 @@ func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 			return apierrors.ErrInternalServer
 		}
 		if claims.Role != constants.Intern {
+			return apierrors.ErrForbidden
+		}
+		return next(w, r, ps)
+	}
+}
+
+func (h *ServiceHandler) AdminMiddleware(next ErrorHandler) ErrorHandler {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
+		if !ok {
+			return apierrors.ErrInternalServer
+		}
+		if claims.Role != constants.Admin {
 			return apierrors.ErrForbidden
 		}
 		return next(w, r, ps)

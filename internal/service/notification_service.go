@@ -95,6 +95,30 @@ func (h *Hub) unregister(userID int) {
 	delete(h.hub, userID)
 }
 
+func (h *Hub) GetOnlineCount() int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.hub)
+}
+
+func (h *Hub) KickUser(userID int, reason string) {
+	h.mu.RLock()
+	client, ok := h.hub[userID]
+	if !ok {
+		log.Println("Not user in hub.")
+		h.mu.RUnlock()
+		return
+	}
+	h.mu.RUnlock()
+
+	select {
+	case client.Send <- reason:
+	default:
+	}
+
+	h.unregister(userID)
+}
+
 func (h *Hub) Send(userID int, msg string) {
 	h.mu.RLock()
 	client, ok := h.hub[userID]

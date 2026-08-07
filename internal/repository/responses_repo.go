@@ -13,23 +13,34 @@ import (
 
 func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models.Response, error) {
 	res := []models.Response{}
-	rows, err := r.db.QueryContext(ctx, `SELECT * FROM applications WHERE intern_id = $1`, internID)
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT a.id, a.intern_id, a.internship_id, a.status, a.created_at
+		FROM applications a
+		JOIN interns i ON a.intern_id = i.id
+		WHERE a.intern_id = $1
+		  AND NOT EXISTS(
+			  SELECT 1 FROM user_bans ub 
+			  WHERE ub.user_id = i.user_id
+		  )
+	`, internID)
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		response := models.Response{}
-		err = rows.Scan(&response.ID,
+		err = rows.Scan(
+			&response.ID,
 			&response.InternID,
 			&response.InternshipID,
 			&response.Status,
-			&response.CreatedAt)
-
+			&response.CreatedAt,
+		)
 		if err != nil {
 			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 		}
-
 		res = append(res, response)
 	}
 	return res, nil

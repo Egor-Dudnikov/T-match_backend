@@ -54,6 +54,12 @@ const (
 	RateLimitSearchInternship = 60 // /internships (GET)
 	RateLimitSearchCompany    = 60 // /companies
 	RateLimitSearchStudent    = 60 // /students
+
+	// Admin endpoints
+	RateLimitAuthAdminLogin = 10 // /admin/login
+	RateLimitAdminStats     = 30 // /admin/stats
+	RateLimitAdmin          = 10 // /admin/ban
+
 )
 
 // Role
