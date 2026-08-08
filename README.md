@@ -316,6 +316,7 @@ GET /my/profile
   "email": "ivan@example.com",
   "profile": {
     "id": 17,
+    "user_id": 9,
     "first_name": "Иван",
     "last_name": "Петров",
     "birth_date": "2008-05-15T00:00:00Z",
@@ -373,6 +374,7 @@ GET /my/company/profile
   "email": "hr@company.ru",
   "profile": {
     "id": 5,
+    "user_id": 3,
     "company_name": "Яндекс",
     "description": "Крупная IT-компания, разработка поисковых технологий",
     "website": "https://ya.ru",
@@ -442,6 +444,7 @@ GET /profile/:id
   "email": "",
   "profile": {
     "id": 17,
+    "user_id": 9,
     "first_name": "Иван",
     "last_name": "Петров",
     "birth_date": "2008-05-15T00:00:00Z",
@@ -479,6 +482,7 @@ GET /company/profile/:id
   "email": "",
   "profile": {
     "id": 5,
+    "user_id": 3,
     "company_name": "Яндекс",
     "description": "Крупная IT-компания, разработка поисковых технологий",
     "website": "https://ya.ru",
@@ -719,6 +723,7 @@ GET /students
 [
   {
     "id": 17,
+    "user_id": 9,
     "first_name": "Иван",
     "last_name": "Петров",
     "location": "Москва",
@@ -728,6 +733,7 @@ GET /students
   },
   {
     "id": 18,
+    "user_id": 12,
     "first_name": "Мария",
     "last_name": "Сидорова",
     "location": "Санкт-Петербург",
@@ -739,6 +745,8 @@ GET /students
 ```
 
 **Важно:** Это **превью** без чувствительных данных (нет `birth_date`, `bio`, `experience`). Полный профиль — через `GET /profile/:id`.
+
+**Поле `user_id`:** это идентификатор пользователя в таблице `users`. Именно его нужно передавать в `POST /internships/:id/invite` для приглашения стажёра (НЕ `id` из таблицы `interns`).
 
 ---
 
@@ -765,6 +773,7 @@ GET /companies
 [
   {
     "id": 5,
+    "user_id": 3,
     "company_name": "Яндекс",
     "description": "Крупная IT-компания, разработка поисковых технологий",
     "website": "https://ya.ru",
@@ -775,6 +784,7 @@ GET /companies
   },
   {
     "id": 8,
+    "user_id": 7,
     "company_name": "ООО Ромашка",
     "description": "IT-компания, разрабатываем крутые продукты",
     "website": "https://romashka.ru",

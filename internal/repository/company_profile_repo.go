@@ -32,7 +32,7 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profi
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
 	profile := models.CompanyProfile{}
 	err := r.db.QueryRowContext(ctx, `
-		SELECT c.id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.kpp, 
+		SELECT c.id, c.user_id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.kpp, 
 		       c.legal_address, c.director_name, c.image
 		FROM companies c
 		WHERE c.id = $1 
@@ -42,6 +42,7 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 		  )
 	`, id).Scan(
 		&profile.ID,
+		&profile.UserID,
 		&profile.CompanyName,
 		&profile.Description,
 		&profile.Website,
@@ -75,7 +76,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	res := []models.CompanyProfile{}
 
 	query := newQuerySelectBuilder(`
-		SELECT c.id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.legal_address, c.image 
+		SELECT c.id, c.user_id, c.company_name, c.description, c.website, c.inn, c.ogrn, c.legal_address, c.image 
 		FROM companies c
 	`)
 
@@ -111,6 +112,7 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 		company := models.CompanyProfile{}
 		err = rows.Scan(
 			&company.ID,
+			&company.UserID,
 			&company.CompanyName,
 			&company.Description,
 			&company.Website,

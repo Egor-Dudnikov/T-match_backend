@@ -115,7 +115,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	res := []models.ShortProfile{}
 
 	query := newQuerySelectBuilder(`
-		SELECT i.id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image 
+		SELECT i.id, i.user_id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image 
 		FROM interns i
 	`)
 
@@ -156,6 +156,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 		intern := models.ShortProfile{}
 		err = rows.Scan(
 			&intern.ID,
+			&intern.UserID,
 			&intern.FirstName,
 			&intern.LastName,
 			&intern.Location,

@@ -21,6 +21,7 @@ type Profile struct {
 
 type CompanyProfile struct {
 	ID           *int    `json:"id,omitempty" validate:"omitempty"`
+	UserID       *int    `json:"user_id,omitempty" validate:"omitempty"`
 	CompanyName  *string `json:"company_name,omitempty" validate:"omitempty,max=100"`
 	Description  *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Website      *string `json:"website,omitempty" validate:"omitempty,max=200"`
@@ -69,6 +70,7 @@ type SearchIntern struct {
 
 type ShortProfile struct {
 	ID         *int    `json:"id,omitempty" validate:"omitempty"`
+	UserID     *int    `json:"user_id,omitempty" validate:"omitempty"`
 	FirstName  *string `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string `json:"last_name,omitempty" validate:"omitempty,max=100"`
 	Location   *string `json:"location,omitempty" validate:"omitempty,max=200"`
