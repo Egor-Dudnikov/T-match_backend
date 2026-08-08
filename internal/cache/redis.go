@@ -9,6 +9,8 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -63,6 +65,31 @@ func (r *Redis) Get(ctx context.Context, key string) (string, error) {
 
 func (r *Redis) Del(ctx context.Context, key string) error {
 	_, err := r.cache.Del(ctx, key).Result()
+	if err != nil {
+		return apierrors.Wrap(apierrors.ErrCacheError, err)
+	}
+	return nil
+}
+
+func (r *Redis) DeleteUserSessions(ctx context.Context, userID int) error {
+	prefix := strconv.Itoa(userID) + "."
+
+	var keys []string
+	iter := r.cache.Scan(ctx, 0, prefix+"*", 1000).Iterator()
+	for iter.Next(ctx) {
+		key := iter.Val()
+		if strings.HasPrefix(key, prefix) {
+			keys = append(keys, key)
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return apierrors.Wrap(apierrors.ErrCacheError, err)
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+
+	_, err := r.cache.Del(ctx, keys...).Result()
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrCacheError, err)
 	}

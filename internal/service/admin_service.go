@@ -34,6 +34,14 @@ func (app *Service) BanUser(ctx context.Context, userID int, adminBanRequest mod
 		return apierrors.ErrBadRequest
 	}
 
+	role, err := app.db.GetUserRole(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if role == constants.Admin {
+		return apierrors.ErrCannotBanAdmin
+	}
+
 	isBanned, err := app.db.IsUserBanned(ctx, userID)
 	if err != nil {
 		return err
@@ -49,6 +57,10 @@ func (app *Service) BanUser(ctx context.Context, userID int, adminBanRequest mod
 
 	app.Hub.KickUser(userID, adminBanRequest.Reason)
 
+	if err := app.cache.DeleteUserSessions(ctx, userID); err != nil {
+		log.Printf("failed to delete sessions of banned user %d: %v", userID, err)
+	}
+
 	return nil
 }
 
@@ -60,6 +72,10 @@ func (app *Service) UnbanUser(ctx context.Context, userID int) error {
 
 	if claims.UserID == userID {
 		return apierrors.ErrBadRequest
+	}
+
+	if _, err := app.db.GetUserRole(ctx, userID); err != nil {
+		return err
 	}
 
 	isBanned, err := app.db.IsUserBanned(ctx, userID)
@@ -97,7 +113,15 @@ func (app *Service) HandlingBannedUser(ctx context.Context, userID int) (string,
 }
 
 func (app *Service) AdminDeleteInternship(ctx context.Context, internshipID int) error {
-	err := app.db.AdminDeleteInternship(ctx, internshipID)
+	exists, err := app.db.InternshipExists(ctx, internshipID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return apierrors.ErrInternshipNotFound
+	}
+
+	err = app.db.AdminDeleteInternship(ctx, internshipID)
 	if err != nil {
 		return err
 	}

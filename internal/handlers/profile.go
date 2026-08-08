@@ -85,12 +85,8 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return err
 	}
-	err = encodeJSON[string](w, url)
-	if err != nil {
-		return err
-	}
 	w.WriteHeader(http.StatusCreated)
-	return nil
+	return encodeJSON[string](w, url)
 }
 
 func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {

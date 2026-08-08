@@ -53,6 +53,8 @@ var (
 	ErrUserAlreadyBanned = errors.New("user already baned")
 	ErrUserNotBanned     = errors.New("user not baned")
 	ErrUserBanned        = errors.New("user baned")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrCannotBanAdmin    = errors.New("cannot ban admin")
 	ErrProfileNotFound   = errors.New("profile not found")
 	ErrCompanyNotFound   = errors.New("company not found")
 )
@@ -103,6 +105,8 @@ var errorStatusMap = map[error]ErrorMapping{
 	ErrUserAlreadyBanned: {http.StatusConflict, "User is already banned"},
 	ErrUserBanned:        {http.StatusConflict, "User is banned"},
 	ErrUserNotBanned:     {http.StatusConflict, "User not baned"},
+	ErrUserNotFound:      {http.StatusNotFound, "User not found"},
+	ErrCannotBanAdmin:    {http.StatusBadRequest, "Admins cannot be banned"},
 	ErrProfileNotFound:   {http.StatusNotFound, "Profile not found"},
 	ErrCompanyNotFound:   {http.StatusNotFound, "Company not found"},
 }

@@ -9,6 +9,7 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -183,6 +184,18 @@ func (r *Repository) GetUserIDByEmail(ctx context.Context, email string) (int, e
 		return id, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return id, err
+}
+
+func (r *Repository) GetUserRole(ctx context.Context, userID int) (string, error) {
+	var role string
+	err := r.db.QueryRowContext(ctx, `SELECT role FROM users WHERE id = $1`, userID).Scan(&role)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", apierrors.ErrUserNotFound
+		}
+		return "", apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	return role, nil
 }
 
 func (r *Repository) UpdatePasswordHash(ctx context.Context, newPasswordHash string, id int) error {

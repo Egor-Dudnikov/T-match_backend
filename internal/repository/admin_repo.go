@@ -108,6 +108,15 @@ func (r *Repository) GetUserBanReason(ctx context.Context, userID int) (string, 
 	return reason, nil
 }
 
+func (r *Repository) InternshipExists(ctx context.Context, internshipID int) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM internships WHERE id = $1)`, internshipID).Scan(&exists)
+	if err != nil {
+		return false, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	return exists, nil
+}
+
 func (r *Repository) AdminDeleteInternship(ctx context.Context, internshipID int) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM internships WHERE id = $1`, internshipID)
 	if err != nil {

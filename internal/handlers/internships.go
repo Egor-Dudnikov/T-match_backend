@@ -28,9 +28,8 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return err
 	}
-	err = encodeJSON[int](w, internshipID)
 	w.WriteHeader(http.StatusCreated)
-	return err
+	return encodeJSON[int](w, internshipID)
 }
 
 func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {

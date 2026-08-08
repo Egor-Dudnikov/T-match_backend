@@ -9,6 +9,7 @@ import (
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/utils"
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -62,11 +63,17 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 
 		reason, err := h.service.HandlingBannedUser(r.Context(), claims.UserID)
 		if err != nil {
-			encodeErr := encodeJSON(w, models.BanResponse{Reason: reason})
+			body, encodeErr := json.Marshal(models.BanResponse{Reason: reason})
 			if encodeErr != nil {
-				return apierrors.Wrap(err, encodeErr)
+				return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, encodeErr)
 			}
-			return err
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			_, writeErr := w.Write(body)
+			if writeErr != nil {
+				return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, writeErr)
+			}
+			return nil
 		}
 
 		ctx := context.WithValue(r.Context(), constants.ClaimsKey, claims)
