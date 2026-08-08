@@ -151,8 +151,8 @@ func TestVerifyUserInvalidCode(t *testing.T) {
 	env := newTestService(t)
 
 	sessionID := "session-123"
-	env.redis.Set(sessionID, `{"Email":"intern@test.ru","PasswordHash":"hash","DeviceID":"device-12345","BirthDate":"2000-01-01T00:00:00Z"}`)
-	env.redis.Set(sessionID+".code", "111111")
+	require.NoError(t, env.redis.Set(sessionID, `{"Email":"intern@test.ru","PasswordHash":"hash","DeviceID":"device-12345","BirthDate":"2000-01-01T00:00:00Z"}`))
+	require.NoError(t, env.redis.Set(sessionID+".code", "111111"))
 
 	// session exists but the submitted code does not match -> ErrInvalidCode
 	_, _, err := env.svc.VerifyUser(ctxWithClaims(0, constants.Intern, ""), sessionID, models.VerifyRequest{Code: "654321"}, constants.Intern)
@@ -166,8 +166,8 @@ func TestVerifyUserSuccess(t *testing.T) {
 	}()
 
 	sessionID := "session-123"
-	env.redis.Set(sessionID, `{"Email":"intern@test.ru","PasswordHash":"hash","DeviceID":"device-12345","BirthDate":"2000-01-01T00:00:00Z"}`)
-	env.redis.Set(sessionID+".code", "111111")
+	require.NoError(t, env.redis.Set(sessionID, `{"Email":"intern@test.ru","PasswordHash":"hash","DeviceID":"device-12345","BirthDate":"2000-01-01T00:00:00Z"}`))
+	require.NoError(t, env.redis.Set(sessionID+".code", "111111"))
 
 	env.mock.ExpectBegin()
 	env.mock.ExpectQuery(`INSERT INTO users (email, password_hash, role, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id`).

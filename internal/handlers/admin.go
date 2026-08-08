@@ -11,7 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (h *ServiceHandler) LoginAdminHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) LoginAdminHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.LoginUser](r)
 	if err != nil {
@@ -37,7 +37,7 @@ func (h *ServiceHandler) AdminGetStatsHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
-func (h *ServiceHandler) AdminBanUserHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) AdminBanUserHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	userID, err := getIDURL(ps)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (h *ServiceHandler) AdminUnbanUserHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func (h *ServiceHandler) AdminDeleteInternshipHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+func (h *ServiceHandler) AdminDeleteInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	internshipID, err := getIDURL(ps)
 	if err != nil {
 		return err

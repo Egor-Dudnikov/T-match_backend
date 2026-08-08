@@ -102,8 +102,9 @@ func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.Compa
 	var email string
 	var existMatch bool
 
-	if ok && claims.Role == constants.Intern {
+	var err error
 
+	if ok && claims.Role == constants.Intern {
 		internID, err := app.db.GetProfileIDByUserID(ctx, claims.UserID)
 		if err != nil {
 			return resp, err
@@ -116,11 +117,7 @@ func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.Compa
 	}
 
 	if ok && (existMatch || claims.Role == constants.Admin) {
-		userID, err := app.db.GetUserIDByCompanyID(ctx, id)
-		if err != nil {
-			return resp, err
-		}
-		email, err = app.db.GetEmailByUserID(ctx, userID)
+		email, err = app.companyEmail(ctx, id)
 		if err != nil {
 			return resp, err
 		}
@@ -133,6 +130,14 @@ func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.Compa
 		return resp, err
 	}
 	return resp, nil
+}
+
+func (app *Service) companyEmail(ctx context.Context, companyID int) (string, error) {
+	userID, err := app.db.GetUserIDByCompanyID(ctx, companyID)
+	if err != nil {
+		return "", err
+	}
+	return app.db.GetEmailByUserID(ctx, userID)
 }
 
 func (app *Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
@@ -240,15 +245,10 @@ func (app *Service) GetProfile(ctx context.Context, internID int) (models.Profil
 	var existMatch bool
 
 	if ok && claims.Role == constants.Company {
-		companyID, err := app.db.GetCompanyIDByUserID(ctx, claims.UserID)
+		existMatch, err = app.companyMatchesIntern(ctx, claims, internID)
 		if err != nil {
 			return resp, err
 		}
-		existMatch, err = app.existCompanyMatch(ctx, companyID, internID)
-		if err != nil {
-			return resp, err
-		}
-
 	}
 
 	if ok && (existMatch || claims.Role == constants.Admin) {
@@ -263,6 +263,14 @@ func (app *Service) GetProfile(ctx context.Context, internID int) (models.Profil
 		return resp, err
 	}
 	return resp, nil
+}
+
+func (app *Service) companyMatchesIntern(ctx context.Context, claims models.Claims, internID int) (bool, error) {
+	companyID, err := app.db.GetCompanyIDByUserID(ctx, claims.UserID)
+	if err != nil {
+		return false, err
+	}
+	return app.existCompanyMatch(ctx, companyID, internID)
 }
 
 func (app *Service) profileResponse(ctx context.Context, internID int, userID int, email string) (models.ProfileResponse, error) {
