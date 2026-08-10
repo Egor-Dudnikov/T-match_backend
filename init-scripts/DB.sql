@@ -69,8 +69,7 @@ CREATE TABLE "internships" (
   "duration_months" INTEGER,
   "location" VARCHAR,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  "is_archived" BOOLEAN NOT NULL DEFAULT FALSE,
-  "tsv_content" tsvector
+  "is_archived" BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE "applications" (
@@ -173,8 +172,8 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS image TEXT;
 ALTER TABLE internships 
 ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
 
-ALTER TABLE internships ADD COLUMN tsv_content tsvector;
-    
+ALTER TABLE internships ADD COLUMN IF NOT EXISTS tsv_content tsvector;
+
 CREATE OR REPLACE FUNCTION update_internships_search_vector() RETURNS trigger AS $$
 BEGIN
   NEW.tsv_content := 
@@ -186,12 +185,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS internship_tsv_trigger ON internships;
 CREATE TRIGGER internship_tsv_trigger
 BEFORE INSERT OR UPDATE ON internships
 FOR EACH ROW EXECUTE FUNCTION update_internships_search_vector();
 
 ALTER TABLE companies
-ADD COLUMN tsv_content tsvector;
+ADD COLUMN IF NOT EXISTS tsv_content tsvector;
 
 CREATE OR REPLACE FUNCTION update_company_search_vector() RETURNS trigger AS $$
 BEGIN
@@ -203,12 +203,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS companies_tsv_trigger ON companies;
 CREATE TRIGGER companies_tsv_trigger
 BEFORE INSERT OR UPDATE ON companies
 FOR EACH ROW EXECUTE FUNCTION update_company_search_vector();
 
 ALTER TABLE interns
-ADD COLUMN tsv_content tsvector;
+ADD COLUMN IF NOT EXISTS tsv_content tsvector;
 
 CREATE OR REPLACE FUNCTION update_intern_search_vector() RETURNS trigger AS $$
 BEGIN
@@ -218,15 +219,16 @@ BEGIN
     setweight(to_tsvector('russian', coalesce(NEW.bio, '')), 'B') ||
     setweight(to_tsvector('russian', coalesce(NEW.experience, '')), 'C') ||
     setweight(to_tsvector('russian', coalesce(NEW.degree, '')), 'C') ||
-    setweight(to_tsvector('russian', coalesce(NEW.university , '')), 'D');
+    setweight(to_tsvector('russian', coalesce(NEW.university, '')), 'D');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS intern_tsv_trigger ON interns;
 CREATE TRIGGER intern_tsv_trigger
 BEFORE INSERT OR UPDATE ON interns
 FOR EACH ROW EXECUTE FUNCTION update_intern_search_vector();
 
-CREATE INDEX idx_intenship_tsv ON internships USING GIN(tsv_content);
-CREATE INDEX idx_companies_tsv ON companies USING GIN(tsv_content);
-CREATE INDEX idx_interns_tsv ON interns USING GIN(tsv_content);
+CREATE INDEX IF NOT EXISTS idx_internships_tsv ON internships USING GIN(tsv_content);
+CREATE INDEX IF NOT EXISTS idx_companies_tsv ON companies USING GIN(tsv_content);
+CREATE INDEX IF NOT EXISTS idx_interns_tsv ON interns USING GIN(tsv_content);
