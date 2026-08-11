@@ -204,7 +204,7 @@ func (h *ServiceHandler) SetResponseStatus(_ http.ResponseWriter, r *http.Reques
 
 func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
-	location := r.URL.Query().Get("location")
+	cityID := r.URL.Query().Get("city_id")
 	salaryMax := r.URL.Query().Get("salary_max")
 	salaryMin := r.URL.Query().Get("salary_min")
 	durationMin := r.URL.Query().Get("duration_min")
@@ -218,7 +218,7 @@ func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.
 	filters := models.SearchInternship{}
 
 	filters.Query = h.parseAndSetString(query)
-	filters.Location = h.parseAndSetString(location)
+	filters.CityID = h.parseAndSetInt(cityID)
 
 	filters.SalaryMax = h.parseAndSetInt(salaryMax)
 	filters.SalaryMin = h.parseAndSetInt(salaryMin)

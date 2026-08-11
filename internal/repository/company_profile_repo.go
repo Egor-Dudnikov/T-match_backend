@@ -6,7 +6,6 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
-	"fmt"
 )
 
 func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profile models.CompanyProfile) error {
@@ -89,9 +88,8 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 
 	addWhereWithIndex[string](query, "tsv_content @@ to_tsquery('russian', $", ")", filters.Query)
 
-	if filters.Location != nil {
-		location := fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')
-		addWhereWithIndex[string](query, "legal_address ILIKE $", "", &location)
+	if filters.CityID != nil {
+		addWhereWithIndex[int](query, "legal_address ILIKE '%' || (SELECT name FROM cities WHERE id = $", ") || '%'", filters.CityID)
 	}
 
 	if filters.Query != nil {

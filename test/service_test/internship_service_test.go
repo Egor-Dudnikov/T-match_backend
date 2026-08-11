@@ -22,7 +22,7 @@ func TestNewInternshipValidationError(t *testing.T) {
 	_, err := env.svc.NewInternship(ctxWithClaims(1, constants.Company, "company@test.ru"), models.Internship{
 		Title:       "",
 		Description: "",
-		Location:    "",
+		CityID:      0,
 	}, 1)
 	require.ErrorIs(t, err, apierrors.ErrBadRequest)
 }
@@ -37,8 +37,8 @@ func TestNewInternshipSuccess(t *testing.T) {
 		WithArgs(1).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
 
-	env.mock.ExpectQuery(`INSERT INTO internships (company_id, title, description, salary, duration_months, location, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`).
-		WithArgs(2, "Go developer", "Backend internship", 100000, 6, "Moscow").
+	env.mock.ExpectQuery(`INSERT INTO internships (company_id, title, description, salary, duration_months, city_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`).
+		WithArgs(2, "Go developer", "Backend internship", 100000, 6, 77).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(7))
 
 	id, err := env.svc.NewInternship(ctxWithClaims(1, constants.Company, "company@test.ru"), models.Internship{
@@ -46,7 +46,7 @@ func TestNewInternshipSuccess(t *testing.T) {
 		Description:   "Backend internship",
 		Salary:        100000,
 		DurationMonth: 6,
-		Location:      "Moscow",
+		CityID:        77,
 	}, 1)
 	require.NoError(t, err)
 	require.Equal(t, 7, id)
@@ -58,10 +58,10 @@ func TestGetInternshipByIDSuccess(t *testing.T) {
 		require.NoError(t, env.mock.ExpectationsWereMet(), "unmatched sql expectations")
 	}()
 
-	env.mock.ExpectQuery(`SELECT i.id, i.company_id, i.title, i.description, i.salary, i.duration_months, i.location, i.created_at, i.is_archived FROM internships i JOIN companies c ON i.company_id = c.id WHERE i.id = $1 AND i.is_archived = FALSE AND NOT EXISTS(SELECT 1 FROM user_bans ub WHERE ub.user_id = c.user_id)`).
+	env.mock.ExpectQuery(`SELECT i.id, i.company_id, i.title, i.description, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i JOIN companies comp ON i.company_id = comp.id WHERE i.id = $1 AND i.is_archived = FALSE AND NOT EXISTS(SELECT 1 FROM user_bans ub WHERE ub.user_id = comp.user_id)`).
 		WithArgs(7).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "company_id", "title", "description", "salary", "duration_months", "location", "created_at", "is_archived"}).
-			AddRow(7, 2, "Go developer", "backend", 100000, 6, "Moscow", time.Now(), false))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "company_id", "title", "description", "salary", "duration_months", "city_id", "created_at", "is_archived"}).
+			AddRow(7, 2, "Go developer", "backend", 100000, 6, 77, time.Now(), false))
 
 	env.mock.ExpectQuery(`SELECT skill_id FROM internship_skills WHERE internship_id = $1`).
 		WithArgs(7).
@@ -71,6 +71,7 @@ func TestGetInternshipByIDSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 7, res.Internship.ID)
 	require.Equal(t, "Go developer", res.Internship.Title)
+	require.Equal(t, 77, res.Internship.CityID)
 	require.Empty(t, res.Skills)
 }
 
@@ -80,7 +81,7 @@ func TestGetInternshipByIDNotFound(t *testing.T) {
 		require.NoError(t, env.mock.ExpectationsWereMet(), "unmatched sql expectations")
 	}()
 
-	env.mock.ExpectQuery(`SELECT i.id, i.company_id, i.title, i.description, i.salary, i.duration_months, i.location, i.created_at, i.is_archived FROM internships i JOIN companies c ON i.company_id = c.id WHERE i.id = $1 AND i.is_archived = FALSE AND NOT EXISTS(SELECT 1 FROM user_bans ub WHERE ub.user_id = c.user_id)`).
+	env.mock.ExpectQuery(`SELECT i.id, i.company_id, i.title, i.description, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i JOIN companies comp ON i.company_id = comp.id WHERE i.id = $1 AND i.is_archived = FALSE AND NOT EXISTS(SELECT 1 FROM user_bans ub WHERE ub.user_id = comp.user_id)`).
 		WithArgs(999).
 		WillReturnError(sql.ErrNoRows)
 
@@ -105,10 +106,10 @@ func TestGetCompanyesInternshipsByUserID(t *testing.T) {
 		WithArgs(1).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
 
-	env.mock.ExpectQuery(`SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships WHERE company_id = $1`).
+	env.mock.ExpectQuery(`SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i WHERE i.company_id = $1`).
 		WithArgs(2).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "company_id", "title", "salary", "duration_months", "location", "created_at", "is_archived"}).
-			AddRow(7, 2, "Go developer", 100000, 6, "Moscow", time.Now(), false))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "company_id", "title", "salary", "duration_months", "city_id", "created_at", "is_archived"}).
+			AddRow(7, 2, "Go developer", 100000, 6, 77, time.Now(), false))
 
 	res, err := env.svc.GetCompanyesInternshipsByUserID(context.TODO(), 1)
 	require.NoError(t, err)

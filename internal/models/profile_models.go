@@ -11,7 +11,7 @@ type Profile struct {
 	FirstName  *string    `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string    `json:"last_name,omitempty" validate:"omitempty,max=100"`
 	BirthDate  *time.Time `json:"birth_date,omitempty" validate:"omitempty"`
-	Location   *string    `json:"location,omitempty" validate:"omitempty,max=200"`
+	CityID     *int       `json:"city_id,omitempty" validate:"omitempty,min=1"`
 	University *string    `json:"university,omitempty" validate:"omitempty,max=200"`
 	Degree     *string    `json:"degree,omitempty" validate:"omitempty,max=100"`
 	Bio        *string    `json:"bio,omitempty" validate:"omitempty,max=2000"`
@@ -54,10 +54,10 @@ type SkillID struct {
 }
 
 type SearchCompany struct {
-	Query    *string
-	Location *string
-	Limit    *int
-	Offset   *int
+	Query  *string
+	CityID *int
+	Limit  *int
+	Offset *int
 }
 
 type SearchIntern struct {
@@ -73,10 +73,16 @@ type ShortProfile struct {
 	UserID     *int    `json:"user_id,omitempty" validate:"omitempty"`
 	FirstName  *string `json:"first_name,omitempty" validate:"omitempty,max=100"`
 	LastName   *string `json:"last_name,omitempty" validate:"omitempty,max=100"`
-	Location   *string `json:"location,omitempty" validate:"omitempty,max=200"`
+	CityID     *int    `json:"city_id,omitempty" validate:"omitempty,min=1"`
 	University *string `json:"university,omitempty" validate:"omitempty,max=200"`
 	Degree     *string `json:"degree,omitempty" validate:"omitempty,max=100"`
 	Image      *string `json:"image,omitempty" validate:"omitempty"`
+}
+
+type City struct {
+	ID     int    `json:"id"`
+	Name   string `json:"name"`
+	Region string `json:"region"`
 }
 
 type Notification struct {

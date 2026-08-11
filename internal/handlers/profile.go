@@ -98,6 +98,15 @@ func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ h
 	return err
 }
 
+func (h ServiceHandler) GetAllCities(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
+	cities, err := h.service.GetAllCities(r.Context())
+	if err != nil {
+		return err
+	}
+	err = encodeJSON[[]models.City](w, cities)
+	return err
+}
+
 func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
@@ -132,14 +141,14 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 
 func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
-	location := r.URL.Query().Get("location")
+	cityID := r.URL.Query().Get("city_id")
 	offset := r.URL.Query().Get("offset")
 	limit := r.URL.Query().Get("limit")
 
 	filters := models.SearchCompany{}
 
 	filters.Query = h.parseAndSetString(query)
-	filters.Location = h.parseAndSetString(location)
+	filters.CityID = h.parseAndSetInt(cityID)
 
 	filters.Offset = h.parseAndSetInt(offset)
 	filters.Limit = h.parseAndSetInt(limit)

@@ -10,7 +10,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strconv"
 )
 
@@ -21,8 +20,8 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 	}
 
 	var internshipID int
-	err = r.db.QueryRowContext(ctx, `INSERT INTO internships (company_id, title, description, salary, duration_months, location, created_at)
-	VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.Location).Scan(&internshipID)
+	err = r.db.QueryRowContext(ctx, `INSERT INTO internships (company_id, title, description, salary, duration_months, city_id, created_at)
+	VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id;`, id, interships.Title, interships.Description, interships.Salary, interships.DurationMonth, interships.CityID).Scan(&internshipID)
 	if err != nil {
 		return 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
@@ -33,15 +32,15 @@ func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Inte
 	internship := models.Internship{}
 	err := r.db.QueryRowContext(ctx, `
 		SELECT i.id, i.company_id, i.title, i.description, 
-		       i.salary, i.duration_months, i.location, 
+		       i.salary, i.duration_months, i.city_id, 
 		       i.created_at, i.is_archived 
 		FROM internships i
-		JOIN companies c ON i.company_id = c.id
+		JOIN companies comp ON i.company_id = comp.id
 		WHERE i.id = $1 
 		  AND i.is_archived = FALSE
 		  AND NOT EXISTS(
 			  SELECT 1 FROM user_bans ub 
-			  WHERE ub.user_id = c.user_id
+			  WHERE ub.user_id = comp.user_id
 		  )
 	`, id).Scan(
 		&internship.ID,
@@ -50,7 +49,7 @@ func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Inte
 		&internship.Description,
 		&internship.Salary,
 		&internship.DurationMonth,
-		&internship.Location,
+		&internship.CityID,
 		&internship.CreatedAt,
 		&internship.IsArchived,
 	)
@@ -70,7 +69,7 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 
 	addFilled[string](query, "title", internship.Title)
 	addFilled[string](query, "description", internship.Description)
-	addFilled[string](query, "location", internship.Location)
+	addFilled[int](query, "city_id", internship.CityID)
 	addFilled[int](query, "salary", internship.Salary)
 	addFilled[int](query, "duration_months", internship.DurationMonth)
 
@@ -105,9 +104,9 @@ func (r *Repository) GetCompanyIDByInternshipID(ctx context.Context, id int) (in
 
 func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArchiveInternships bool) ([]models.Internship, error) {
 	res := []models.Internship{}
-	query := `SELECT id, company_id, title, salary, duration_months, location, created_at, is_archived FROM internships WHERE company_id = $1`
+	query := `SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i WHERE i.company_id = $1`
 	if hintArchiveInternships {
-		query += " AND is_archived = FALSE"
+		query += " AND i.is_archived = FALSE"
 	}
 	rows, err := r.db.QueryContext(ctx, query, id)
 	if err != nil {
@@ -123,7 +122,7 @@ func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArch
 			&internship.Title,
 			&internship.Salary,
 			&internship.DurationMonth,
-			&internship.Location,
+			&internship.CityID,
 			&internship.CreatedAt,
 			&internship.IsArchived,
 		)
@@ -146,14 +145,14 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 
 func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res := []models.Internship{}
-	query := newQuerySelectBuilder("SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.location, i.created_at, i.is_archived FROM internships i")
+	query := newQuerySelectBuilder("SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i")
 
 	query.addWhere(`
 		i.is_archived = FALSE 
 		AND NOT EXISTS(
 			SELECT 1 FROM user_bans ub 
-			JOIN companies c ON ub.user_id = c.user_id 
-			WHERE c.id = i.company_id
+			JOIN companies comp ON ub.user_id = comp.user_id 
+			WHERE comp.id = i.company_id
 		)
 	`)
 
@@ -168,10 +167,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 			") = "+strconv.Itoa(len(*filters.Skills)), filters.Skills)
 	}
 
-	if filters.Location != nil {
-		location := fmt.Sprintf("%c%s%c", '%', *filters.Location, '%')
-		addWhereWithIndex[string](query, "location ILIKE $", "", &location)
-	}
+	addWhereWithIndex[int](query, "i.city_id = $", "", filters.CityID)
 
 	if sortValid(filters.Order, filters.Sort) {
 		if *filters.Order == 1 {
@@ -206,7 +202,7 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 			&internship.Title,
 			&internship.Salary,
 			&internship.DurationMonth,
-			&internship.Location,
+			&internship.CityID,
 			&internship.CreatedAt,
 			&internship.IsArchived,
 		)

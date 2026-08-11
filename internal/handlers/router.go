@@ -160,6 +160,9 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router.GET("/skills", ErrorMiddleware(
 		app.CorsMiddleware(app.GetAllSkills)))
 
+	router.GET("/cities", ErrorMiddleware(
+		app.CorsMiddleware(app.GetAllCities)))
+
 	router.GET("/companies/:id/internships", ErrorMiddleware(
 		app.CorsMiddleware(
 			app.RateLimitMiddleware(app.GetCompanyInternshipsHandler, constants.RateLimitCompanyInternship, "/companies/internships"))))

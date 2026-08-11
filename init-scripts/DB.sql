@@ -26,13 +26,22 @@ CREATE TABLE "users" (
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "cities" (
+    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL,
+    "region" VARCHAR(100) NOT NULL,
+    "geo_lat" DECIMAL(10, 7),
+    "geo_lon" DECIMAL(10, 7),
+    UNIQUE ("name", "region")
+);
+
 CREATE TABLE "interns" (
   "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "user_id" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   "first_name" VARCHAR,
   "last_name" VARCHAR,
   "birth_date" DATE,
-  "location" VARCHAR,
+  "city_id" INTEGER REFERENCES cities(id),
   "university" VARCHAR,
   "degree" VARCHAR,
   "bio" TEXT,
@@ -67,7 +76,7 @@ CREATE TABLE "internships" (
   "description" TEXT,
   "salary" INTEGER,
   "duration_months" INTEGER,
-  "location" VARCHAR,
+  "city_id" INTEGER REFERENCES cities(id),
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "is_archived" BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -150,6 +159,7 @@ ALTER TABLE "intern_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("i
 ALTER TABLE "internship_skills" ADD FOREIGN KEY ("internship_id") REFERENCES "internships" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 ALTER TABLE "internship_skills" ADD FOREIGN KEY ("skill_id") REFERENCES "skills" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 
+CREATE INDEX idx_cities_name ON cities(name);
 CREATE INDEX idx_applications_intern_id ON applications(intern_id);
 CREATE INDEX idx_applications_internship_id ON applications(internship_id);
 CREATE INDEX idx_applications_status ON applications(status);
@@ -179,7 +189,7 @@ BEGIN
   NEW.tsv_content := 
   setweight(to_tsvector('russian', coalesce(NEW.title, '')), 'A') || 
   setweight(to_tsvector('russian', coalesce(NEW.description, '')), 'B') ||
-  setweight(to_tsvector('russian', coalesce(NEW.location, '')), 'C') ||
+  setweight(to_tsvector('russian', coalesce((SELECT name FROM cities WHERE id = NEW.city_id), '')), 'C') ||
   setweight(to_tsvector('russian', coalesce((SELECT company_name FROM companies WHERE id = NEW.company_id), '')), 'D');
   RETURN NEW;
 END;

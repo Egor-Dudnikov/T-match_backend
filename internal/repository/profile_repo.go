@@ -23,7 +23,7 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 	addFilled[string](query, "bio", profile.Bio)
 	addFilled[string](query, "degree", profile.Degree)
 	addFilled[string](query, "experience", profile.Experience)
-	addFilled[string](query, "location", profile.Location)
+	addFilled[int](query, "city_id", profile.CityID)
 	addFilled[string](query, "university", profile.University)
 
 	if query.empty() {
@@ -51,7 +51,7 @@ func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int,
 func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
 	err := r.db.QueryRowContext(ctx, `
-		SELECT i.id, i.user_id, i.first_name, i.last_name, i.birth_date, i.location, 
+		SELECT i.id, i.user_id, i.first_name, i.last_name, i.birth_date, i.city_id, 
 		       i.university, i.degree, i.bio, i.experience, i.image 
 		FROM interns i
 		WHERE i.id = $1 
@@ -65,7 +65,7 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 		&profile.FirstName,
 		&profile.LastName,
 		&profile.BirthDate,
-		&profile.Location,
+		&profile.CityID,
 		&profile.University,
 		&profile.Degree,
 		&profile.Bio,
@@ -115,7 +115,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	res := []models.ShortProfile{}
 
 	query := newQuerySelectBuilder(`
-		SELECT i.id, i.user_id, i.first_name, i.last_name, i.location, i.university, i.degree, i.image 
+		SELECT i.id, i.user_id, i.first_name, i.last_name, i.city_id, i.university, i.degree, i.image 
 		FROM interns i
 	`)
 
@@ -159,7 +159,7 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 			&intern.UserID,
 			&intern.FirstName,
 			&intern.LastName,
-			&intern.Location,
+			&intern.CityID,
 			&intern.University,
 			&intern.Degree,
 			&intern.Image,
@@ -170,6 +170,25 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 		res = append(res, intern)
 	}
 	return res, nil
+}
+
+func (r *Repository) GetAllCities(ctx context.Context) ([]models.City, error) {
+	cities := []models.City{}
+	rows, err := r.db.QueryContext(ctx, `SELECT id, name, region FROM cities ORDER BY name`)
+	if err != nil {
+		return cities, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var city models.City
+		err = rows.Scan(&city.ID, &city.Name, &city.Region)
+		if err != nil {
+			return cities, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
+		cities = append(cities, city)
+	}
+
+	return cities, nil
 }
 
 func (r *Repository) GetUserIDByProfileID(ctx context.Context, id int) (int, error) {

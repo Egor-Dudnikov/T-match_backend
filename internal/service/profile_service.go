@@ -180,6 +180,14 @@ func (app *Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	return skills, nil
 }
 
+func (app *Service) GetAllCities(ctx context.Context) ([]models.City, error) {
+	cities, err := app.db.GetAllCities(ctx)
+	if err != nil {
+		return cities, err
+	}
+	return cities, nil
+}
+
 func (app *Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
