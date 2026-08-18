@@ -20,6 +20,7 @@ func (app *Service) NewInternship(ctx context.Context, internship models.Interns
 	if err != nil {
 		return internshipID, err
 	}
+	app.syncInternshipCreate(ctx, internshipID, internship.CityID)
 	return internshipID, nil
 }
 
@@ -51,7 +52,13 @@ func (app *Service) UpdateInternship(ctx context.Context, internship models.Inte
 	}
 
 	err = app.db.UpdateInternships(ctx, internship)
-	return err
+	if err != nil {
+		return err
+	}
+	if internship.CityID != nil {
+		app.syncInternshipGeo(ctx, internship.ID, *internship.CityID)
+	}
+	return nil
 }
 
 func (app *Service) ArchivedInternship(ctx context.Context, id int) error {
@@ -63,6 +70,7 @@ func (app *Service) ArchivedInternship(ctx context.Context, id int) error {
 	if err != nil {
 		return err
 	}
+	app.deleteRecsysInternship(ctx, id)
 	return nil
 }
 
@@ -113,6 +121,7 @@ func (app *Service) AddInternshipSkills(ctx context.Context, skills []int, id in
 	if err != nil {
 		return err
 	}
+	app.addRecsysInternshipSkills(ctx, id, skills)
 	return nil
 }
 
@@ -126,6 +135,8 @@ func (app *Service) DeleteInternshipSkills(ctx context.Context, internshipID int
 	if err != nil {
 		return err
 	}
+
+	app.deleteRecsysInternshipSkills(ctx, internshipID, skillIDs)
 
 	return nil
 }
@@ -145,6 +156,8 @@ func (app *Service) RespondInternship(ctx context.Context, internshipID int) err
 	if err != nil {
 		return nil
 	}
+
+	app.sendRecsysAction(ctx, claims.UserID, internshipID, constants.RecsysActionApply)
 
 	notification, err := app.db.NewApplicationNotification(ctx, internID, internshipID, respondID)
 	if err != nil {

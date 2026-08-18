@@ -215,6 +215,20 @@ func NewRouter(app *ServiceHandler) *httprouter.Router {
 				app.CompanyMiddleware(
 					app.RateLimitMiddleware(app.InternshipInviteHandler, constants.RateLimitInternshipInvite, "/responses/:id/status"))))))
 
+	// Recsys routes
+
+	router.GET("/my/recommendations", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.GetRecommendationsHandler, constants.RateLimitRecommendations, "/my/recommendations"))))))
+
+	router.POST("/internships/:id/view", ErrorMiddleware(
+		app.CorsMiddleware(
+			app.AuthMiddleware(
+				app.InternMiddleware(
+					app.RateLimitMiddleware(app.TrackInternshipViewHandler, constants.RateLimitRecommendations, "/internships/:id/view"))))))
+
 	// Search routes
 
 	router.GET("/companies", ErrorMiddleware(

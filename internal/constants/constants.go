@@ -55,6 +55,9 @@ const (
 	RateLimitSearchCompany    = 60 // /companies
 	RateLimitSearchStudent    = 60 // /students
 
+	// Recommendations
+	RateLimitRecommendations = 60 // /my/recommendations
+
 	// Admin endpoints
 	RateLimitAuthAdminLogin = 10 // /admin/login
 	RateLimitAdminStats     = 30 // /admin/stats
@@ -99,6 +102,14 @@ const (
 // Client timeout
 const (
 	DadataTimeout = time.Second * 10
+	RecsysTimeout = time.Second * 5
+)
+
+// Recsys action types
+const (
+	RecsysActionClick  = "click"
+	RecsysActionApply  = "apply"
+	RecsysActionInvate = "invate"
 )
 
 const (

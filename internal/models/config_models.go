@@ -14,6 +14,7 @@ type Config struct {
 	EmailConfig  EmailConfig
 	CORSConfig   CORSConfig
 	S3Config     S3Config
+	RecsysConfig RecsysConfig
 }
 
 type DbConfig struct {
@@ -54,4 +55,8 @@ type S3Config struct {
 	AccessKeyID     string `json:"access_key_ID"`
 	SecretAccessKey string `json:"secret_access_key"`
 	UseSSL          bool   `json:"use_SSL"`
+}
+
+type RecsysConfig struct {
+	URL string `json:"url"`
 }

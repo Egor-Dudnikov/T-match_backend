@@ -47,6 +47,9 @@ func LoadConfig() models.Config {
 			SecretAccessKey: getEnv("S3_SECRET_ACCESS_KEY", "minioadmin"),
 			UseSSL:          getEnvAsBool("S3_USE_SSL", false),
 		},
+		RecsysConfig: models.RecsysConfig{
+			URL: getEnv("RECSYS_URL", "http://recsys:8000"),
+		},
 	}
 }
 

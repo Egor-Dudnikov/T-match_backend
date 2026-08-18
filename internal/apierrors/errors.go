@@ -45,6 +45,7 @@ var (
 	ErrInternshipIsArchived = errors.New("internship is archived")
 	ErrInternshipNotFound   = errors.New("internship not found")
 	ErrAlreadyResponded     = errors.New("already responded to this internship")
+	ErrCityNotFound         = errors.New("city not found")
 
 	ErrSkillsNotFound     = errors.New("skills not found")
 	ErrKeyNotFound        = errors.New("redis key not found")
@@ -85,6 +86,7 @@ var errorStatusMap = map[error]ErrorMapping{
 	ErrCompanyNotExists:   {http.StatusNotFound, "Company with this TIN not exists"},
 	ErrInternshipNotFound: {http.StatusNotFound, "Internship not found"},
 	ErrSkillsNotFound:     {http.StatusNotFound, "Skills not found"},
+	ErrCityNotFound:       {http.StatusNotFound, "City not found"},
 
 	ErrInternshipIsArchived: {http.StatusGone, "Internship is archived"},
 

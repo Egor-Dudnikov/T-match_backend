@@ -9,6 +9,7 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/dadata"
 	"T-match_backend/internal/models"
+	"T-match_backend/internal/recsys"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
 	"T-match_backend/internal/utils"
@@ -30,11 +31,12 @@ type Service struct {
 	email    *EmailClient
 	s3       *s3.Storage
 	dadata   *dadata.Client
+	recsys   *recsys.Client
 	Hub      *Hub
 	validate *validator.Validate
 }
 
-func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client, hub *Hub) *Service {
+func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client, hub *Hub, recsysClient *recsys.Client) *Service {
 	return &Service{
 		db:       db,
 		cache:    cache,
@@ -43,6 +45,7 @@ func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClien
 		s3:       s3,
 		Hub:      hub,
 		dadata:   dadataclient,
+		recsys:   recsysClient,
 	}
 }
 
@@ -77,9 +80,11 @@ func RegService(config models.Config) (*Service, error) {
 
 	dadataClient := dadata.NewClient()
 
+	recsysClient := recsys.NewClient(config.RecsysConfig.URL)
+
 	hub := newHub()
 
-	app := Newservice(repo, redis, email, validate, s3Storage, dadataClient, hub)
+	app := Newservice(repo, redis, email, validate, s3Storage, dadataClient, hub, recsysClient)
 	return app, err
 }
 
@@ -285,6 +290,10 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 	id, err := userVerify.QueryNewUser(ctx, app.db)
 	if err != nil {
 		return "", "", err
+	}
+
+	if role == constants.Intern {
+		app.createRecsysUser(ctx, id)
 	}
 
 	accessToken, refreshToken, err := userVerify.GeneratingTokenPair(id)

@@ -191,6 +191,18 @@ func (r *Repository) GetAllCities(ctx context.Context) ([]models.City, error) {
 	return cities, nil
 }
 
+func (r *Repository) GetCityGeo(ctx context.Context, cityID int) (float64, float64, error) {
+	var geoLen, geoLot float64
+	err := r.db.QueryRowContext(ctx, `SELECT geo_lon, geo_lat FROM cities WHERE id = $1`, cityID).Scan(&geoLen, &geoLot)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, 0, apierrors.ErrCityNotFound
+		}
+		return 0, 0, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	return geoLen, geoLot, nil
+}
+
 func (r *Repository) GetUserIDByProfileID(ctx context.Context, id int) (int, error) {
 	var userID int
 	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM interns WHERE id = $1`, id).Scan(&userID)

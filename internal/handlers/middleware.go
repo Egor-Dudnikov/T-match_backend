@@ -102,17 +102,18 @@ func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 func (h ServiceHandler) getAuthTokenFromHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 
-	if authHeader == "" {
-		return "", apierrors.ErrUnauthorized
+	if authHeader != "" {
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			return parts[1], nil
+		}
 	}
 
-	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		return "", apierrors.ErrUnauthorized
+	if token := r.URL.Query().Get("token"); token != "" {
+		return token, nil
 	}
 
-	tokenStr := parts[1]
-	return tokenStr, nil
+	return "", apierrors.ErrUnauthorized
 }
 
 func (h ServiceHandler) refreshTokenValid(ctx context.Context, r *http.Request) error {

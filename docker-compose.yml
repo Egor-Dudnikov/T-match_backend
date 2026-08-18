@@ -84,7 +84,50 @@ services:
       - "8025:8025"
     networks:
       - backend
-    
+
+  recsys-db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: recsys_user
+      POSTGRES_PASSWORD: recsys_password
+      POSTGRES_DB: recsys_db
+    volumes:
+      - recsys_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recsys_user -d recsys_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  recsys-redis:
+    image: redis:7-alpine
+    volumes:
+      - recsys_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  recsys:
+    build: ../recsys
+    command: ["api"]
+    environment:
+      DATABASE_URL: postgresql://recsys_user:recsys_password@recsys-db:5432/recsys_db
+      REDIS_URL: redis://recsys-redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      recsys-db:
+        condition: service_healthy
+      recsys-redis:
+        condition: service_healthy
+    networks:
+      - backend
 
 networks:
   backend:
@@ -94,3 +137,5 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  recsys_postgres_data:
+  recsys_redis_data:

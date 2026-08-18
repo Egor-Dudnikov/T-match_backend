@@ -126,6 +126,8 @@ func (app *Service) AdminDeleteInternship(ctx context.Context, internshipID int)
 		return err
 	}
 
+	app.deleteRecsysInternship(ctx, internshipID)
+
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer

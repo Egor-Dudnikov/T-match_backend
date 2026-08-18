@@ -35,6 +35,9 @@ func (app *Service) UpdateStudentProfile(ctx context.Context, profile models.Pro
 	if err != nil {
 		return err
 	}
+	if profile.CityID != nil {
+		app.syncUserGeo(ctx, claims.UserID, *profile.CityID)
+	}
 	return nil
 }
 
@@ -198,6 +201,7 @@ func (app *Service) AddInternSkills(ctx context.Context, skills []int) error {
 	if err != nil {
 		return err
 	}
+	app.addRecsysUserSkills(ctx, claims.UserID, skills)
 	return nil
 }
 
@@ -211,6 +215,7 @@ func (app *Service) DeleteInternSkills(ctx context.Context, skillIDs []int) erro
 	if err != nil {
 		return err
 	}
+	app.deleteRecsysUserSkills(ctx, claims.UserID, skillIDs)
 	return nil
 }
 

@@ -54,6 +54,8 @@ func (app *Service) InvateIntern(ctx context.Context, internshipID int, invateIn
 		return err
 	}
 
+	app.sendRecsysAction(ctx, invateIntern.UserID, internshipID, constants.RecsysActionInvate)
+
 	notificationJSON, err := json.Marshal(notification)
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrJSONEncodeFailed, err)
@@ -150,7 +152,7 @@ func (c *Client) WritePump() {
 	defer c.Conn.Close()
 
 	for msg := range c.Send {
-		err := c.Conn.WriteJSON(msg)
+		err := c.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
 		if err != nil {
 			log.Println(err)
 			break

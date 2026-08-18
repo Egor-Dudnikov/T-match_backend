@@ -14,6 +14,7 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/dadata"
 	"T-match_backend/internal/models"
+	"T-match_backend/internal/recsys"
 	"T-match_backend/internal/repository"
 	"T-match_backend/internal/s3"
 	"T-match_backend/internal/service"
@@ -57,8 +58,9 @@ func newTestService(t *testing.T) *testEnv {
 	storage := &s3.Storage{}
 	daData := &dadata.Client{}
 	hub := &service.Hub{}
+	recsysClient := recsys.NewClient("")
 
-	app := service.Newservice(repo, myCache, email, validate, storage, daData, hub)
+	app := service.Newservice(repo, myCache, email, validate, storage, daData, hub, recsysClient)
 
 	return &testEnv{
 		svc:   app,
