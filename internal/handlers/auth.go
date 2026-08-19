@@ -18,13 +18,15 @@ import (
 
 // ServiceHandler handles HTTP requests and delegates work to the underlying service.
 type ServiceHandler struct {
-	service    *service.Service
-	corsConfig *models.CORSConfig
+	service      *service.Service
+	corsConfig   *models.CORSConfig
+	cookieSecure bool
 }
 
-// NewServiceHandler creates a new ServiceHandler with the given service and CORS config.
-func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *ServiceHandler {
-	return &ServiceHandler{service: service, corsConfig: cfg}
+// NewServiceHandler creates a new ServiceHandler with the given service, CORS config,
+// and cookie security flag.
+func NewServiceHandler(service *service.Service, cfg *models.CORSConfig, cookieSecure bool) *ServiceHandler {
+	return &ServiceHandler{service: service, corsConfig: cfg, cookieSecure: cookieSecure}
 }
 
 // CheckHealth writes an "OK" response to indicate the service is healthy.
@@ -68,7 +70,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
@@ -97,7 +99,7 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
 }
@@ -137,7 +139,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
 }
@@ -154,7 +156,7 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
 }
@@ -165,7 +167,7 @@ func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _
 	if err != nil {
 		return err
 	}
-	SetRefreshCookie(w, "", -1)
+	h.SetRefreshCookie(w, "", -1)
 	return nil
 }
 
@@ -204,7 +206,7 @@ func (h *ServiceHandler) VerifyForgotPasswordHandler(w http.ResponseWriter, r *h
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
 }
@@ -251,13 +253,13 @@ func encodeJSON[T any](w http.ResponseWriter, resp T) error {
 }
 
 // SetRefreshCookie sets the refresh token cookie with the given value and max age.
-func SetRefreshCookie(w http.ResponseWriter, value string, maxAge int) {
-	//nolint:gosec // cookie is served over plain HTTP in dev; switch Secure to true when moving to HTTPS
+func (h *ServiceHandler) SetRefreshCookie(w http.ResponseWriter, value string, maxAge int) {
+	//nolint:gosec // Secure is driven by COOKIE_SECURE env: false for plain-HTTP dev, true in prod over HTTPS; the analyzer cannot see the runtime value.
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    value,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   h.cookieSecure,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 		MaxAge:   maxAge,

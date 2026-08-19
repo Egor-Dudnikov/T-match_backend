@@ -12,7 +12,9 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 
@@ -186,6 +188,19 @@ func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
+// clientIP extracts the client IP from a RemoteAddr, handling IPv6 addresses
+// correctly and normalizing IPv4-mapped IPv6 addresses to plain IPv4.
+func clientIP(remoteAddr string) string {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return remoteAddr
+	}
+	if addr, err := netip.ParseAddr(host); err == nil {
+		return addr.Unmap().String()
+	}
+	return host
+}
+
 // RateLimitMiddleware rate limits requests to an endpoint by user, session, or IP.
 func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -202,8 +217,7 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 		} else if sessionID != "" {
 			id = sessionID
 		} else {
-			ip := strings.SplitN(r.RemoteAddr, ":", 2)
-			id = ip[0]
+			id = clientIP(r.RemoteAddr)
 		}
 		key := id + "." + endpoint
 		ok, err := h.service.RateLimitCheck(ctx, key, rate)

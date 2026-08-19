@@ -52,6 +52,7 @@ func LoadConfig() models.Config {
 		RecsysConfig: models.RecsysConfig{
 			URL: getEnv("RECSYS_URL", "http://recsys:8000"),
 		},
+		CookieSecure: getEnvAsBool("COOKIE_SECURE", false),
 	}
 }
 

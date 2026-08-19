@@ -24,7 +24,7 @@ func (h *ServiceHandler) LoginAdminHandler(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
+	h.SetRefreshCookie(w, refreshToken, constants.MaxAgeRefreshToken)
 	err = encodeJSON(w, map[string]string{"access_token": accessToken})
 	return err
 }

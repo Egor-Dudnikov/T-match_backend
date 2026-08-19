@@ -16,6 +16,7 @@ type Config struct {
 	CORSConfig   CORSConfig
 	S3Config     S3Config
 	RecsysConfig RecsysConfig
+	CookieSecure bool
 }
 
 // DbConfig holds the PostgreSQL connection settings.

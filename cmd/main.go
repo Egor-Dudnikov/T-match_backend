@@ -31,7 +31,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig)
+	authHandler := handlers.NewServiceHandler(app, &config.CORSConfig, config.CookieSecure)
 
 	router := handlers.NewRouter(authHandler)
 
