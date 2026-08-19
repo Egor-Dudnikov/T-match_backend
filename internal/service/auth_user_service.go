@@ -25,6 +25,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Service aggregates the repositories, cache, clients and hub used to
+// implement the application's business logic.
 type Service struct {
 	db       *repository.Repository
 	cache    *cache.Redis
@@ -36,6 +38,7 @@ type Service struct {
 	validate *validator.Validate
 }
 
+// Newservice creates a Service with the given dependencies.
 func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClient, validate *validator.Validate, s3 *s3.Storage, dadataclient *dadata.Client, hub *Hub, recsysClient *recsys.Client) *Service {
 	return &Service{
 		db:       db,
@@ -49,6 +52,8 @@ func Newservice(db *repository.Repository, cache *cache.Redis, email *EmailClien
 	}
 }
 
+// RegService initializes the repositories, cache and clients from the given
+// config and returns a ready-to-use Service.
 func RegService(config models.Config) (*Service, error) {
 	db, err := repository.PingDatabase(config.DbConfig)
 	if err != nil {
@@ -88,20 +93,25 @@ func RegService(config models.Config) (*Service, error) {
 	return app, err
 }
 
+// CloseDB closes the underlying database connection.
 func (app *Service) CloseDB() error {
 	return app.db.Close()
 }
 
+// CloseRedis closes the underlying Redis connection.
 func (app *Service) CloseRedis() error {
 	return app.cache.Close()
 }
 
+// UserVerify defines the operations required to persist and authenticate a
+// user pending email verification.
 type UserVerify interface {
 	QueryNewUser(ctx context.Context, db *repository.Repository) (int, error)
 	GeneratingTokenPair(id int) (string, string, error)
 	GetUserKey(id int) string
 }
 
+// InternVerify holds the data of an intern pending email verification.
 type InternVerify struct {
 	Email        string
 	PasswordHash string
@@ -109,6 +119,7 @@ type InternVerify struct {
 	BirthDate    time.Time
 }
 
+// QueryNewUser creates the intern in the database and returns the new user ID.
 func (iv InternVerify) QueryNewUser(ctx context.Context, db *repository.Repository) (int, error) {
 	id, err := db.QueryNewUser(ctx, models.InternVerify{
 		Email:        iv.Email,
@@ -119,15 +130,21 @@ func (iv InternVerify) QueryNewUser(ctx context.Context, db *repository.Reposito
 	return id, err
 }
 
+// GeneratingTokenPair generates an access and refresh token pair for the intern
+// with the given ID.
 func (iv InternVerify) GeneratingTokenPair(id int) (string, string, error) {
 	accessToken, refreshToken, err := utils.GeneratingTokenPair(id, iv.DeviceID, iv.Email, constants.Intern)
 	return accessToken, refreshToken, err
 }
 
+// GetUserKey returns the cache key under which the intern's refresh token is
+// stored.
 func (iv InternVerify) GetUserKey(id int) string {
 	return fmt.Sprintf("%d.%s", id, iv.DeviceID)
 }
 
+// AuthIntern validates an intern's registration data, sends a verification code
+// and returns the verification session ID.
 func (app *Service) AuthIntern(ctx context.Context, userReg models.InternAuth) (string, error) {
 	err := app.validate.Struct(userReg)
 	if err != nil {
@@ -262,6 +279,8 @@ func unmarshalUserVerify(userJSON string, role string) (UserVerify, error) {
 	return nil, err
 }
 
+// VerifyUser checks the verification code, creates the user and returns access
+// and refresh tokens.
 func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest, role string) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
@@ -310,6 +329,8 @@ func (app *Service) VerifyUser(ctx context.Context, sessionID string, verifyRequ
 	return accessToken, refreshToken, err
 }
 
+// NewCode generates a new verification code for the given session and resends
+// it to the user's email.
 func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 	newCode, err := utils.NewCode()
 	if err != nil {
@@ -343,6 +364,8 @@ func (app *Service) NewCode(ctx context.Context, sessionID string) error {
 	return nil
 }
 
+// LoginUser validates the user's credentials and returns access and refresh
+// tokens.
 func (app *Service) LoginUser(ctx context.Context, userLog models.LoginUser, role string) (string, string, error) {
 	err := app.validate.Struct(userLog)
 	if err != nil {
@@ -381,6 +404,8 @@ func (app *Service) LoginUser(ctx context.Context, userLog models.LoginUser, rol
 	return accessToken, refreshToken, nil
 }
 
+// FogotPassword sends a verification code to the user's email for password
+// reset and returns the verification session ID.
 func (app *Service) FogotPassword(ctx context.Context, user models.FogetPasswordRequest) (string, error) {
 	err := app.validate.Struct(user)
 	if err != nil {
@@ -432,6 +457,8 @@ func (app *Service) FogotPassword(ctx context.Context, user models.FogetPassword
 	return sessionID, err
 }
 
+// VerifyFogottenUser verifies the reset code and returns access and refresh
+// tokens for the user.
 func (app *Service) VerifyFogottenUser(ctx context.Context, sessionID string, verifyRequest models.VerifyRequest) (string, string, error) {
 	err := app.validate.Struct(verifyRequest)
 	if err != nil {
@@ -484,6 +511,7 @@ func (app *Service) VerifyFogottenUser(ctx context.Context, sessionID string, ve
 	return accessToken, refreshToken, err
 }
 
+// ChangePassword updates the password of the authenticated user.
 func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.ChangePasswordRequest) error {
 	err := app.validate.Struct(newPasswordReq)
 	if err != nil {
@@ -506,6 +534,7 @@ func (app *Service) ChangePassword(ctx context.Context, newPasswordReq models.Ch
 	return err
 }
 
+// GetRefreshToken returns the refresh token of the authenticated user.
 func (app *Service) GetRefreshToken(ctx context.Context) (string, error) {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -524,6 +553,7 @@ func (app *Service) GetRefreshToken(ctx context.Context) (string, error) {
 	return token, nil
 }
 
+// RateLimitCheck reports whether the given key has exceeded the rate limit.
 func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (bool, error) {
 	ok, err := app.cache.RateLimitCheck(ctx, key, rate)
 	if err != nil {
@@ -532,6 +562,7 @@ func (app *Service) RateLimitCheck(ctx context.Context, key string, rate int) (b
 	return ok, nil
 }
 
+// DeleteRefreshToken deletes the refresh token of the authenticated user.
 func (app *Service) DeleteRefreshToken(ctx context.Context) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Egor Dudnikov
 // SPDX-License-Identifier: MIT
 
+// Command t-match-backend is the entry point of the T-match API server.
 package main
 
 import (

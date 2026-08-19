@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// ValidPassword reports whether the field value is a valid password.
 func ValidPassword(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 
@@ -42,6 +43,7 @@ func isAllowSpecial(c rune) bool {
 	return false
 }
 
+// ValidRole reports whether the field value is a valid role.
 func ValidRole(fl validator.FieldLevel) bool {
 	role := fl.Field().String()
 	if role != constants.Intern && role != constants.Company {
@@ -50,6 +52,7 @@ func ValidRole(fl validator.FieldLevel) bool {
 	return true
 }
 
+// ValidAge reports whether the person born on the given date is old enough.
 func ValidAge(birthDate time.Time) bool {
 	today := time.Now()
 	age := today.Year() - birthDate.Year()
@@ -62,6 +65,7 @@ func ValidAge(birthDate time.Time) bool {
 	return true
 }
 
+// ValidResponseStatus reports whether the field value is a valid response status.
 func ValidResponseStatus(fl validator.FieldLevel) bool {
 	statuses := [4]string{constants.Pending, constants.Reviewing, constants.Accepted, constants.Rejected}
 	status := fl.Field().String()
@@ -75,6 +79,7 @@ func ValidResponseStatus(fl validator.FieldLevel) bool {
 	return ok
 }
 
+// NewValidator creates a validator with the registered validation rules.
 func NewValidator() (*validator.Validate, error) {
 	validate := validator.New()
 

@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Egor Dudnikov
 // SPDX-License-Identifier: MIT
 
+// Package apierrors defines the error sentinels and HTTP status mappings used
+// across the API layer.
 package apierrors
 
 import (
@@ -10,56 +12,92 @@ import (
 )
 
 var (
+	// ErrUserAlreadyExists is returned when a user with the given email already exists.
 	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrUserNotExists     = errors.New("user not exists")
+	// ErrUserNotExists is returned when no user matches the given email.
+	ErrUserNotExists = errors.New("user not exists")
 
-	ErrInvalidCode    = errors.New("invalid verification code")
-	ErrCodeExpired    = errors.New("verification code expired")
+	// ErrInvalidCode is returned when the verification code format is invalid.
+	ErrInvalidCode = errors.New("invalid verification code")
+	// ErrCodeExpired is returned when the verification code has expired.
+	ErrCodeExpired = errors.New("verification code expired")
+	// ErrSessionExpired is returned when the verification session has expired.
 	ErrSessionExpired = errors.New("verification session expired")
 
+	// ErrDatabaseError is returned when a database operation fails.
 	ErrDatabaseError = errors.New("database error")
 
+	// ErrCacheError is returned when the cache service fails.
 	ErrCacheError = errors.New("cache error")
 
+	// ErrEmailSendFailed is returned when an email cannot be sent.
 	ErrEmailSendFailed = errors.New("failed to send email")
 
+	// ErrJWTGenerationFailed is returned when a JWT cannot be generated.
 	ErrJWTGenerationFailed = errors.New("failed to generate JWT")
-	ErrJWTDecodingFailed   = errors.New("failed to decode JWT")
+	// ErrJWTDecodingFailed is returned when a JWT cannot be decoded.
+	ErrJWTDecodingFailed = errors.New("failed to decode JWT")
 
+	// ErrJSONDecodeFailed is returned when a request body cannot be decoded.
 	ErrJSONDecodeFailed = errors.New("failed to decode JSON")
+	// ErrJSONEncodeFailed is returned when a response cannot be encoded.
 	ErrJSONEncodeFailed = errors.New("failed to encode JSON")
 
-	ErrBadRequest             = errors.New("bad request")
-	ErrInternalServer         = errors.New("internal server error")
+	// ErrBadRequest is returned for malformed requests.
+	ErrBadRequest = errors.New("bad request")
+	// ErrInternalServer is returned for unexpected internal failures.
+	ErrInternalServer = errors.New("internal server error")
+	// ErrTooManyInvalidAttempts is returned after repeated invalid attempts.
 	ErrTooManyInvalidAttempts = errors.New("too many invalid attempts")
 
+	// ErrInvalidPassword is returned when the provided password is wrong.
 	ErrInvalidPassword = errors.New("invalid password")
 
-	ErrBadGateway       = errors.New("bad gateway")
+	// ErrBadGateway is returned when an upstream service fails.
+	ErrBadGateway = errors.New("bad gateway")
+	// ErrCompanyNotExists is returned when the company is not found.
 	ErrCompanyNotExists = errors.New("company not exists")
-	ErrUnauthorized     = errors.New("user unauthorized")
+	// ErrUnauthorized is returned for unauthenticated access.
+	ErrUnauthorized = errors.New("user unauthorized")
 
-	ErrForbidden    = errors.New("access forbidden")
+	// ErrForbidden is returned when access is denied by role.
+	ErrForbidden = errors.New("access forbidden")
+	// ErrUserMustBe16 is returned when the user is younger than the allowed age.
 	ErrUserMustBe16 = errors.New("birth date is invalid")
 
+	// ErrInternshipIsArchived is returned when operating on an archived internship.
 	ErrInternshipIsArchived = errors.New("internship is archived")
-	ErrInternshipNotFound   = errors.New("internship not found")
-	ErrAlreadyResponded     = errors.New("already responded to this internship")
-	ErrCityNotFound         = errors.New("city not found")
+	// ErrInternshipNotFound is returned when an internship does not exist.
+	ErrInternshipNotFound = errors.New("internship not found")
+	// ErrAlreadyResponded is returned when a user responds twice to the same internship.
+	ErrAlreadyResponded = errors.New("already responded to this internship")
+	// ErrCityNotFound is returned when a city does not exist.
+	ErrCityNotFound = errors.New("city not found")
 
-	ErrSkillsNotFound     = errors.New("skills not found")
-	ErrKeyNotFound        = errors.New("redis key not found")
+	// ErrSkillsNotFound is returned when a skill is not found.
+	ErrSkillsNotFound = errors.New("skills not found")
+	// ErrKeyNotFound is returned when a redis key does not exist.
+	ErrKeyNotFound = errors.New("redis key not found")
+	// ErrCompanyNameMissing is returned when a company has no name.
 	ErrCompanyNameMissing = errors.New("company have not name")
 
+	// ErrUserAlreadyBanned is returned when banning an already banned user.
 	ErrUserAlreadyBanned = errors.New("user already baned")
-	ErrUserNotBanned     = errors.New("user not baned")
-	ErrUserBanned        = errors.New("user baned")
-	ErrUserNotFound      = errors.New("user not found")
-	ErrCannotBanAdmin    = errors.New("cannot ban admin")
-	ErrProfileNotFound   = errors.New("profile not found")
-	ErrCompanyNotFound   = errors.New("company not found")
+	// ErrUserNotBanned is returned when unbanning a user that is not banned.
+	ErrUserNotBanned = errors.New("user not baned")
+	// ErrUserBanned is returned when a banned user attempts an action.
+	ErrUserBanned = errors.New("user baned")
+	// ErrUserNotFound is returned when a user does not exist.
+	ErrUserNotFound = errors.New("user not found")
+	// ErrCannotBanAdmin is returned when attempting to ban an admin.
+	ErrCannotBanAdmin = errors.New("cannot ban admin")
+	// ErrProfileNotFound is returned when a profile does not exist.
+	ErrProfileNotFound = errors.New("profile not found")
+	// ErrCompanyNotFound is returned when a company does not exist.
+	ErrCompanyNotFound = errors.New("company not found")
 )
 
+// ErrorMapping maps an error to its HTTP status and client-facing message.
 type ErrorMapping struct {
 	Status  int
 	Message string
@@ -113,6 +151,7 @@ var errorStatusMap = map[error]ErrorMapping{
 	ErrCompanyNotFound:   {http.StatusNotFound, "Company not found"},
 }
 
+// HTTPStatusMapping resolves an error into its HTTP status code and message.
 func HTTPStatusMapping(err error) (status int, message string) {
 	for e, m := range errorStatusMap {
 		if errors.Is(err, e) {
@@ -123,6 +162,7 @@ func HTTPStatusMapping(err error) (status int, message string) {
 	return deafult.Status, deafult.Message
 }
 
+// Wrap wraps the apierror sentinel around an underlying error preserving both.
 func Wrap(apierror error, err error) error {
 	return fmt.Errorf("%w: %w", apierror, err)
 }

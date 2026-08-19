@@ -10,9 +10,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"strconv"
 )
 
+// NewInternship creates a new internship for the company of the given user and returns its ID.
 func (r *Repository) NewInternship(ctx context.Context, interships models.Internship, userID int) (int, error) {
 	id, err := r.GetCompanyIDByUserID(ctx, userID)
 	if err != nil {
@@ -28,6 +30,7 @@ func (r *Repository) NewInternship(ctx context.Context, interships models.Intern
 	return internshipID, nil
 }
 
+// GetInternshipByID returns the non-archived internship with the given ID, excluding banned companies.
 func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Internship, error) {
 	internship := models.Internship{}
 	err := r.db.QueryRowContext(ctx, `
@@ -63,6 +66,7 @@ func (r *Repository) GetInternshipByID(ctx context.Context, id int) (models.Inte
 	return internship, nil
 }
 
+// UpdateInternships updates the filled fields of the non-archived internship with the given ID.
 func (r *Repository) UpdateInternships(ctx context.Context, internship models.InternshipUpdate) error {
 
 	query := newUpdateQuery("UPDATE internships SET ", internship.ID)
@@ -90,6 +94,7 @@ func (r *Repository) UpdateInternships(ctx context.Context, internship models.In
 	return err
 }
 
+// GetCompanyIDByInternshipID returns the company ID of the non-archived internship with the given ID.
 func (r *Repository) GetCompanyIDByInternshipID(ctx context.Context, id int) (int, error) {
 	var companyID int
 	err := r.db.QueryRowContext(ctx, `SELECT company_id FROM internships WHERE id = $1 AND is_archived = FALSE`, id).Scan(&companyID)
@@ -102,6 +107,7 @@ func (r *Repository) GetCompanyIDByInternshipID(ctx context.Context, id int) (in
 	return companyID, nil
 }
 
+// GetCompanyInternships returns the internships of the company with the given ID, optionally only non-archived ones.
 func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArchiveInternships bool) ([]models.Internship, error) {
 	res := []models.Internship{}
 	query := `SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i WHERE i.company_id = $1`
@@ -112,7 +118,11 @@ func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArch
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		internship := models.Internship{}
@@ -135,6 +145,7 @@ func (r *Repository) GetCompanyInternships(ctx context.Context, id int, hintArch
 	return res, nil
 }
 
+// ArchivedInternship marks the internship with the given ID as archived.
 func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE internships SET is_archived = TRUE WHERE id = $1`, id)
 	if err != nil {
@@ -143,6 +154,7 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 	return nil
 }
 
+// SearchInternship returns non-archived internships matching the given filters.
 func (r *Repository) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res := []models.Internship{}
 	query := newQuerySelectBuilder("SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived FROM internships i")
@@ -192,7 +204,11 @@ func (r *Repository) SearchInternship(ctx context.Context, filters models.Search
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		internship := models.Internship{}
@@ -219,10 +235,10 @@ func sortValid(order *int, sort *string) bool {
 	if order == nil || sort == nil {
 		return false
 	}
-	if *sort == "salary" {
+	switch *sort {
+	case "salary", "duration_months":
 		return true
-	} else if *sort == "duration_months" {
-		return true
+	default:
+		return false
 	}
-	return false
 }

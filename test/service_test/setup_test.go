@@ -6,6 +6,7 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -81,7 +82,10 @@ func ctxWithClaims(userID int, role, email string) context.Context {
 }
 
 func TestMain(m *testing.M) {
-	os.Setenv("JWT_SECRET", "test-secret-key-for-tests")
+	//nolint:gosec // test-only value, not a real secret
+	if err := os.Setenv("JWT_SECRET", "test-secret-key-for-tests"); err != nil {
+		log.Fatalf("setenv JWT_SECRET: %v", err)
+	}
 	os.Exit(m.Run())
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// GetMyNotifications returns the notifications of the authenticated user.
 func (app *Service) GetMyNotifications(ctx context.Context) ([]models.Notification, error) {
 	res := []models.Notification{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -23,6 +24,7 @@ func (app *Service) GetMyNotifications(ctx context.Context) ([]models.Notificati
 	return res, err
 }
 
+// SetReadStatusOfNotification marks all notifications of the authenticated user as read.
 func (app *Service) SetReadStatusOfNotification(ctx context.Context) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -33,6 +35,7 @@ func (app *Service) SetReadStatusOfNotification(ctx context.Context) error {
 	return err
 }
 
+// InvateIntern sends an internship invitation to an intern and notifies them.
 func (app *Service) InvateIntern(ctx context.Context, internshipID int, invateIntern models.InvateIntern) error {
 	err := app.validate.Struct(invateIntern)
 	if err != nil {
@@ -66,6 +69,7 @@ func (app *Service) InvateIntern(ctx context.Context, internshipID int, invateIn
 	return nil
 }
 
+// Hub manages the websocket connections of online users.
 type Hub struct {
 	hub map[int]*Client
 	mu  sync.RWMutex
@@ -77,6 +81,7 @@ func newHub() *Hub {
 	}
 }
 
+// Register registers the given client for the given user.
 func (h *Hub) Register(userID int, client *Client) {
 	h.mu.Lock()
 	h.hub[userID] = client
@@ -97,12 +102,14 @@ func (h *Hub) unregister(userID int) {
 	delete(h.hub, userID)
 }
 
+// GetOnlineCount returns the number of currently connected users.
 func (h *Hub) GetOnlineCount() int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return len(h.hub)
 }
 
+// KickUser disconnects the user with the given ID and sends the given reason.
 func (h *Hub) KickUser(userID int, reason string) {
 	h.mu.RLock()
 	client, ok := h.hub[userID]
@@ -121,6 +128,7 @@ func (h *Hub) KickUser(userID int, reason string) {
 	h.unregister(userID)
 }
 
+// Send sends the given message to the user with the given ID.
 func (h *Hub) Send(userID int, msg string) {
 	h.mu.RLock()
 	client, ok := h.hub[userID]
@@ -141,6 +149,7 @@ func (h *Hub) Send(userID int, msg string) {
 
 }
 
+// Client represents a websocket connection of a user.
 type Client struct {
 	UserID int
 	Conn   *websocket.Conn
@@ -148,8 +157,13 @@ type Client struct {
 	Hub    *Hub
 }
 
+// WritePump writes messages from the Send channel to the websocket connection.
 func (c *Client) WritePump() {
-	defer c.Conn.Close()
+	defer func() {
+		if cerr := c.Conn.Close(); cerr != nil {
+			log.Printf("ws: close connection: %v", cerr)
+		}
+	}()
 
 	for msg := range c.Send {
 		err := c.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
@@ -161,9 +175,12 @@ func (c *Client) WritePump() {
 
 }
 
+// ReadPump reads messages from the websocket connection and responds to pings.
 func (c *Client) ReadPump() {
 	defer func() {
-		c.Conn.Close()
+		if cerr := c.Conn.Close(); cerr != nil {
+			log.Printf("ws: close connection: %v", cerr)
+		}
 		c.Hub.unregister(c.UserID)
 	}()
 

@@ -7,9 +7,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
+// GetMyNotifications returns the notifications of the user with the given ID, newest first.
 func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.Notification, error) {
 	notifications := []models.Notification{}
 
@@ -46,7 +48,11 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
 	if err != nil {
 		return notifications, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		var n models.Notification
@@ -119,6 +125,7 @@ func (r *Repository) GetMyNotifications(ctx context.Context, id int) ([]models.N
 	return notifications, nil
 }
 
+// SetReadStatusOfNotification marks all notifications of the user with the given ID as read.
 func (r *Repository) SetReadStatusOfNotification(ctx context.Context, userID int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE notifications SET is_read = TRUE WHERE user_id = $1`, userID)
 	if err != nil {
@@ -127,6 +134,7 @@ func (r *Repository) SetReadStatusOfNotification(ctx context.Context, userID int
 	return nil
 }
 
+// NewChangeStatusNotification creates a change status notification for the application and returns it.
 func (r *Repository) NewChangeStatusNotification(ctx context.Context, responseID int, internshipID int, newStatus string) (models.Notification, error) {
 	var notification models.Notification
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -209,6 +217,7 @@ func (r *Repository) NewChangeStatusNotification(ctx context.Context, responseID
 	return notification, nil
 }
 
+// NewInviteNotification creates an invite notification from the company to the user and returns it.
 func (r *Repository) NewInviteNotification(ctx context.Context, userID int, internshipID int, companyID int, message *string) (models.Notification, error) {
 	var notification models.Notification
 
@@ -292,6 +301,7 @@ func (r *Repository) NewInviteNotification(ctx context.Context, userID int, inte
 	return notification, nil
 }
 
+// NewApplicationNotification creates a new application notification for the company and returns it.
 func (r *Repository) NewApplicationNotification(ctx context.Context, internID, internshipID, responseID int) (models.Notification, error) {
 
 	var notification models.Notification

@@ -20,8 +20,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// ErrorHandler is a handler function that can return an error.
 type ErrorHandler func(http.ResponseWriter, *http.Request, httprouter.Params) error
 
+// ErrorMiddleware wraps an ErrorHandler and converts returned errors into HTTP responses.
 func ErrorMiddleware(next ErrorHandler) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if err := next(w, r, ps); err != nil {
@@ -32,6 +34,7 @@ func ErrorMiddleware(next ErrorHandler) httprouter.Handle {
 	}
 }
 
+// CorsMiddleware sets CORS headers and handles preflight OPTIONS requests.
 func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		w.Header().Set("Access-Control-Allow-Origin", h.corsConfig.ControlAllowOrigin)
@@ -48,6 +51,7 @@ func (h *ServiceHandler) CorsMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
+// AuthMiddleware authenticates the request, refreshes expired tokens, and checks for banned users.
 func (h *ServiceHandler) AuthMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 
@@ -140,6 +144,7 @@ func (h ServiceHandler) refreshTokenValid(ctx context.Context, r *http.Request) 
 	return nil
 }
 
+// InternMiddleware restricts the request to authenticated interns.
 func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
@@ -153,6 +158,7 @@ func (h *ServiceHandler) InternMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
+// AdminMiddleware restricts the request to authenticated admins.
 func (h *ServiceHandler) AdminMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
@@ -166,6 +172,7 @@ func (h *ServiceHandler) AdminMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
+// CompanyMiddleware restricts the request to authenticated companies.
 func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		claims, ok := r.Context().Value(constants.ClaimsKey).(models.Claims)
@@ -179,6 +186,7 @@ func (h *ServiceHandler) CompanyMiddleware(next ErrorHandler) ErrorHandler {
 	}
 }
 
+// RateLimitMiddleware rate limits requests to an endpoint by user, session, or IP.
 func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 		ctx := r.Context()

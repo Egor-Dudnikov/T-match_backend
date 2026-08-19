@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 )
 
+// NewInternship validates and creates a new internship for the given company and returns its ID.
 func (app *Service) NewInternship(ctx context.Context, internship models.Internship, id int) (int, error) {
 	err := app.validate.Struct(internship)
 	if err != nil {
@@ -24,6 +25,7 @@ func (app *Service) NewInternship(ctx context.Context, internship models.Interns
 	return internshipID, nil
 }
 
+// GetInternshipByID returns the internship with the given ID, including its skills.
 func (app *Service) GetInternshipByID(ctx context.Context, id int) (models.InternshipResponse, error) {
 	res := models.InternshipResponse{}
 	internship, err := app.db.GetInternshipByID(ctx, id)
@@ -40,6 +42,7 @@ func (app *Service) GetInternshipByID(ctx context.Context, id int) (models.Inter
 	return res, nil
 }
 
+// UpdateInternship validates and updates an internship owned by the authenticated company.
 func (app *Service) UpdateInternship(ctx context.Context, internship models.InternshipUpdate) error {
 	err := app.validate.Struct(internship)
 	if err != nil {
@@ -61,6 +64,7 @@ func (app *Service) UpdateInternship(ctx context.Context, internship models.Inte
 	return nil
 }
 
+// ArchivedInternship archives the internship with the given ID.
 func (app *Service) ArchivedInternship(ctx context.Context, id int) error {
 	err := app.IsCompanysInternship(ctx, id)
 	if err != nil {
@@ -74,6 +78,7 @@ func (app *Service) ArchivedInternship(ctx context.Context, id int) error {
 	return nil
 }
 
+// IsCompanysInternship returns an error if the internship with the given ID does not belong to the authenticated company.
 func (app *Service) IsCompanysInternship(ctx context.Context, id int) error {
 	companyID, err := app.db.GetCompanyIDByInternshipID(ctx, id)
 	if err != nil {
@@ -95,6 +100,7 @@ func (app *Service) IsCompanysInternship(ctx context.Context, id int) error {
 	return nil
 }
 
+// GetCompanyesInternshipsByUserID returns the non-archived internships of the company of the given user.
 func (app *Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID int) ([]models.Internship, error) {
 	res := []models.Internship{}
 
@@ -107,11 +113,13 @@ func (app *Service) GetCompanyesInternshipsByUserID(ctx context.Context, userID 
 	return res, err
 }
 
+// GetCompanyesInternships returns the internships of the company with the given ID.
 func (app *Service) GetCompanyesInternships(ctx context.Context, companyID int) ([]models.Internship, error) {
 	res, err := app.db.GetCompanyInternships(ctx, companyID, true)
 	return res, err
 }
 
+// AddInternshipSkills adds the given skills to the internship with the given ID.
 func (app *Service) AddInternshipSkills(ctx context.Context, skills []int, id int) error {
 	err := app.IsCompanysInternship(ctx, id)
 	if err != nil {
@@ -125,6 +133,7 @@ func (app *Service) AddInternshipSkills(ctx context.Context, skills []int, id in
 	return nil
 }
 
+// DeleteInternshipSkills deletes the given skills from the internship with the given ID.
 func (app *Service) DeleteInternshipSkills(ctx context.Context, internshipID int, skillIDs []int) error {
 	err := app.IsCompanysInternship(ctx, internshipID)
 	if err != nil {
@@ -141,6 +150,7 @@ func (app *Service) DeleteInternshipSkills(ctx context.Context, internshipID int
 	return nil
 }
 
+// RespondInternship creates a response to the internship for the authenticated intern and notifies the company.
 func (app *Service) RespondInternship(ctx context.Context, internshipID int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -174,6 +184,7 @@ func (app *Service) RespondInternship(ctx context.Context, internshipID int) err
 	return err
 }
 
+// DeleteRespondInternship deletes the response of the authenticated intern to the internship with the given ID.
 func (app *Service) DeleteRespondInternship(ctx context.Context, internshipID int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -187,6 +198,7 @@ func (app *Service) DeleteRespondInternship(ctx context.Context, internshipID in
 	return err
 }
 
+// GetInternshipResponses returns the responses for the internship with the given ID.
 func (app *Service) GetInternshipResponses(ctx context.Context, internshipID int) ([]models.Response, error) {
 	err := app.IsCompanysInternship(ctx, internshipID)
 	if err != nil {
@@ -196,6 +208,7 @@ func (app *Service) GetInternshipResponses(ctx context.Context, internshipID int
 	return responses, err
 }
 
+// SetResponseStatus updates the status of the response with the given ID and notifies the intern.
 func (app *Service) SetResponseStatus(ctx context.Context, responseID int, respReq models.ResponseRequest) error {
 	err := app.validate.Struct(respReq)
 	if err != nil {
@@ -232,6 +245,7 @@ func (app *Service) SetResponseStatus(ctx context.Context, responseID int, respR
 	return nil
 }
 
+// SearchInternship searches internships by the given filters.
 func (app *Service) SearchInternship(ctx context.Context, filters models.SearchInternship) ([]models.Internship, error) {
 	res, err := app.db.SearchInternship(ctx, filters)
 	return res, err

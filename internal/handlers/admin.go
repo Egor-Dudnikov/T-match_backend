@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Egor Dudnikov
 // SPDX-License-Identifier: MIT
 
+// Package handlers implements the HTTP handlers and routing for the API.
 package handlers
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// LoginAdminHandler logs an admin in and returns access and refresh tokens.
 func (h *ServiceHandler) LoginAdminHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.LoginUser](r)
@@ -27,6 +29,7 @@ func (h *ServiceHandler) LoginAdminHandler(w http.ResponseWriter, r *http.Reques
 	return err
 }
 
+// AdminGetStatsHandler returns admin statistics.
 func (h *ServiceHandler) AdminGetStatsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	stats, err := h.service.GetAdminStats(r.Context())
 	if err != nil {
@@ -37,6 +40,7 @@ func (h *ServiceHandler) AdminGetStatsHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
+// AdminBanUserHandler bans a user by ID with the given reason.
 func (h *ServiceHandler) AdminBanUserHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	userID, err := getIDURL(ps)
 	if err != nil {
@@ -56,6 +60,7 @@ func (h *ServiceHandler) AdminBanUserHandler(_ http.ResponseWriter, r *http.Requ
 	return nil
 }
 
+// AdminUnbanUserHandler unbans a user by ID.
 func (h *ServiceHandler) AdminUnbanUserHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	userID, err := getIDURL(ps)
 	if err != nil {
@@ -71,6 +76,7 @@ func (h *ServiceHandler) AdminUnbanUserHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
+// AdminDeleteInternshipHandler deletes an internship by ID.
 func (h *ServiceHandler) AdminDeleteInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	internshipID, err := getIDURL(ps)
 	if err != nil {

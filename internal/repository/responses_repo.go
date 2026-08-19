@@ -7,10 +7,12 @@ import (
 	"T-match_backend/internal/apierrors"
 	"T-match_backend/internal/models"
 	"context"
+	"log"
 
 	"github.com/lib/pq"
 )
 
+// GetMyResponses returns the applications of the intern with the given ID, excluding banned users.
 func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models.Response, error) {
 	res := []models.Response{}
 
@@ -27,7 +29,11 @@ func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		response := models.Response{}
@@ -46,6 +52,7 @@ func (r *Repository) GetMyResponses(ctx context.Context, internID int) ([]models
 	return res, nil
 }
 
+// RespondInternship creates an application from the intern to the internship and returns its ID.
 func (r *Repository) RespondInternship(ctx context.Context, internID int, internshipID int) (int, error) {
 	var respondID int
 	err := r.db.QueryRowContext(ctx, `INSERT INTO applications (intern_id, internship_id, created_at) VALUES ($1, $2, NOW()) RETURNING id`, internID, internshipID).Scan(&respondID)
@@ -58,13 +65,18 @@ func (r *Repository) RespondInternship(ctx context.Context, internID int, intern
 	return respondID, nil
 }
 
+// InternshipsResponse returns the applications for the internship with the given ID and sets them to reviewing.
 func (r *Repository) InternshipsResponse(ctx context.Context, internshipID int) ([]models.Response, error) {
 	res := []models.Response{}
 	rows, err := r.db.QueryContext(ctx, `SELECT * FROM applications WHERE internship_id = $1`, internshipID)
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 	for rows.Next() {
 		response := models.Response{}
 		err := rows.Scan(&response.ID,
@@ -82,11 +94,13 @@ func (r *Repository) InternshipsResponse(ctx context.Context, internshipID int) 
 	return res, err
 }
 
+// DeleteRespondInternship deletes the pending application of the intern to the internship.
 func (r *Repository) DeleteRespondInternship(ctx context.Context, internID int, internshipID int) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM applications WHERE internship_id = $1 AND intern_id = $2 AND status = 'pending'", internshipID, internID)
 	return err
 }
 
+// SetReviewStatus sets the status to reviewing for all pending applications of the internship.
 func (r *Repository) SetReviewStatus(ctx context.Context, internshipID int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE applications SET status = 'reviewing' WHERE status = 'pending' AND internship_id = $1`, internshipID)
 	if err != nil {
@@ -95,6 +109,7 @@ func (r *Repository) SetReviewStatus(ctx context.Context, internshipID int) erro
 	return nil
 }
 
+// SetResponseStatus sets the status of the application with the given ID.
 func (r *Repository) SetResponseStatus(ctx context.Context, ID int, status string) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE applications SET status = $1 WHERE id = $2`, status, ID)
 	if err != nil {
@@ -103,6 +118,7 @@ func (r *Repository) SetResponseStatus(ctx context.Context, ID int, status strin
 	return nil
 }
 
+// GetInternshipIDByResponseID returns the internship ID of the application with the given ID.
 func (r *Repository) GetInternshipIDByResponseID(ctx context.Context, ResponseID int) (int, error) {
 	var internshipID int
 	err := r.db.QueryRowContext(ctx, `SELECT internship_id FROM applications WHERE id = $1`, ResponseID).Scan(&internshipID)

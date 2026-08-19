@@ -5,6 +5,7 @@ package models
 
 import "time"
 
+// Internship is an internship listing published by a company.
 type Internship struct {
 	ID            int       `json:"id"`
 	CompanyID     int       `json:"company_id"`
@@ -17,6 +18,7 @@ type Internship struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+// InternshipUpdate is the payload for updating an internship.
 type InternshipUpdate struct {
 	ID            int     `json:"id,omitempty"`
 	Title         *string `json:"title,omitempty" validate:"omitempty,min=1,max=200"`
@@ -26,11 +28,13 @@ type InternshipUpdate struct {
 	DurationMonth *int    `json:"duration_months,omitempty" validate:"omitempty,min=1"`
 }
 
+// InternshipResponse is the internship returned by the API along with its skills.
 type InternshipResponse struct {
 	Internship Internship `json:"internship"`
 	Skills     []Skill    `json:"skills"`
 }
 
+// Response is a student's application to an internship.
 type Response struct {
 	ID           int       `json:"id"`
 	InternID     int       `json:"intern_id"`
@@ -39,10 +43,12 @@ type Response struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+// ResponseRequest is the payload for changing a response status.
 type ResponseRequest struct {
 	Status string `json:"status" validate:"required,valid_response_status"`
 }
 
+// SearchInternship are the internship search filters.
 type SearchInternship struct {
 	Query       *string
 	CityID      *int
@@ -57,6 +63,7 @@ type SearchInternship struct {
 	Limit       *int
 }
 
+// InvateIntern is the payload for inviting a student to an internship.
 type InvateIntern struct {
 	UserID  int     `json:"user_id" validate:"required,numeric"`
 	Message *string `json:"message" validate:"omitempty"`

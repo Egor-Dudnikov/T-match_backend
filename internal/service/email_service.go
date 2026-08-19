@@ -13,14 +13,17 @@ import (
 	"time"
 )
 
+// EmailClient sends emails using the given configuration.
 type EmailClient struct {
 	cfg models.EmailConfig
 }
 
+// NewEmailClient returns a new EmailClient with the given configuration.
 func NewEmailClient(cfg models.EmailConfig) *EmailClient {
 	return &EmailClient{cfg: cfg}
 }
 
+// SendVerifyCode sends an email with the given verification code to the given address.
 func (r *EmailClient) SendVerifyCode(to string, code string) error {
 	addr := r.cfg.Addr
 

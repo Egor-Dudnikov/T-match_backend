@@ -11,6 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// NewRouter builds and returns the application router with all routes registered.
 func NewRouter(app *ServiceHandler) *httprouter.Router {
 	router := httprouter.New()
 

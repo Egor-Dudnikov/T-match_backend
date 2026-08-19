@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Egor Dudnikov
 // SPDX-License-Identifier: MIT
 
+// Package configs loads the application configuration from environment variables.
 package configs
 
 import (
@@ -11,6 +12,7 @@ import (
 	"time"
 )
 
+// LoadConfig builds the application configuration from environment variables.
 func LoadConfig() models.Config {
 	return models.Config{
 		DbConfig: models.DbConfig{

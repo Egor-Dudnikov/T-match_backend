@@ -1,3 +1,4 @@
+// Package dadata provides a client for the DaData company lookup API.
 package dadata
 
 import (
@@ -8,17 +9,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/tidwall/gjson"
 )
 
+// Client is a client for the DaData API.
 type Client struct {
 	apiKey     string
 	httpClient *http.Client
 }
 
+// NewClient creates a DaData client using the API key from the environment.
 func NewClient() *Client {
 	return &Client{
 		apiKey: os.Getenv("DA_DATA_API_KEY"),
@@ -28,6 +32,7 @@ func NewClient() *Client {
 	}
 }
 
+// MakeRequest looks up the company with the given TIN and returns the raw response body and status code.
 func (c *Client) MakeRequest(TIN string) ([]byte, int, error) {
 	requestBody, err := json.Marshal(map[string]string{
 		"query": TIN,
@@ -49,7 +54,11 @@ func (c *Client) MakeRequest(TIN string) ([]byte, int, error) {
 	if err != nil {
 		return []byte{}, resp.StatusCode, apierrors.Wrap(apierrors.ErrBadGateway, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("dadata: close response body: %v", cerr)
+		}
+	}()
 
 	respJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -58,6 +67,7 @@ func (c *Client) MakeRequest(TIN string) ([]byte, int, error) {
 	return respJSON, resp.StatusCode, nil
 }
 
+// ValidTIN validates the given TIN and returns the matching active company data.
 func (c *Client) ValidTIN(TIN string) (models.CompanyData, error) {
 	company := models.CompanyData{}
 

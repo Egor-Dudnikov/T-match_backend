@@ -77,7 +77,7 @@ func TestLoginUserNotExists(t *testing.T) {
 		WithArgs("intern@test.ru", constants.Intern).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-	_, _, err := env.svc.LoginUser(ctxWithClaims(0, constants.Intern, ""), models.LoginUser{
+	_, _, err := env.svc.LoginUser(ctxWithClaims(0, constants.Intern, ""), models.LoginUser{ //nolint:gosec // test-only values
 		Email:        "intern@test.ru",
 		PasswordHash: "not-a-real-hash",
 		DeviceID:     "device-12345",

@@ -5,6 +5,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"T-match_backend/internal/apierrors"
@@ -15,20 +16,24 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// ServiceHandler handles HTTP requests and delegates work to the underlying service.
 type ServiceHandler struct {
 	service    *service.Service
 	corsConfig *models.CORSConfig
 }
 
+// NewServiceHandler creates a new ServiceHandler with the given service and CORS config.
 func NewServiceHandler(service *service.Service, cfg *models.CORSConfig) *ServiceHandler {
 	return &ServiceHandler{service: service, corsConfig: cfg}
 }
 
+// CheckHealth writes an "OK" response to indicate the service is healthy.
 func (h *ServiceHandler) CheckHealth(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) error {
 	_, err := w.Write([]byte("OK"))
 	return err
 }
 
+// AuthStudentHandler registers a new intern and returns a verification session ID.
 func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userReg, err := decodeJSON[models.InternAuth](r)
@@ -46,6 +51,7 @@ func (h *ServiceHandler) AuthStudentHandler(w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
+// VerifyUserHandler verifies an intern's session and returns access and refresh tokens.
 func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
@@ -68,6 +74,7 @@ func (h *ServiceHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Reques
 	return err
 }
 
+// NewVerifyCode requests a new verification code for the given session.
 func (h *ServiceHandler) NewVerifyCode(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
@@ -78,6 +85,7 @@ func (h *ServiceHandler) NewVerifyCode(_ http.ResponseWriter, r *http.Request, _
 	return nil
 }
 
+// LoginUserHandler logs an intern in and returns access and refresh tokens.
 func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.LoginUser](r)
@@ -94,6 +102,7 @@ func (h *ServiceHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request
 	return err
 }
 
+// AuthCompanyHandler registers a new company and returns a verification session ID.
 func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userReg, err := decodeJSON[models.CompanyAuth](r)
@@ -111,6 +120,7 @@ func (h *ServiceHandler) AuthCompanyHandler(w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
+// VerifyCompanyHandler verifies a company's session and returns access and refresh tokens.
 func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
@@ -132,6 +142,7 @@ func (h *ServiceHandler) VerifyCompanyHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
+// LoginCompanyHandler logs a company in and returns access and refresh tokens.
 func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	userLog, err := decodeJSON[models.LoginUser](r)
@@ -148,6 +159,7 @@ func (h *ServiceHandler) LoginCompanyHandler(w http.ResponseWriter, r *http.Requ
 	return err
 }
 
+// LogoutHandler deletes the refresh token and clears the refresh cookie.
 func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	err := h.service.DeleteRefreshToken(r.Context())
 	if err != nil {
@@ -157,6 +169,7 @@ func (h *ServiceHandler) LogoutHandler(w http.ResponseWriter, r *http.Request, _
 	return nil
 }
 
+// ForgotPasswordHandler starts a password reset flow and returns a verification session ID.
 func (h *ServiceHandler) ForgotPasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	req, err := decodeJSON[models.FogetPasswordRequest](r)
 	if err != nil {
@@ -174,6 +187,7 @@ func (h *ServiceHandler) ForgotPasswordHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
+// VerifyForgotPasswordHandler verifies a password reset code and returns access and refresh tokens.
 func (h *ServiceHandler) VerifyForgotPasswordHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	sessionID := r.Header.Get("X-Verify-Session")
@@ -195,6 +209,7 @@ func (h *ServiceHandler) VerifyForgotPasswordHandler(w http.ResponseWriter, r *h
 	return err
 }
 
+// ChangePasswordHandler changes the password for the authenticated user.
 func (h *ServiceHandler) ChangePasswordHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	req, err := decodeJSON[models.ChangePasswordRequest](r)
 	if err != nil {
@@ -208,8 +223,12 @@ func (h *ServiceHandler) ChangePasswordHandler(_ http.ResponseWriter, r *http.Re
 
 func decodeJSON[T any](r *http.Request) (T, error) {
 	var res T
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Printf("handlers: close request body: %v", cerr)
+		}
+	}()
 	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
 
 	err := decoder.Decode(&res)
 	if err != nil {
@@ -231,8 +250,9 @@ func encodeJSON[T any](w http.ResponseWriter, resp T) error {
 	return nil
 }
 
+// SetRefreshCookie sets the refresh token cookie with the given value and max age.
 func SetRefreshCookie(w http.ResponseWriter, value string, maxAge int) {
-	// при переходе на https заменить Secure на true
+	//nolint:gosec // cookie is served over plain HTTP in dev; switch Secure to true when moving to HTTPS
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    value,

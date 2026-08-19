@@ -41,6 +41,10 @@ func TestNewInternshipSuccess(t *testing.T) {
 		WithArgs(2, "Go developer", "Backend internship", 100000, 6, 77).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(7))
 
+	env.mock.ExpectQuery(`SELECT geo_lon, geo_lat FROM cities WHERE id = $1`).
+		WithArgs(77).
+		WillReturnRows(sqlmock.NewRows([]string{"geo_lon", "geo_lat"}).AddRow(55.75, 37.62))
+
 	id, err := env.svc.NewInternship(ctxWithClaims(1, constants.Company, "company@test.ru"), models.Internship{
 		Title:         "Go developer",
 		Description:   "Backend internship",

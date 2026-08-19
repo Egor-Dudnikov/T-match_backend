@@ -9,10 +9,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
 
+// AddInternSkills adds the given skills to the intern's profile for the given user ID.
 func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID int) error {
 	id, err := r.GetProfileIDByUserID(ctx, userID)
 	if err != nil {
@@ -50,6 +52,7 @@ func (r *Repository) AddInternSkills(ctx context.Context, skills []int, userID i
 	return nil
 }
 
+// GetInternSkills returns the skills of the intern for the given user ID.
 func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.Skill, error) {
 	id, err := r.GetProfileIDByUserID(ctx, userID)
 	res := []models.Skill{}
@@ -64,7 +67,11 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 		}
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		var skillID int
@@ -82,6 +89,7 @@ func (r *Repository) GetInternSkills(ctx context.Context, userID int) ([]models.
 	return res, nil
 }
 
+// DeleteInternSkills deletes the given skills from the intern's profile for the given user ID.
 func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userID int) error {
 	if len(skills) == 0 {
 		return nil
@@ -119,6 +127,7 @@ func (r *Repository) DeleteInternSkills(ctx context.Context, skills []int, userI
 	return nil
 }
 
+// AddInternshipSkills adds the given skills to the internship with the given ID.
 func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, internshipID int) error {
 	if len(skills) == 0 {
 		return nil
@@ -152,6 +161,7 @@ func (r *Repository) AddInternshipSkills(ctx context.Context, skills []int, inte
 	return nil
 }
 
+// GetInternshipSkills returns the skills of the internship with the given ID.
 func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) ([]models.Skill, error) {
 	res := []models.Skill{}
 	skillIDs := []int{}
@@ -162,7 +172,11 @@ func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) 
 		}
 		return res, nil
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		var skillID int
@@ -177,6 +191,7 @@ func (r *Repository) GetInternshipSkills(ctx context.Context, internshipID int) 
 	return res, err
 }
 
+// DeleteInternshipSkills deletes the given skills from the internship with the given ID.
 func (r *Repository) DeleteInternshipSkills(ctx context.Context, skills []int, internshipID int) error {
 	if len(skills) == 0 {
 		return nil
@@ -209,6 +224,7 @@ func (r *Repository) DeleteInternshipSkills(ctx context.Context, skills []int, i
 	return nil
 }
 
+// GetNameSkills returns the skills with the given IDs including their names.
 func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]models.Skill, error) {
 	res := []models.Skill{}
 	if len(skillsID) == 0 {
@@ -235,7 +251,11 @@ func (r *Repository) GetNameSkills(ctx context.Context, skillsID []int) ([]model
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	ptr := 0
 	for rows.Next() {

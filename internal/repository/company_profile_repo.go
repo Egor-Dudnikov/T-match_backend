@@ -6,8 +6,10 @@ import (
 	"T-match_backend/internal/models"
 	"context"
 	"database/sql"
+	"log"
 )
 
+// UpdateCompanyProfile updates the filled fields of the company profile for the given user ID.
 func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profile models.CompanyProfile) error {
 	query := newUpdateQuery("UPDATE companies SET ", userID)
 
@@ -28,6 +30,7 @@ func (r *Repository) UpdateCompanyProfile(ctx context.Context, userID int, profi
 	return nil
 }
 
+// GetCompanyProfile returns the company profile with the given ID, excluding banned users.
 func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfile, error) {
 	profile := models.CompanyProfile{}
 	err := r.db.QueryRowContext(ctx, `
@@ -61,6 +64,7 @@ func (r *Repository) GetCompanyProfile(ctx context.Context, id int) (models.Comp
 	return profile, nil
 }
 
+// SetMyCompanyAvatar updates the avatar image URL of the company for the given user ID.
 func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE companies SET
 	image = $2
@@ -71,6 +75,7 @@ func (r *Repository) SetMyCompanyAvatar(ctx context.Context, url string, id int)
 	return nil
 }
 
+// SearchCompany returns company profiles matching the given filters.
 func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res := []models.CompanyProfile{}
 
@@ -104,7 +109,11 @@ func (r *Repository) SearchCompany(ctx context.Context, filters models.SearchCom
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		company := models.CompanyProfile{}

@@ -10,10 +10,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
 
+// QueryProfile updates the filled fields of the intern profile for the given user ID.
 func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Profile) error {
 	query := newUpdateQuery("UPDATE interns SET ", id)
 
@@ -39,6 +41,7 @@ func (r *Repository) QueryProfile(ctx context.Context, id int, profile models.Pr
 	return nil
 }
 
+// GetProfileIDByUserID returns the profile ID associated with the given user ID.
 func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM interns WHERE user_id = $1`, userID).Scan(&id)
@@ -48,6 +51,7 @@ func (r *Repository) GetProfileIDByUserID(ctx context.Context, userID int) (int,
 	return id, err
 }
 
+// GetProfile returns the intern profile with the given ID, excluding banned users.
 func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, error) {
 	profile := models.Profile{}
 	err := r.db.QueryRowContext(ctx, `
@@ -81,6 +85,7 @@ func (r *Repository) GetProfile(ctx context.Context, id int) (models.Profile, er
 	return profile, nil
 }
 
+// SetMyAvatar updates the avatar image URL of the intern for the given user ID.
 func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE interns SET
 	image = $2
@@ -91,13 +96,18 @@ func (r *Repository) SetMyAvatar(ctx context.Context, url string, id int) error 
 	return nil
 }
 
+// GetAllSkills returns all available skills.
 func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills := []models.Skill{}
 	rows, err := r.db.QueryContext(ctx, `SELECT * FROM skills;`)
 	if err != nil {
 		return skills, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 	for rows.Next() {
 		var id int
 		var name string
@@ -111,6 +121,7 @@ func (r *Repository) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	return skills, nil
 }
 
+// SearchIntern returns intern short profiles matching the given filters.
 func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res := []models.ShortProfile{}
 
@@ -150,7 +161,11 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	if err != nil {
 		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 
 	for rows.Next() {
 		intern := models.ShortProfile{}
@@ -172,13 +187,18 @@ func (r *Repository) SearchIntern(ctx context.Context, filters models.SearchInte
 	return res, nil
 }
 
+// GetAllCities returns all cities ordered by name.
 func (r *Repository) GetAllCities(ctx context.Context) ([]models.City, error) {
 	cities := []models.City{}
 	rows, err := r.db.QueryContext(ctx, `SELECT id, name, region FROM cities ORDER BY name`)
 	if err != nil {
 		return cities, apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
 	for rows.Next() {
 		var city models.City
 		err = rows.Scan(&city.ID, &city.Name, &city.Region)
@@ -191,6 +211,7 @@ func (r *Repository) GetAllCities(ctx context.Context) ([]models.City, error) {
 	return cities, nil
 }
 
+// GetCityGeo returns the longitude and latitude of the city with the given ID.
 func (r *Repository) GetCityGeo(ctx context.Context, cityID int) (float64, float64, error) {
 	var geoLen, geoLot float64
 	err := r.db.QueryRowContext(ctx, `SELECT geo_lon, geo_lat FROM cities WHERE id = $1`, cityID).Scan(&geoLen, &geoLot)
@@ -203,6 +224,7 @@ func (r *Repository) GetCityGeo(ctx context.Context, cityID int) (float64, float
 	return geoLen, geoLot, nil
 }
 
+// GetUserIDByProfileID returns the user ID associated with the given profile ID.
 func (r *Repository) GetUserIDByProfileID(ctx context.Context, id int) (int, error) {
 	var userID int
 	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM interns WHERE id = $1`, id).Scan(&userID)
@@ -212,6 +234,7 @@ func (r *Repository) GetUserIDByProfileID(ctx context.Context, id int) (int, err
 	return userID, nil
 }
 
+// ExistStatus reports whether an application with the given status exists for the intern at the company.
 func (r *Repository) ExistStatus(ctx context.Context, companyID, internID int, status string) (bool, error) {
 	exist := false
 	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(

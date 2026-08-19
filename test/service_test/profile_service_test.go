@@ -69,6 +69,10 @@ func TestUpdateStudentProfileSuccess(t *testing.T) {
 		WithArgs(1, fname, lname, cityID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	env.mock.ExpectQuery(`SELECT geo_lon, geo_lat FROM cities WHERE id = $1`).
+		WithArgs(cityID).
+		WillReturnRows(sqlmock.NewRows([]string{"geo_lon", "geo_lat"}).AddRow(55.75, 37.62))
+
 	err = env.svc.UpdateStudentProfile(ctxWithClaims(1, constants.Intern, "intern@test.ru"), models.Profile{
 		FirstName: &fname,
 		LastName:  &lname,

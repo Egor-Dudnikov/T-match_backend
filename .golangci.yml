@@ -1,24 +1,27 @@
+version: "2"
+
 run:
   timeout: 5m
-  test: true
-  
+
 linters:
   enable:
-    - errcheck      # проверка ошибок
-    - govet         # подозрительные конструкции
-    - staticcheck   # мощный статический анализ
-    - gosec         # безопасность
-    - revive        # замена golint
-    - gofmt         # форматирование
-    - goimports     # сортировка импортов
-    - dupl          # дублирующийся код
-    - gocyclo       # сложность функций
-    - godox         # TODO/FIXME комментарии
+    - errcheck
+    - govet
+    - staticcheck
+    - gosec
+    - revive
+    - dupl
+    - gocyclo
+    - godox
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
-  
   gocyclo:
     min-complexity: 10

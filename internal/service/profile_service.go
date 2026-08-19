@@ -15,6 +15,7 @@ import (
 	"strconv"
 )
 
+// UpdateStudentProfile validates and updates the student profile of the authenticated intern.
 func (app *Service) UpdateStudentProfile(ctx context.Context, profile models.Profile) error {
 	err := app.validate.Struct(profile)
 	if err != nil {
@@ -41,6 +42,7 @@ func (app *Service) UpdateStudentProfile(ctx context.Context, profile models.Pro
 	return nil
 }
 
+// GetMyProfile returns the profile of the authenticated intern.
 func (app *Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -59,6 +61,7 @@ func (app *Service) GetMyProfile(ctx context.Context) (models.ProfileResponse, e
 	return resp, nil
 }
 
+// UpdateCompanyProfile validates and updates the company profile of the authenticated user.
 func (app *Service) UpdateCompanyProfile(ctx context.Context, profile models.CompanyProfile) error {
 	err := app.validate.Struct(profile)
 	if err != nil {
@@ -75,6 +78,7 @@ func (app *Service) UpdateCompanyProfile(ctx context.Context, profile models.Com
 	return nil
 }
 
+// GetMyCompanyProfile returns the company profile of the authenticated user.
 func (app *Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
@@ -97,6 +101,7 @@ func (app *Service) GetMyCompanyProfile(ctx context.Context) (models.CompanyProf
 	return resp, nil
 }
 
+// GetCompanyProfile returns the company profile with the given ID, exposing the email only to matching interns or admins.
 func (app *Service) GetCompanyProfile(ctx context.Context, id int) (models.CompanyProfileResponse, error) {
 	resp := models.CompanyProfileResponse{}
 
@@ -143,6 +148,7 @@ func (app *Service) companyEmail(ctx context.Context, companyID int) (string, er
 	return app.db.GetEmailByUserID(ctx, userID)
 }
 
+// SetMyAvatar uploads and sets the avatar of the authenticated user, returning its URL.
 func (app *Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader, file io.Reader, claims models.Claims) (string, error) {
 	if info.Size > constants.MaxSizeImage {
 		return "", apierrors.ErrBadRequest
@@ -175,6 +181,7 @@ func (app *Service) SetMyAvatar(ctx context.Context, info *multipart.FileHeader,
 	return url, err
 }
 
+// GetAllSkills returns all available skills.
 func (app *Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	skills, err := app.db.GetAllSkills(ctx)
 	if err != nil {
@@ -183,6 +190,7 @@ func (app *Service) GetAllSkills(ctx context.Context) ([]models.Skill, error) {
 	return skills, nil
 }
 
+// GetAllCities returns all available cities.
 func (app *Service) GetAllCities(ctx context.Context) ([]models.City, error) {
 	cities, err := app.db.GetAllCities(ctx)
 	if err != nil {
@@ -191,6 +199,7 @@ func (app *Service) GetAllCities(ctx context.Context) ([]models.City, error) {
 	return cities, nil
 }
 
+// AddInternSkills adds the given skills to the authenticated intern.
 func (app *Service) AddInternSkills(ctx context.Context, skills []int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -205,6 +214,7 @@ func (app *Service) AddInternSkills(ctx context.Context, skills []int) error {
 	return nil
 }
 
+// DeleteInternSkills deletes the given skills from the authenticated intern.
 func (app *Service) DeleteInternSkills(ctx context.Context, skillIDs []int) error {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
@@ -219,6 +229,7 @@ func (app *Service) DeleteInternSkills(ctx context.Context, skillIDs []int) erro
 	return nil
 }
 
+// GetMyResponses returns the internship responses of the authenticated intern.
 func (app *Service) GetMyResponses(ctx context.Context) ([]models.Response, error) {
 	responses := []models.Response{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -235,16 +246,19 @@ func (app *Service) GetMyResponses(ctx context.Context) ([]models.Response, erro
 	return responses, err
 }
 
+// SearchCompany searches companies by the given filters.
 func (app *Service) SearchCompany(ctx context.Context, filters models.SearchCompany) ([]models.CompanyProfile, error) {
 	res, err := app.db.SearchCompany(ctx, filters)
 	return res, err
 }
 
+// SearchIntern searches interns by the given filters.
 func (app *Service) SearchIntern(ctx context.Context, filters models.SearchIntern) ([]models.ShortProfile, error) {
 	res, err := app.db.SearchIntern(ctx, filters)
 	return res, err
 }
 
+// GetProfile returns the intern profile with the given ID, exposing the email only to matching companies or admins.
 func (app *Service) GetProfile(ctx context.Context, internID int) (models.ProfileResponse, error) {
 	resp := models.ProfileResponse{}
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)

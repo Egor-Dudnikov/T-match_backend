@@ -14,6 +14,7 @@ import (
 	"os"
 )
 
+// PingDatabase opens a PostgreSQL connection using the given config and verifies it with a ping.
 func PingDatabase(config models.DbConfig) (*sql.DB, error) {
 
 	conStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
@@ -32,18 +33,22 @@ func PingDatabase(config models.DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
+// Repository wraps a SQL database connection and provides data access methods.
 type Repository struct {
 	db *sql.DB
 }
 
+// NewRepository creates a new Repository backed by the given SQL database.
 func NewRepository(r *sql.DB) *Repository {
 	return &Repository{db: r}
 }
 
+// Close closes the underlying database connection.
 func (r *Repository) Close() error {
 	return r.db.Close()
 }
 
+// QueryNewUser inserts a new intern user with their profile and returns the new user ID.
 func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify) (int, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -83,6 +88,7 @@ func (r *Repository) QueryNewUser(ctx context.Context, user models.InternVerify)
 	return id, nil
 }
 
+// QueryNewCompany inserts a new company user with its details and returns the new user ID.
 func (r *Repository) QueryNewCompany(ctx context.Context, company models.CompanyVerify) (int, error) {
 	var id int
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -128,6 +134,7 @@ func (r *Repository) QueryNewCompany(ctx context.Context, company models.Company
 	return id, nil
 }
 
+// CheckUserEmail reports whether a user with the given email and role exists.
 func (r *Repository) CheckUserEmail(ctx context.Context, email string, role string) (bool, error) {
 	var exist bool
 	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND role = $2)`, email, role).Scan(&exist)
@@ -137,6 +144,7 @@ func (r *Repository) CheckUserEmail(ctx context.Context, email string, role stri
 	return exist, nil
 }
 
+// GetUser returns the user with the given email and role.
 func (r *Repository) GetUser(ctx context.Context, email string, role string) (models.User, error) {
 	user := models.User{}
 	err := r.db.QueryRowContext(ctx, `SELECT id, email, password_hash, role FROM users WHERE email = $1 AND role = $2`, email, role).Scan(
@@ -150,6 +158,7 @@ func (r *Repository) GetUser(ctx context.Context, email string, role string) (mo
 	return user, nil
 }
 
+// GetCompanyIDByUserID returns the company ID associated with the given user ID.
 func (r *Repository) GetCompanyIDByUserID(ctx context.Context, userID int) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM companies WHERE user_id = $1`, userID).Scan(&id)
@@ -159,6 +168,7 @@ func (r *Repository) GetCompanyIDByUserID(ctx context.Context, userID int) (int,
 	return id, nil
 }
 
+// GetEmailByUserID returns the email of the user with the given ID.
 func (r *Repository) GetEmailByUserID(ctx context.Context, id int) (string, error) {
 	var email string
 	err := r.db.QueryRowContext(ctx, `SELECT email FROM users WHERE id = $1`, id).Scan(&email)
@@ -168,6 +178,7 @@ func (r *Repository) GetEmailByUserID(ctx context.Context, id int) (string, erro
 	return email, err
 }
 
+// GetUserIDByCompanyID returns the user ID associated with the given company ID.
 func (r *Repository) GetUserIDByCompanyID(ctx context.Context, id int) (int, error) {
 	var userID int
 	err := r.db.QueryRowContext(ctx, `SELECT user_id FROM companies WHERE id = $1`, id).Scan(&userID)
@@ -177,6 +188,7 @@ func (r *Repository) GetUserIDByCompanyID(ctx context.Context, id int) (int, err
 	return userID, err
 }
 
+// GetUserIDByEmail returns the user ID of the user with the given email.
 func (r *Repository) GetUserIDByEmail(ctx context.Context, email string) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&id)
@@ -186,6 +198,7 @@ func (r *Repository) GetUserIDByEmail(ctx context.Context, email string) (int, e
 	return id, err
 }
 
+// GetUserRole returns the role of the user with the given ID.
 func (r *Repository) GetUserRole(ctx context.Context, userID int) (string, error) {
 	var role string
 	err := r.db.QueryRowContext(ctx, `SELECT role FROM users WHERE id = $1`, userID).Scan(&role)
@@ -198,6 +211,7 @@ func (r *Repository) GetUserRole(ctx context.Context, userID int) (string, error
 	return role, nil
 }
 
+// UpdatePasswordHash updates the password hash of the user with the given ID.
 func (r *Repository) UpdatePasswordHash(ctx context.Context, newPasswordHash string, id int) error {
 	err := r.db.QueryRowContext(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, newPasswordHash, id).Err()
 	if err != nil {

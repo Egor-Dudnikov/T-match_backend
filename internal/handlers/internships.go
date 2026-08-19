@@ -13,6 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// NewInternshipHandler creates a new internship for the authenticated company.
 func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -32,6 +33,7 @@ func (h *ServiceHandler) NewInternshipHandler(w http.ResponseWriter, r *http.Req
 	return encodeJSON[int](w, internshipID)
 }
 
+// GetInternshipByIDHandler returns an internship by ID.
 func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -50,6 +52,7 @@ func (h *ServiceHandler) GetInternshipByIDHandler(w http.ResponseWriter, r *http
 	return nil
 }
 
+// UpdateInternshipHandler updates an internship by ID.
 func (h *ServiceHandler) UpdateInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -75,6 +78,7 @@ func getIDURL(ps httprouter.Params) (int, error) {
 	return id, nil
 }
 
+// ArchivedInternshipHandler archives an internship by ID.
 func (h *ServiceHandler) ArchivedInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -88,6 +92,7 @@ func (h *ServiceHandler) ArchivedInternshipHandler(_ http.ResponseWriter, r *htt
 	return nil
 }
 
+// GetMyInternshipsHandler returns the authenticated company's internships.
 func (h *ServiceHandler) GetMyInternshipsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
@@ -103,6 +108,7 @@ func (h *ServiceHandler) GetMyInternshipsHandler(w http.ResponseWriter, r *http.
 	return err
 }
 
+// GetCompanyInternshipsHandler returns internships for a company by ID.
 func (h *ServiceHandler) GetCompanyInternshipsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -118,6 +124,7 @@ func (h *ServiceHandler) GetCompanyInternshipsHandler(w http.ResponseWriter, r *
 	return err
 }
 
+// AddInternshipSkillsHandler adds skills to an internship by ID.
 func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -134,6 +141,7 @@ func (h *ServiceHandler) AddInternshipSkillsHandler(w http.ResponseWriter, r *ht
 	return err
 }
 
+// DeleteInternshipSkillsHandler removes skills from an internship by ID.
 func (h *ServiceHandler) DeleteInternshipSkillsHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -149,6 +157,7 @@ func (h *ServiceHandler) DeleteInternshipSkillsHandler(_ http.ResponseWriter, r 
 	return err
 }
 
+// RespondInternshipHandler submits an intern's response to an internship by ID.
 func (h *ServiceHandler) RespondInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -160,6 +169,7 @@ func (h *ServiceHandler) RespondInternshipHandler(_ http.ResponseWriter, r *http
 	return err
 }
 
+// DeleteRespondInternshipHandler removes an intern's response to an internship by ID.
 func (h *ServiceHandler) DeleteRespondInternshipHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -171,6 +181,7 @@ func (h *ServiceHandler) DeleteRespondInternshipHandler(_ http.ResponseWriter, r
 	return err
 }
 
+// GetInternshipResponses returns responses to an internship by ID.
 func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -186,6 +197,7 @@ func (h *ServiceHandler) GetInternshipResponses(w http.ResponseWriter, r *http.R
 	return err
 }
 
+// SetResponseStatus updates the status of a response to an internship.
 func (h *ServiceHandler) SetResponseStatus(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 
@@ -202,6 +214,7 @@ func (h *ServiceHandler) SetResponseStatus(_ http.ResponseWriter, r *http.Reques
 	return err
 }
 
+// SearchInternshipHandler searches internships by the provided filters.
 func (h *ServiceHandler) SearchInternshipHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	cityID := r.URL.Query().Get("city_id")
@@ -268,6 +281,7 @@ func (h *ServiceHandler) parseAndSetString(val string) *string {
 	return nil
 }
 
+// InternshipInviteHandler invites an intern to an internship by ID.
 func (h *ServiceHandler) InternshipInviteHandler(_ http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	internshipID, err := getIDURL(ps)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"T-match_backend/internal/constants"
 	"T-match_backend/internal/models"
 	"T-match_backend/internal/service"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// UpdateProfileHandler updates the authenticated intern's profile.
 func (h *ServiceHandler) UpdateProfileHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.Profile](r)
 	if err != nil {
@@ -25,6 +27,7 @@ func (h *ServiceHandler) UpdateProfileHandler(_ http.ResponseWriter, r *http.Req
 	return err
 }
 
+// GetMyProfileHandler returns the authenticated intern's profile.
 func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := h.service.GetMyProfile(r.Context())
 	if err != nil {
@@ -34,6 +37,7 @@ func (h *ServiceHandler) GetMyProfileHandler(w http.ResponseWriter, r *http.Requ
 	return err
 }
 
+// UpdateCompanyProfileHandler updates the authenticated company's profile.
 func (h *ServiceHandler) UpdateCompanyProfileHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := decodeJSON[models.CompanyProfile](r)
 	if err != nil {
@@ -43,6 +47,7 @@ func (h *ServiceHandler) UpdateCompanyProfileHandler(_ http.ResponseWriter, r *h
 	return err
 }
 
+// GetMyCompanyProfileHandler returns the authenticated company's profile.
 func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	profile, err := h.service.GetMyCompanyProfile(r.Context())
 	if err != nil {
@@ -52,6 +57,7 @@ func (h *ServiceHandler) GetMyCompanyProfileHandler(w http.ResponseWriter, r *ht
 	return err
 }
 
+// GetCompanyProfileHandler returns a company profile by ID.
 func (h *ServiceHandler) GetCompanyProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	id, err := getIDURL(ps)
 	if err != nil {
@@ -65,13 +71,15 @@ func (h *ServiceHandler) GetCompanyProfileHandler(w http.ResponseWriter, r *http
 	return err
 }
 
+// SetMyAvatarHandler uploads an avatar image for the authenticated user.
 func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return apierrors.ErrInternalServer
 	}
-	err := r.ParseMultipartForm(10 << 20)
+	r.Body = http.MaxBytesReader(w, r.Body, constants.MaxSizeImage)
+	err := r.ParseMultipartForm(constants.MaxSizeImage) //nolint:gosec // body is already capped by MaxBytesReader above; gosec cannot detect it
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
@@ -80,7 +88,11 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return apierrors.Wrap(apierrors.ErrBadRequest, err)
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			log.Printf("handlers: close avatar file: %v", cerr)
+		}
+	}()
 	url, err := h.service.SetMyAvatar(ctx, info, file, claims)
 	if err != nil {
 		return err
@@ -89,6 +101,7 @@ func (h *ServiceHandler) SetMyAvatarHandler(w http.ResponseWriter, r *http.Reque
 	return encodeJSON[string](w, url)
 }
 
+// GetAllSkills returns all available skills.
 func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	skills, err := h.service.GetAllSkills(r.Context())
 	if err != nil {
@@ -98,6 +111,7 @@ func (h ServiceHandler) GetAllSkills(w http.ResponseWriter, r *http.Request, _ h
 	return err
 }
 
+// GetAllCities returns all available cities.
 func (h ServiceHandler) GetAllCities(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	cities, err := h.service.GetAllCities(r.Context())
 	if err != nil {
@@ -107,6 +121,7 @@ func (h ServiceHandler) GetAllCities(w http.ResponseWriter, r *http.Request, _ h
 	return err
 }
 
+// AddInternSkillsHandler adds skills to the authenticated intern's profile.
 func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
@@ -120,6 +135,7 @@ func (h ServiceHandler) AddInternSkillsHandler(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
+// DeleteInternSkillsHandler removes skills from the authenticated intern's profile.
 func (h ServiceHandler) DeleteInternSkillsHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	skillIDs, err := decodeJSON[models.SkillID](r)
 	if err != nil {
@@ -129,6 +145,7 @@ func (h ServiceHandler) DeleteInternSkillsHandler(_ http.ResponseWriter, r *http
 	return err
 }
 
+// GetMyResponsesHandler returns the authenticated intern's responses to internships.
 func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	responses, err := h.service.GetMyResponses(ctx)
@@ -139,6 +156,7 @@ func (h ServiceHandler) GetMyResponsesHandler(w http.ResponseWriter, r *http.Req
 	return err
 }
 
+// SearchCompanyHandler searches companies by the provided filters.
 func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	cityID := r.URL.Query().Get("city_id")
@@ -162,6 +180,7 @@ func (h ServiceHandler) SearchCompanyHandler(w http.ResponseWriter, r *http.Requ
 	return err
 }
 
+// SearchInternHandler searches interns by the provided filters.
 func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	query := r.URL.Query().Get("query")
 	university := r.URL.Query().Get("university")
@@ -198,6 +217,7 @@ func (h ServiceHandler) SearchInternHandler(w http.ResponseWriter, r *http.Reque
 	return err
 }
 
+// GetProfileHandler returns a profile by ID.
 func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	ctx := r.Context()
 	id, err := getIDURL(ps)
@@ -212,6 +232,7 @@ func (h *ServiceHandler) GetProfileHandler(w http.ResponseWriter, r *http.Reques
 	return err
 }
 
+// MyNotificationsHandler returns the authenticated user's notifications.
 func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	notifications, err := h.service.GetMyNotifications(ctx)
@@ -222,12 +243,14 @@ func (h *ServiceHandler) MyNotificationsHandler(w http.ResponseWriter, r *http.R
 	return err
 }
 
+// SetReadStatusOfNotificationHandler marks the authenticated user's notifications as read.
 func (h *ServiceHandler) SetReadStatusOfNotificationHandler(_ http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 	ctx := r.Context()
 	err := h.service.SetReadStatusOfNotification(ctx)
 	return err
 }
 
+// WSNotificationHandler upgrades the connection to a WebSocket for real-time notifications.
 func (h *ServiceHandler) WSNotificationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
 
 	var upgrader = websocket.Upgrader{

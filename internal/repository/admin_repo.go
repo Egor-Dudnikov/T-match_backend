@@ -1,3 +1,4 @@
+// Package repository implements the PostgreSQL data access layer.
 package repository
 
 import (
@@ -7,6 +8,7 @@ import (
 	"database/sql"
 )
 
+// GetStats returns aggregated statistics about interns, companies, internships and applications.
 func (r *Repository) GetStats(ctx context.Context) (models.AdminStats, error) {
 	var stats models.AdminStats
 
@@ -60,6 +62,7 @@ func (r *Repository) GetStats(ctx context.Context) (models.AdminStats, error) {
 	return stats, nil
 }
 
+// BanUser bans the user with the given ID, updating the reason if already banned.
 func (r *Repository) BanUser(ctx context.Context, userID int, bannedBy int, reason string) error {
 	_, err := r.db.ExecContext(ctx, `
         INSERT INTO user_bans (user_id, reason, banned_by)
@@ -73,6 +76,7 @@ func (r *Repository) BanUser(ctx context.Context, userID int, bannedBy int, reas
 	return nil
 }
 
+// UnbanUser removes the ban from the user with the given ID.
 func (r *Repository) UnbanUser(ctx context.Context, userID int) error {
 	_, err := r.db.ExecContext(ctx, `
         DELETE FROM user_bans WHERE user_id = $1
@@ -83,6 +87,7 @@ func (r *Repository) UnbanUser(ctx context.Context, userID int) error {
 	return nil
 }
 
+// IsUserBanned reports whether the user with the given ID is banned.
 func (r *Repository) IsUserBanned(ctx context.Context, userID int) (bool, error) {
 	var exists bool
 	err := r.db.QueryRowContext(ctx, `
@@ -94,6 +99,7 @@ func (r *Repository) IsUserBanned(ctx context.Context, userID int) (bool, error)
 	return exists, nil
 }
 
+// GetUserBanReason returns the ban reason of the user with the given ID, or an empty string if not banned.
 func (r *Repository) GetUserBanReason(ctx context.Context, userID int) (string, error) {
 	var reason string
 	err := r.db.QueryRowContext(ctx, `
@@ -108,6 +114,7 @@ func (r *Repository) GetUserBanReason(ctx context.Context, userID int) (string, 
 	return reason, nil
 }
 
+// InternshipExists reports whether an internship with the given ID exists.
 func (r *Repository) InternshipExists(ctx context.Context, internshipID int) (bool, error) {
 	var exists bool
 	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM internships WHERE id = $1)`, internshipID).Scan(&exists)
@@ -117,6 +124,7 @@ func (r *Repository) InternshipExists(ctx context.Context, internshipID int) (bo
 	return exists, nil
 }
 
+// AdminDeleteInternship deletes the internship with the given ID.
 func (r *Repository) AdminDeleteInternship(ctx context.Context, internshipID int) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM internships WHERE id = $1`, internshipID)
 	if err != nil {

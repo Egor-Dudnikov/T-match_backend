@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Config is the root application configuration.
 type Config struct {
 	DbConfig     DbConfig
 	ServerConfig ServerConfig
@@ -17,6 +18,7 @@ type Config struct {
 	RecsysConfig RecsysConfig
 }
 
+// DbConfig holds the PostgreSQL connection settings.
 type DbConfig struct {
 	Host    string `json:"host"`
 	Port    int    `json:"port"`
@@ -25,11 +27,13 @@ type DbConfig struct {
 	Sslmode string `json:"sslmode"`
 }
 
+// ServerConfig holds the HTTP server listen settings.
 type ServerConfig struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
 }
 
+// RedisConfig holds the Redis connection settings.
 type RedisConfig struct {
 	Addr        string        `json:"addr"`
 	DB          int           `json:"db"`
@@ -38,6 +42,7 @@ type RedisConfig struct {
 	Timeout     time.Duration `json:"time_duration"`
 }
 
+// EmailConfig holds the SMTP server settings.
 type EmailConfig struct {
 	Addr     string `json:"addr"`
 	Host     string `json:"host"`
@@ -45,11 +50,13 @@ type EmailConfig struct {
 	Username string `json:"username"`
 }
 
+// CORSConfig holds the CORS allowlist settings.
 type CORSConfig struct {
 	ControlAllowOrigin  string   `json:"control_allow_origin"`
 	ControlAllowHeaders []string `json:"control_allow_headers"`
 }
 
+// S3Config holds the S3-compatible storage credentials.
 type S3Config struct {
 	Endpoint        string `json:"endpoint"`
 	AccessKeyID     string `json:"access_key_ID"`
@@ -57,6 +64,7 @@ type S3Config struct {
 	UseSSL          bool   `json:"use_SSL"`
 }
 
+// RecsysConfig holds the recommendation service connection settings.
 type RecsysConfig struct {
 	URL string `json:"url"`
 }

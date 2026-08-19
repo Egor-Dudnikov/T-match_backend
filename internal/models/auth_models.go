@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// User is a registered account in the system.
 type User struct {
 	ID           int
 	Email        string
@@ -16,6 +17,7 @@ type User struct {
 	PasswordHash string
 }
 
+// InternAuth is the registration payload for interns.
 type InternAuth struct {
 	Email     string    `json:"email" validate:"required,email,max=255"`
 	Password  string    `json:"password" validate:"required,min=8,max=72,strong_password"`
@@ -23,6 +25,7 @@ type InternAuth struct {
 	BirthDate time.Time `json:"birth_date"`
 }
 
+// CompanyAuth is the registration payload for companies.
 type CompanyAuth struct {
 	Inn      string `json:"inn" validate:"required,min=10,max=12,numeric"`
 	Email    string `json:"email" validate:"required,email,max=255"`
@@ -30,6 +33,7 @@ type CompanyAuth struct {
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
 }
 
+// CompanyData holds the company details returned by the dadata service.
 type CompanyData struct {
 	Inn          string
 	Kpp          string
@@ -43,6 +47,7 @@ type CompanyData struct {
 	Address      string
 }
 
+// InternVerify is the verification payload for interns.
 type InternVerify struct {
 	Email        string
 	PasswordHash string
@@ -50,6 +55,7 @@ type InternVerify struct {
 	BirthDate    time.Time
 }
 
+// CompanyVerify is the verification payload for companies.
 type CompanyVerify struct {
 	CompanyData  CompanyData
 	Email        string
@@ -57,10 +63,12 @@ type CompanyVerify struct {
 	DeviceID     string
 }
 
+// VerifyRequest is the email verification code payload.
 type VerifyRequest struct {
 	Code string `json:"code" validate:"required,len=6,numeric"`
 }
 
+// Claims is the JWT claims structure embedded into tokens.
 type Claims struct {
 	UserID   int
 	DeviceID string
@@ -69,6 +77,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// UserInfo contains the identity data extracted from the access token.
 type UserInfo struct {
 	UserID   int
 	DeviceID string
@@ -76,18 +85,21 @@ type UserInfo struct {
 	Role     string
 }
 
+// LoginUser is the login payload.
 type LoginUser struct {
 	Email        string `json:"email"`
 	PasswordHash string `json:"password"`
 	DeviceID     string `json:"device_id"`
 }
 
+// FogetPasswordRequest is the forgot-password request payload.
 type FogetPasswordRequest struct {
 	DeviceID string `json:"device_id" validate:"required,min=5,max=100"`
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Role     string `json:"role" validate:"required,valid_role"`
 }
 
+// ChangePasswordRequest is the password change payload.
 type ChangePasswordRequest struct {
 	Password string `json:"password" validate:"required,min=8,max=72,strong_password"`
 }

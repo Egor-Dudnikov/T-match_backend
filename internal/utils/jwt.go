@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// GeneratingJWT creates a signed JWT with the given claims and lifetime.
 func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Duration) (string, error) {
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
@@ -37,6 +38,7 @@ func GeneratingJWT(userID int, deviceID, email, role string, timeLife time.Durat
 
 }
 
+// GeneratingTokenPair creates an access and refresh token pair for the given user.
 func GeneratingTokenPair(userID int, deviceID, email, role string) (string, string, error) {
 	accessToken, err := GeneratingJWT(userID, deviceID, email, role, constants.AccessTokenTimeLife)
 	if err != nil {
@@ -50,6 +52,7 @@ func GeneratingTokenPair(userID int, deviceID, email, role string) (string, stri
 	return accessToken, refreshToken, nil
 }
 
+// DecodeJWT parses and verifies the given JWT, returning its token and claims.
 func DecodeJWT(tokenStr string) (*jwt.Token, models.Claims, error) {
 	claims := models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, keyfunc)
