@@ -12,6 +12,8 @@ import (
 	"errors"
 	"log"
 	"strconv"
+
+	"github.com/lib/pq"
 )
 
 // NewInternship creates a new internship for the company of the given user and returns its ID.
@@ -152,6 +154,61 @@ func (r *Repository) ArchivedInternship(ctx context.Context, id int) error {
 		return apierrors.Wrap(apierrors.ErrDatabaseError, err)
 	}
 	return nil
+}
+
+// GetInternshipsByIDs returns the non-archived internships with the given IDs, excluding banned companies,
+// ordered by the order of the IDs.
+func (r *Repository) GetInternshipsByIDs(ctx context.Context, ids []int) ([]models.Internship, error) {
+	res := []models.Internship{}
+	if len(ids) == 0 {
+		return res, nil
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT i.id, i.company_id, i.title, i.salary, i.duration_months, i.city_id, i.created_at, i.is_archived
+		FROM internships i
+		WHERE i.id = ANY($1)
+		  AND i.is_archived = FALSE
+		  AND NOT EXISTS(
+			  SELECT 1 FROM user_bans ub
+			  JOIN companies comp ON ub.user_id = comp.user_id
+			  WHERE comp.id = i.company_id
+		  )
+	`, pq.Array(ids))
+	if err != nil {
+		return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+	}
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Printf("repo: close rows: %v", cerr)
+		}
+	}()
+
+	byID := make(map[int]models.Internship, len(ids))
+	for rows.Next() {
+		internship := models.Internship{}
+		err = rows.Scan(
+			&internship.ID,
+			&internship.CompanyID,
+			&internship.Title,
+			&internship.Salary,
+			&internship.DurationMonth,
+			&internship.CityID,
+			&internship.CreatedAt,
+			&internship.IsArchived,
+		)
+		if err != nil {
+			return res, apierrors.Wrap(apierrors.ErrDatabaseError, err)
+		}
+		byID[internship.ID] = internship
+	}
+
+	for _, id := range ids {
+		if internship, ok := byID[id]; ok {
+			res = append(res, internship)
+		}
+	}
+	return res, nil
 }
 
 // SearchInternship returns non-archived internships matching the given filters.

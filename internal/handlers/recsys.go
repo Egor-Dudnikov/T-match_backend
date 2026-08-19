@@ -10,13 +10,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// GetRecommendationsHandler returns internship recommendations for the authenticated intern.
+// GetRecommendationsHandler returns ranked internship cards for the authenticated intern.
 func (h *ServiceHandler) GetRecommendationsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) error {
-	recommendations, err := h.service.GetRecommendations(r.Context())
+	internships, err := h.service.GetRecommendations(r.Context())
 	if err != nil {
 		return err
 	}
-	return encodeJSON[[]models.Recommendation](w, recommendations)
+	return encodeJSON[[]models.Internship](w, internships)
 }
 
 // TrackInternshipViewHandler records a view of an internship by the authenticated intern.

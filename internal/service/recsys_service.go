@@ -105,8 +105,8 @@ func (app *Service) sendRecsysAction(ctx context.Context, userID, internshipID i
 	}
 }
 
-// GetRecommendations returns ranked internship recommendations for the current intern.
-func (app *Service) GetRecommendations(ctx context.Context) ([]models.Recommendation, error) {
+// GetRecommendations returns the ranked short internships recommended for the current intern.
+func (app *Service) GetRecommendations(ctx context.Context) ([]models.Internship, error) {
 	claims, ok := ctx.Value(constants.ClaimsKey).(models.Claims)
 	if !ok {
 		return nil, apierrors.ErrInternalServer
@@ -116,7 +116,17 @@ func (app *Service) GetRecommendations(ctx context.Context) ([]models.Recommenda
 	if err != nil {
 		return nil, err
 	}
-	return recommendations, nil
+
+	ids := make([]int, 0, len(recommendations))
+	for _, rec := range recommendations {
+		ids = append(ids, rec.InternshipID)
+	}
+
+	internships, err := app.db.GetInternshipsByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	return internships, nil
 }
 
 // TrackInternshipView reports a click event for the current intern.

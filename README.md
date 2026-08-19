@@ -1288,31 +1288,35 @@ GET /my/recommendations
 ```
 *Роль: `intern`* | Rate limit: 60 запросов/мин
 
-Возвращает список стажировок, отсортированный по убыванию `score`:
+Возвращает ранжированный список стажировок (короткие карточки, тот же формат, что в поиске `GET /internships`), отсортированный по убыванию рекомендательного балла recsys:
 
 ```json
 [
   {
-    "internship_id": 15,
-    "score": 1.824,
-    "geo_similarity": 0.842,
-    "skill_similarity": 0.982,
-    "distance_km": 12.345,
-    "als_score": 3.1
+    "id": 15,
+    "company_id": 2,
+    "title": "Go developer",
+    "salary": 100000,
+    "duration_months": 6,
+    "city_id": 77,
+    "created_at": "2026-08-19T10:00:00Z",
+    "is_archived": false
   }
 ]
 ```
 
 | Поле | Описание |
 | :--- | :--- |
-| `internship_id` | ID стажировки |
-| `score` | Итоговый балл (`geo_similarity + skill_similarity`, ALS учитывается дополнительно) |
-| `geo_similarity` | Гео-близость (1 / (1 + расстояние)) |
-| `skill_similarity` | Косинусная схожесть навыков стажёра и стажировки |
-| `distance_km` | Расстояние от города стажёра до города стажировки |
-| `als_score` | Балл ALS-модели или `null`, если ALS-данных нет |
+| `id` | ID стажировки |
+| `company_id` | ID компании-работодателя |
+| `title` | Название |
+| `salary` | Зарплата |
+| `duration_months` | Длительность в месяцах |
+| `city_id` | ID города |
+| `created_at` | Дата создания |
+| `is_archived` | Флаг архивации (всегда `false`) |
 
-**Примечание:** recsys не возвращает полные данные стажировок — только рейтинги. Фронтенд должен подтянуть детали через `GET /internships/:id`.
+**Примечание:** бэкенд сам запрашивает рейтинги у recsys и подставляет карточки стажировок из БД, сохраняя порядок ранжирования. Архивные стажировки и стажировки забаненных компаний в ответ не попадают. Внутренние поля recsys (`score`, `geo_similarity`, `als_score` и т.д.) фронту не отдаются. Если recsys недоступен — ответ `502`.
 
 ### 13.4 Отслеживание просмотра
 
@@ -1363,7 +1367,7 @@ docker compose up -d --build recsys
 | `422` | `User must be at least 16 years old` | Возраст < 16 лет |
 | `429` | `Too many invalid attempts` | Превышен rate limit |
 | `500` | `Internal server error` | Внутренняя ошибка сервера |
-| `502` | `External service temporarily unavailable` | Ошибка DaData |
+| `502` | `External service temporarily unavailable` | Ошибка DaData или недоступен recsys |
 | `503` | `Cache service temporarily unavailable` | Redis недоступен |
 | `503` | `Failed to send email, please try again` | Ошибка отправки email |
 
