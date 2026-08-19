@@ -1336,11 +1336,24 @@ POST /internships/:id/view
 RECSYS_URL=http://recsys:8000
 ```
 
-**Запуск:** recsys (вместе со своими PostgreSQL и Redis) включён в `docker-compose.yml` и `docker-compose.dev.yml` — поднимается автоматически вместе с остальными сервисами. Отдельный запуск:
+**Запуск:** бэкенд и recsys — два независимых Docker-проекта. Каждый поднимается отдельно, а взаимодействуют они через общую внешнюю Docker-сеть `t-match-net`:
 
-```bash
-docker compose up -d --build recsys
-```
+1. Создать общую сеть (один раз):
+   ```bash
+   docker network create t-match-net
+   ```
+
+2. Запустить бэкенд (из корня этого репозитория):
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. Запустить recsys (из репозитория `recsys`, вместе со своими PostgreSQL и Redis):
+   ```bash
+   docker compose up -d --build
+   ```
+
+Бэкенд обращается к recsys по адресу `http://recsys:8000` — имя `recsys` резолвится через сетевой алиас в `t-match-net`. Проекты можно останавливать, перезапускать и обновлять независимо друг от друга; бэкенд работает и без recsys (см. поведение при недоступном сервисе в п. 13.3).
 
 ---
 
