@@ -1,0 +1,11 @@
+# Copyright (c) 2026 Egor Dudnikov
+# SPDX-License-Identifier: MIT
+
+{$CADDY_DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

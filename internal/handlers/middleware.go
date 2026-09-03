@@ -201,6 +201,33 @@ func clientIP(remoteAddr string) string {
 	return host
 }
 
+// isTrustedProxy reports whether the direct peer is a trusted reverse proxy
+// (Caddy/nginx on the same host or on a private/Docker network).
+func isTrustedProxy(remoteAddr string) bool {
+	addr, err := netip.ParseAddr(clientIP(remoteAddr))
+	if err != nil {
+		return false
+	}
+	return addr.IsLoopback() || addr.IsPrivate()
+}
+
+// getRealIP returns the real client IP for rate limiting. The X-Forwarded-For
+// header is honored only when the direct peer is a trusted proxy; otherwise
+// it is ignored so a client cannot spoof it and bypass the rate limit.
+func getRealIP(r *http.Request) string {
+	if isTrustedProxy(r.RemoteAddr) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			ips := strings.Split(xff, ",")
+			if ip := strings.TrimSpace(ips[0]); ip != "" {
+				if addr, err := netip.ParseAddr(ip); err == nil {
+					return addr.Unmap().String()
+				}
+			}
+		}
+	}
+	return clientIP(r.RemoteAddr)
+}
+
 // RateLimitMiddleware rate limits requests to an endpoint by user, session, or IP.
 func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoint string) ErrorHandler {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
@@ -217,7 +244,7 @@ func (h *ServiceHandler) RateLimitMiddleware(next ErrorHandler, rate int, endpoi
 		} else if sessionID != "" {
 			id = sessionID
 		} else {
-			id = clientIP(r.RemoteAddr)
+			id = getRealIP(r)
 		}
 		key := id + "." + endpoint
 		ok, err := h.service.RateLimitCheck(ctx, key, rate)
